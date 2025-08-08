@@ -46,18 +46,39 @@ export abstract class DetectionStrategy {
   protected buildComponentPath(fiber: any): string[] {
     const path: string[] = [];
     let current = fiber;
+    const maxDepth = 10; // Limit depth to avoid too long paths
+    let depth = 0;
 
-    while (current) {
+    // Common wrapper components to filter out
+    const wrappers = new Set([
+      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
+      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
+      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode',
+      'App' // Keep App but filter if it's just a wrapper
+    ]);
+
+    while (current && depth < maxDepth) {
       if (current.type && typeof current.type === 'function') {
         const componentName = current.type.displayName || current.type.name;
-        if (componentName) {
+        if (componentName && !wrappers.has(componentName)) {
+          // Add to path if it's not a wrapper component
           path.unshift(componentName);
+          depth++;
+        } else if (componentName === 'App' && path.length === 0) {
+          // Only add App if there are no other components yet
+          path.unshift(componentName);
+          depth++;
         }
       } else if (current.type && typeof current.type === 'string') {
         // Skip HTML elements in the path
       }
 
       current = current.return;
+    }
+
+    // If path is empty, at least show something meaningful
+    if (path.length === 0) {
+      path.push('Component');
     }
 
     return path;

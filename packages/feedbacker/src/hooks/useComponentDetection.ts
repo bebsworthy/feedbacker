@@ -226,18 +226,16 @@ export function useComponentDetection(): UseComponentDetectionResult {
   }, [isActive, handleMouseMove, handleTouchMove]);
 
   // ESC key handler to exit component selection mode (Requirement 3.6)
-  const handleKeyDown = useMemo(
-    () => (event: KeyboardEvent) => {
-      if (!isActiveRef.current) return;
-      
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        deactivate();
-      }
-    },
-    [deactivate]
-  );
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (!isActiveRef.current) return;
+    
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('[useComponentDetection] ESC key pressed, deactivating');
+      deactivate();
+    }
+  }, [deactivate]);
 
   // Activate component detection
   const activate = useCallback(() => {
@@ -249,31 +247,34 @@ export function useComponentDetection(): UseComponentDetectionResult {
     
     console.log('[useComponentDetection] Setting isActive to true');
     setIsActive(true);
-    
-    // Add event listeners for desktop interaction
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('click', handleClick, true);
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Add event listeners for mobile interaction (Requirement 9.2)
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-    
     // Cursor styling
     document.body.style.cursor = 'crosshair';
-  }, [isActive, handleMouseMove, handleClick, handleKeyDown, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [isActive]);
 
-  // Cleanup event listeners when active state changes
+  // Setup and cleanup event listeners when active state changes
   useEffect(() => {
-    if (!isActive) {
-      // Remove all event listeners when deactivating
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('click', handleClick, true);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+    if (isActive) {
+      console.log('[useComponentDetection] Adding event listeners');
+      // Add event listeners for desktop interaction
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('click', handleClick, true);
+      document.addEventListener('keydown', handleKeyDown);
+      
+      // Add event listeners for mobile interaction (Requirement 9.2)
+      document.addEventListener('touchstart', handleTouchStart, { passive: false });
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      
+      // Cleanup function
+      return () => {
+        console.log('[useComponentDetection] Removing event listeners');
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('click', handleClick, true);
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('touchstart', handleTouchStart);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
     }
   }, [isActive, handleMouseMove, handleClick, handleKeyDown, handleTouchStart, handleTouchMove, handleTouchEnd]);
 

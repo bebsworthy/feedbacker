@@ -49,14 +49,20 @@ export class FiberStrategy extends DetectionStrategy {
     if (!fiber) return null;
 
     try {
+      // First try to get the name from the immediate fiber
+      const immediateName = this.extractNameFromFiber(fiber);
+      if (immediateName && this.isValidComponentName(immediateName)) {
+        return immediateName;
+      }
+
       // Walk up the fiber tree to find a named component
-      let current = fiber;
+      let current = fiber.return; // Start from parent
       let attempts = 0;
       const maxAttempts = 20; // Prevent infinite loops
 
       while (current && attempts < maxAttempts) {
         const name = this.extractNameFromFiber(current);
-        if (name) {
+        if (name && this.isValidComponentName(name)) {
           return name;
         }
         current = current.return;
@@ -68,6 +74,24 @@ export class FiberStrategy extends DetectionStrategy {
     }
 
     return null;
+  }
+
+  /**
+   * Check if component name is valid and not a wrapper
+   */
+  private isValidComponentName(name: string): boolean {
+    // Filter out common wrapper/provider components
+    const wrappers = [
+      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
+      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
+      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+    ];
+    
+    return !wrappers.includes(name) && 
+           !name.includes('Provider') && 
+           !name.includes('Context') &&
+           name !== 'Anonymous' &&
+           name !== 'Component';
   }
 
   /**
