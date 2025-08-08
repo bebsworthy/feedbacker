@@ -23,7 +23,9 @@ type EventType =
   | 'feedback:export'
   | 'selection:start'
   | 'selection:cancel'
-  | 'manager:open';
+  | 'manager:open'
+  | 'export:open'
+  | 'clearall:confirm';
 
 interface FeedbackEvent {
   type: EventType;

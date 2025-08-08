@@ -161,7 +161,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
       scale: isHighDPI ? Math.min(window.devicePixelRatio, 2) : 1,
       maxWidth: isMobile ? 1024 : 1920,
       maxHeight: isMobile ? 768 : 1080,
-      backgroundColor: null, // Let SnapDOM detect it
+      backgroundColor: undefined, // Let SnapDOM detect it
       useCORS: true
     };
   }
