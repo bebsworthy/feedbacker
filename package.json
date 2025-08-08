@@ -1,0 +1,23 @@
+{
+  "name": "feedbacker-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Feedbacker - React component-level feedback library",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@feedbacker/demo",
+    "build": "npm run build --workspace=@feedbacker/core",
+    "build:demo": "npm run build --workspace=@feedbacker/demo",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  }
+}

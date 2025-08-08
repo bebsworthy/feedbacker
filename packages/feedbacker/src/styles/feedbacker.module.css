@@ -1,0 +1,41 @@
+/* Feedbacker CSS Module - Component styles */
+
+/* Component Overlay */
+.overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--fb-primary, #3b82f6);
+  background-color: rgba(59, 130, 246, 0.1);
+  z-index: 9998;
+  transition: all 0.2s ease;
+}
+
+/* FAB Styles */
+.fab {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.fabButton {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--fb-primary, #3b82f6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.fabButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
