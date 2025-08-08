@@ -85,6 +85,97 @@ export abstract class DetectionStrategy {
   }
 
   /**
+   * Helper method to build hybrid path (Components > HTML elements)
+   * Shows React components followed by DOM path to the selected element
+   */
+  protected buildHybridPath(element: HTMLElement, fiber: any): string[] {
+    const path: string[] = [];
+    
+    // Step 1: Build DOM path from selected element up to nearest React component
+    const domPath: string[] = [];
+    let currentElement: HTMLElement | null = element;
+    let parentComponentFiber: any = null;
+    
+    // Find the nearest parent React component
+    while (currentElement && !parentComponentFiber) {
+      // Add current element to DOM path
+      const tagName = currentElement.tagName.toLowerCase();
+      const className = currentElement.className;
+      
+      // Format the element (include className for the first/selected element)
+      if (domPath.length === 0 && className) {
+        // For the selected element, include className
+        const classes = className.split(' ').filter(c => c.trim()).join('.');
+        domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
+      } else {
+        domPath.unshift(tagName);
+      }
+      
+      // Check if this element has a React fiber with a component
+      const elementFiber = this.getReactFiber(currentElement);
+      if (elementFiber) {
+        // Walk up the fiber tree to find the nearest React component
+        let fiberCurrent = elementFiber;
+        while (fiberCurrent) {
+          if (fiberCurrent.type && typeof fiberCurrent.type === 'function') {
+            const componentName = fiberCurrent.type.displayName || fiberCurrent.type.name;
+            if (componentName && this.isValidReactComponent(componentName)) {
+              parentComponentFiber = fiberCurrent;
+              break;
+            }
+          }
+          fiberCurrent = fiberCurrent.return;
+        }
+      }
+      
+      currentElement = currentElement.parentElement;
+    }
+    
+    // Step 2: Build React component path from the parent component upwards
+    const componentPath: string[] = [];
+    let current = parentComponentFiber;
+    const maxDepth = 10;
+    let depth = 0;
+    
+    const wrappers = new Set([
+      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
+      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
+      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+    ]);
+    
+    while (current && depth < maxDepth) {
+      if (current.type && typeof current.type === 'function') {
+        const componentName = current.type.displayName || current.type.name;
+        if (componentName && !wrappers.has(componentName)) {
+          componentPath.unshift(componentName);
+          depth++;
+        }
+      }
+      current = current.return;
+    }
+    
+    // Step 3: Combine paths (Components > DOM elements)
+    return [...componentPath, ...domPath];
+  }
+
+  /**
+   * Check if a name is a valid React component (not a wrapper)
+   */
+  private isValidReactComponent(name: string): boolean {
+    const wrappers = [
+      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
+      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
+      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+    ];
+    
+    return !wrappers.includes(name) && 
+           !name.includes('Provider') && 
+           !name.includes('Context') &&
+           name !== 'Anonymous' &&
+           name !== 'Component';
+  }
+
+  /**
    * Helper method to extract props from React fiber (safely)
    */
   protected extractProps(fiber: any): Record<string, any> | undefined {

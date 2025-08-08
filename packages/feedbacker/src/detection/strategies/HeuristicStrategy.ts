@@ -13,14 +13,13 @@ export class HeuristicStrategy extends DetectionStrategy {
    */
   protected detect(element: HTMLElement): ComponentInfo | null {
     try {
-      const componentName = this.guessComponentName(element);
+      // Build a hybrid-style path even without fiber data
+      const path = this.buildHeuristicHybridPath(element);
       
-      if (!componentName) {
-        return null;
-      }
-
-      // Build a simple path based on DOM structure
-      const path = this.buildDOMPath(element);
+      // Extract component name from the path or guess it
+      const componentName = this.extractComponentFromPath(path) || 
+                           this.guessComponentName(element) || 
+                           'Component';
 
       return {
         name: this.sanitizeComponentName(componentName),
@@ -34,6 +33,78 @@ export class HeuristicStrategy extends DetectionStrategy {
       console.warn('[Feedbacker] Heuristic detection failed:', error);
       return null;
     }
+  }
+
+  /**
+   * Build a hybrid-style path using heuristics (no fiber data)
+   */
+  private buildHeuristicHybridPath(element: HTMLElement): string[] {
+    const path: string[] = [];
+    const domPath: string[] = [];
+    const componentPath: string[] = [];
+    
+    let currentElement: HTMLElement | null = element;
+    let foundComponent = false;
+    let depth = 0;
+    const maxDepth = 10;
+    
+    // Step 1: Build path from element upwards, trying to identify components
+    while (currentElement && depth < maxDepth) {
+      const tagName = currentElement.tagName.toLowerCase();
+      const className = currentElement.className;
+      
+      // Try to identify if this might be a React component
+      const possibleComponentName = this.guessComponentName(currentElement);
+      
+      if (possibleComponentName && !foundComponent) {
+        // Found a likely component - switch to component path
+        foundComponent = true;
+        componentPath.unshift(possibleComponentName);
+      } else if (!foundComponent) {
+        // Still in DOM elements
+        if (domPath.length === 0 && className) {
+          // For the selected element, include className
+          const classes = className.split(' ').filter(c => c.trim()).join('.');
+          domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
+        } else {
+          domPath.unshift(tagName);
+        }
+      } else {
+        // We're above the first component, look for parent components
+        const parentComponentName = this.guessComponentName(currentElement);
+        if (parentComponentName) {
+          componentPath.unshift(parentComponentName);
+        }
+      }
+      
+      currentElement = currentElement.parentElement;
+      depth++;
+    }
+    
+    // If we didn't find any components, treat the whole thing as DOM path
+    if (componentPath.length === 0 && domPath.length > 0) {
+      // Try to infer a component from the context
+      const inferredComponent = 'Component';
+      componentPath.push(inferredComponent);
+    }
+    
+    // Combine paths
+    return [...componentPath, ...domPath];
+  }
+
+  /**
+   * Extract component name from path
+   */
+  private extractComponentFromPath(path: string[]): string | null {
+    for (let i = path.length - 1; i >= 0; i--) {
+      const segment = path[i];
+      if (!segment) continue;
+      // Check if it's not an HTML element
+      if (!/^[a-z]/.test(segment) && !segment.includes('.')) {
+        return segment;
+      }
+    }
+    return null;
   }
 
   /**
@@ -200,24 +271,6 @@ export class HeuristicStrategy extends DetectionStrategy {
     return null;
   }
 
-  /**
-   * Build a simple DOM-based path
-   */
-  private buildDOMPath(element: HTMLElement): string[] {
-    const path: string[] = [];
-    let current = element;
-    let depth = 0;
-    const maxDepth = 10;
-
-    while (current && current !== document.body && depth < maxDepth) {
-      const name = this.guessComponentName(current) || current.tagName.toLowerCase();
-      path.unshift(this.formatComponentName(name));
-      current = current.parentElement;
-      depth++;
-    }
-
-    return path;
-  }
 
   /**
    * Format component name consistently

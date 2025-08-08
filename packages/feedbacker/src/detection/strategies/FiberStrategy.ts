@@ -19,13 +19,14 @@ export class FiberStrategy extends DetectionStrategy {
         return null;
       }
 
-      const componentName = this.getComponentNameFromFiber(fiber);
+      // Use hybrid path instead of component-only path
+      const path = this.buildHybridPath(element, fiber);
       
-      if (!componentName) {
-        return null;
-      }
-
-      const path = this.buildComponentPath(fiber);
+      // Extract the component name from the path or fiber
+      const componentName = this.extractComponentNameFromPath(path) || 
+                           this.getComponentNameFromFiber(fiber) ||
+                           'Component';
+      
       const props = this.extractProps(fiber);
 
       return {
@@ -40,6 +41,22 @@ export class FiberStrategy extends DetectionStrategy {
       console.warn('[Feedbacker] Fiber detection failed:', error);
       return null;
     }
+  }
+
+  /**
+   * Extract component name from hybrid path
+   */
+  private extractComponentNameFromPath(path: string[]): string | null {
+    // Find the last React component in the path (before HTML elements)
+    for (let i = path.length - 1; i >= 0; i--) {
+      const segment = path[i];
+      if (!segment) continue;
+      // Check if it's an HTML element (lowercase or contains .)
+      if (!/^[a-z]/.test(segment) && !segment.includes('.')) {
+        return segment;
+      }
+    }
+    return null;
   }
 
   /**

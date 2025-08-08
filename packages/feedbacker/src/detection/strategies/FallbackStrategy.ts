@@ -13,15 +13,11 @@ export class FallbackStrategy extends DetectionStrategy {
    */
   protected detect(element: HTMLElement): ComponentInfo | null {
     try {
-      const tagName = element.tagName.toLowerCase();
-      const id = element.id;
-      const className = element.className;
-
-      // Create a descriptive fallback name
-      const fallbackName = this.createFallbackName(element);
+      // Create a hybrid-style fallback path
+      const path = this.createHybridFallbackPath(element);
       
-      // Create a simple path with DOM hierarchy
-      const path = this.createFallbackPath(element);
+      // Create a descriptive fallback name based on the element
+      const fallbackName = this.createFallbackName(element);
 
       // Extract basic element information as "props"
       const elementInfo = this.extractElementInfo(element);
@@ -38,11 +34,17 @@ export class FallbackStrategy extends DetectionStrategy {
       console.warn('[Feedbacker] Fallback detection failed:', error);
       
       // Even if there's an error, return basic fallback
+      const tagName = element.tagName.toLowerCase();
+      const className = element.className;
+      const fallbackPath = className ? 
+        ['Unknown', `${tagName}.${className.split(' ').join('.')}`] : 
+        ['Unknown', tagName];
+      
       return {
         name: 'Unknown Component',
-        path: ['Unknown Component'],
+        path: fallbackPath,
         element,
-        props: { tagName: element.tagName.toLowerCase() },
+        props: { tagName },
         fiber: undefined
       };
     }
@@ -83,39 +85,121 @@ export class FallbackStrategy extends DetectionStrategy {
   }
 
   /**
-   * Create a simple fallback path with DOM hierarchy
+   * Create a hybrid-style fallback path with inferred component and DOM hierarchy
    */
-  private createFallbackPath(element: HTMLElement): string[] {
-    const path: string[] = [];
-    let current = element;
+  private createHybridFallbackPath(element: HTMLElement): string[] {
+    const domPath: string[] = [];
+    const componentPath: string[] = ['Unknown']; // Default component name
+    
+    let current: HTMLElement | null = element;
     let depth = 0;
     const maxDepth = 5;
-
+    
+    // Build DOM path from selected element upwards
     while (current && current !== document.body && depth < maxDepth) {
       const tagName = current.tagName.toLowerCase();
       const id = current.id;
       const classList = Array.from(current.classList);
-
-      let pathSegment = tagName;
-
-      if (id) {
-        pathSegment = `${tagName}#${id}`;
-      } else if (classList.length > 0) {
-        const mainClass = classList[0];
-        pathSegment = `${tagName}.${mainClass}`;
+      
+      // For the first element (selected), include all classes
+      if (depth === 0 && classList.length > 0) {
+        const classes = classList.filter(c => c.trim()).join('.');
+        domPath.unshift(`${tagName}.${classes}`);
+      } else if (depth === 0 && id) {
+        domPath.unshift(`${tagName}#${id}`);
+      } else {
+        // For parent elements, just show tag name
+        domPath.unshift(tagName);
       }
-
-      path.unshift(this.capitalizeFirst(pathSegment));
+      
+      // Try to detect if we've reached a component boundary
+      // Look for semantic indicators that might suggest a component
+      if (this.looksLikeComponent(current) && componentPath.length === 1) {
+        // Replace 'Unknown' with a better guess
+        const componentName = this.inferComponentName(current);
+        if (componentName) {
+          componentPath[0] = componentName;
+        }
+      }
+      
       current = current.parentElement;
       depth++;
     }
+    
+    // Combine paths (component > DOM elements)
+    return [...componentPath, ...domPath];
+  }
 
-    // Ensure the path always ends with our component
-    if (path.length === 0 || path[path.length - 1] !== 'Unknown Component') {
-      path.push('Unknown Component');
+  /**
+   * Check if element looks like it might be a component root
+   */
+  private looksLikeComponent(element: HTMLElement): boolean {
+    // Check for data attributes that might indicate a component
+    if (element.hasAttribute('data-component') || 
+        element.hasAttribute('data-testid') ||
+        element.hasAttribute('data-react-component')) {
+      return true;
     }
+    
+    // Check for semantic HTML that might be component roots
+    const semanticTags = ['article', 'section', 'aside', 'header', 'footer', 'main', 'nav'];
+    if (semanticTags.includes(element.tagName.toLowerCase())) {
+      return true;
+    }
+    
+    // Check for class patterns that suggest components
+    const classList = Array.from(element.classList);
+    return classList.some(cls => 
+      /^[A-Z]/.test(cls) || // PascalCase
+      cls.includes('component') ||
+      cls.includes('widget') ||
+      cls.includes('module')
+    );
+  }
 
-    return path;
+  /**
+   * Infer a component name from element characteristics
+   */
+  private inferComponentName(element: HTMLElement): string | null {
+    // Check data attributes
+    const dataComponent = element.getAttribute('data-component');
+    if (dataComponent) return dataComponent;
+    
+    const dataTestId = element.getAttribute('data-testid');
+    if (dataTestId) return this.formatComponentName(dataTestId);
+    
+    // Check for PascalCase classes
+    const classList = Array.from(element.classList);
+    const pascalClass = classList.find(cls => /^[A-Z][a-zA-Z0-9]*$/.test(cls));
+    if (pascalClass) return pascalClass;
+    
+    // Use semantic HTML element names
+    const tagName = element.tagName.toLowerCase();
+    const semanticNames: Record<string, string> = {
+      'header': 'Header',
+      'nav': 'Navigation',
+      'main': 'Main',
+      'aside': 'Sidebar',
+      'footer': 'Footer',
+      'article': 'Article',
+      'section': 'Section'
+    };
+    
+    if (semanticNames[tagName]) {
+      return semanticNames[tagName];
+    }
+    
+    return null;
+  }
+
+  /**
+   * Format a string as a component name
+   */
+  private formatComponentName(str: string): string {
+    return str
+      .split(/[-_\s]+/)
+      .map(word => this.capitalizeFirst(word))
+      .join('');
   }
 
   /**
