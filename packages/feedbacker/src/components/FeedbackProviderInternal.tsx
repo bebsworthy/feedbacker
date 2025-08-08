@@ -19,6 +19,8 @@ export const FeedbackProviderInternal: React.FC<FeedbackProviderInternalProps> =
   enabled = true,
   storageKey = 'feedbacker',
   onFeedbackSubmit,
+  autoCopy,
+  autoDownload,
   isReactCompatible
 }) => {
   // If React is not compatible or system is disabled, just render children
@@ -27,7 +29,10 @@ export const FeedbackProviderInternal: React.FC<FeedbackProviderInternalProps> =
   }
 
   return (
-    <FeedbackContextProvider onFeedbackSubmit={onFeedbackSubmit}>
+    <FeedbackContextProvider 
+      onFeedbackSubmit={onFeedbackSubmit}
+      autoCopy={autoCopy}
+      autoDownload={autoDownload}>
       <div 
         className="feedbacker-root"
         style={{

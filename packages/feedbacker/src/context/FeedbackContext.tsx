@@ -2,8 +2,10 @@
  * Feedback Context - Central state management for the feedback system
  */
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { Feedback, Draft, ComponentInfo } from '../types';
+import { MarkdownExporter } from '../export/MarkdownExporter';
+import { ZipExporter } from '../export/ZipExporter';
 
 interface FeedbackContextValue {
   // State
@@ -11,6 +13,8 @@ interface FeedbackContextValue {
   draft: Draft | null;
   isActive: boolean;
   error: Error | null;
+  autoCopy: boolean;
+  autoDownload: boolean | 'markdown' | 'zip';
   
   // Actions
   addFeedback: (feedback: Feedback) => void;
@@ -27,6 +31,10 @@ interface FeedbackContextValue {
   // UI actions
   setActive: (active: boolean) => void;
   setError: (error: Error | null) => void;
+  
+  // Settings actions
+  setAutoCopy: (enabled: boolean) => void;
+  setAutoDownload: (setting: boolean | 'markdown' | 'zip') => void;
 }
 
 const FeedbackContext = createContext<FeedbackContextValue | undefined>(undefined);
@@ -34,16 +42,84 @@ const FeedbackContext = createContext<FeedbackContextValue | undefined>(undefine
 interface FeedbackContextProviderProps {
   children: React.ReactNode;
   onFeedbackSubmit?: (feedback: Feedback) => void;
+  autoCopy?: boolean;
+  autoDownload?: boolean | 'markdown' | 'zip';
 }
 
 export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = ({
   children,
-  onFeedbackSubmit
+  onFeedbackSubmit,
+  autoCopy: propAutoCopy = false,
+  autoDownload: propAutoDownload = false
 }) => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [autoCopy, setAutoCopy] = useState(propAutoCopy);
+  const [autoDownload, setAutoDownload] = useState(propAutoDownload);
+  
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('feedbacker-settings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        // Props take precedence over saved settings
+        if (propAutoCopy === undefined && settings.autoCopy !== undefined) {
+          setAutoCopy(settings.autoCopy);
+        }
+        if (propAutoDownload === undefined && settings.autoDownload !== undefined) {
+          setAutoDownload(settings.autoDownload);
+        }
+      }
+    } catch (error) {
+      console.error('[Feedbacker] Failed to load settings:', error);
+    }
+  }, []);
+
+  // Auto-action helper functions
+  const performAutoCopy = useCallback(async (feedback: Feedback) => {
+    try {
+      const markdown = MarkdownExporter.exportAsMarkdown([feedback]);
+      await navigator.clipboard.writeText(markdown);
+      console.log('[Feedbacker] Feedback copied to clipboard');
+    } catch (error) {
+      console.error('[Feedbacker] Failed to copy to clipboard:', error);
+    }
+  }, []);
+
+  const performAutoDownload = useCallback(async (feedback: Feedback, format: 'markdown' | 'zip') => {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      if (format === 'markdown') {
+        const markdown = MarkdownExporter.exportAsMarkdown([feedback]);
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `feedback-${timestamp}.md`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const zipBlob = await ZipExporter.exportAsZip([feedback]);
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `feedback-${timestamp}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      console.log('[Feedbacker] Feedback auto-downloaded');
+    } catch (error) {
+      console.error('[Feedbacker] Failed to auto-download:', error);
+    }
+  }, []);
 
   const addFeedback = useCallback((feedback: Feedback) => {
     setFeedbacks(prev => {
@@ -53,9 +129,20 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
       }
       return [feedback, ...prev];
     });
-    // Always trigger onFeedbackSubmit for addFeedback - this is for new feedback
+    
+    // Trigger callback
     onFeedbackSubmit?.(feedback);
-  }, [onFeedbackSubmit]);
+    
+    // Perform auto-actions
+    if (autoCopy) {
+      performAutoCopy(feedback);
+    }
+    
+    if (autoDownload) {
+      const format = autoDownload === true ? 'markdown' : autoDownload;
+      performAutoDownload(feedback, format);
+    }
+  }, [onFeedbackSubmit, autoCopy, autoDownload, performAutoCopy, performAutoDownload]);
 
   // Separate method for loading feedback from storage - doesn't trigger onFeedbackSubmit
   const loadFeedbackFromStorage = useCallback((feedback: Feedback) => {
@@ -109,12 +196,38 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     setIsActive(active);
   }, []);
 
+  const setAutoCopyState = useCallback((enabled: boolean) => {
+    setAutoCopy(enabled);
+    // Save to localStorage
+    try {
+      const settings = JSON.parse(localStorage.getItem('feedbacker-settings') || '{}');
+      settings.autoCopy = enabled;
+      localStorage.setItem('feedbacker-settings', JSON.stringify(settings));
+    } catch (error) {
+      console.error('[Feedbacker] Failed to save settings:', error);
+    }
+  }, []);
+
+  const setAutoDownloadState = useCallback((setting: boolean | 'markdown' | 'zip') => {
+    setAutoDownload(setting);
+    // Save to localStorage
+    try {
+      const settings = JSON.parse(localStorage.getItem('feedbacker-settings') || '{}');
+      settings.autoDownload = setting;
+      localStorage.setItem('feedbacker-settings', JSON.stringify(settings));
+    } catch (error) {
+      console.error('[Feedbacker] Failed to save settings:', error);
+    }
+  }, []);
+
   const contextValue = useMemo<FeedbackContextValue>(() => ({
     // State
     feedbacks,
     draft,
     isActive,
     error,
+    autoCopy,
+    autoDownload,
     
     // Actions
     addFeedback,
@@ -130,12 +243,18 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     
     // UI actions
     setActive,
-    setError
+    setError,
+    
+    // Settings actions
+    setAutoCopy: setAutoCopyState,
+    setAutoDownload: setAutoDownloadState
   }), [
     feedbacks,
     draft,
     isActive,
     error,
+    autoCopy,
+    autoDownload,
     addFeedback,
     loadFeedbackFromStorage,
     updateFeedback,
@@ -144,7 +263,9 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     saveDraft,
     clearDraft,
     restoreDraft,
-    setActive
+    setActive,
+    setAutoCopyState,
+    setAutoDownloadState
   ]);
 
   return (

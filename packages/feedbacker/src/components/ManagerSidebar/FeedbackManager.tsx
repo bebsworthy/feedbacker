@@ -9,6 +9,7 @@ import { XMarkIcon, ArrowDownTrayIcon, TrashIcon, PencilIcon } from '../../icons
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExportDialog } from './ExportDialog';
 import { FeedbackCard } from './FeedbackCard';
+import { useFeedbackContext } from '../../context/FeedbackContext';
 import '../../styles/feedbacker.css';
 
 interface FeedbackManagerProps {
@@ -36,6 +37,13 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   onClearAll,
   onExport
 }) => {
+  // Get context for settings
+  const { autoCopy, autoDownload, setAutoCopy, setAutoDownload } = useFeedbackContext();
+  const [showSettings, setShowSettings] = useState(false);
+  const [localAutoDownloadFormat, setLocalAutoDownloadFormat] = useState<'markdown' | 'zip'>(
+    autoDownload === 'zip' ? 'zip' : 'markdown'
+  );
+  
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -178,6 +186,21 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
             Feedback Manager
           </h2>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: showSettings ? '#e0e7ff' : '#ffffff',
+                color: showSettings ? '#4f46e5' : '#6b7280',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              ⚙️ Settings
+            </button>
             <span style={{ fontSize: '14px', color: '#6b7280' }}>
               {feedbacks.length} {feedbacks.length === 1 ? 'item' : 'items'}
             </span>
@@ -252,6 +275,122 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
           </div>
         </div>
 
+        {/* Settings Section */}
+        {showSettings && (
+          <div style={{
+            backgroundColor: '#f3f4f6',
+            borderBottom: '1px solid #e5e7eb',
+            padding: '20px 24px'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+              Auto Actions
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Auto-copy toggle */}
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                    📋 Auto-copy to clipboard
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    Automatically copy markdown to clipboard when feedback is captured
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoCopy}
+                  onChange={(e) => setAutoCopy(e.target.checked)}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'pointer'
+                  }}
+                />
+              </label>
+              
+              {/* Auto-download toggle */}
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>
+                    💾 Auto-download feedback
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    Automatically download feedback when captured
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={!!autoDownload}
+                  onChange={(e) => setAutoDownload(e.target.checked ? localAutoDownloadFormat : false)}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'pointer'
+                  }}
+                />
+              </label>
+              
+              {/* Download format selector */}
+              {autoDownload && (
+                <div style={{
+                  marginLeft: '32px',
+                  padding: '12px 16px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                    Download format:
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="downloadFormat"
+                        value="markdown"
+                        checked={localAutoDownloadFormat === 'markdown'}
+                        onChange={(e) => {
+                          setLocalAutoDownloadFormat('markdown');
+                          setAutoDownload('markdown');
+                        }}
+                      />
+                      <span style={{ fontSize: '13px', color: '#4b5563' }}>Markdown</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="downloadFormat"
+                        value="zip"
+                        checked={localAutoDownloadFormat === 'zip'}
+                        onChange={(e) => {
+                          setLocalAutoDownloadFormat('zip');
+                          setAutoDownload('zip');
+                        }}
+                      />
+                      <span style={{ fontSize: '13px', color: '#4b5563' }}>ZIP (with images)</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         {/* Content */}
         <div style={{ padding: '24px' }}>
           {groupedFeedbacks.length === 0 ? (

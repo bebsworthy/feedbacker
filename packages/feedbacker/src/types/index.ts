@@ -46,6 +46,8 @@ export interface FeedbackProviderProps {
   enabled?: boolean;
   storageKey?: string;
   onFeedbackSubmit?: (feedback: Feedback) => void;
+  autoCopy?: boolean;
+  autoDownload?: boolean | 'markdown' | 'zip';
   children?: any; // React.ReactNode will be properly typed when React is imported
 }
 
@@ -68,6 +70,8 @@ export interface UserSettings {
   position?: string;
   primaryColor?: string;
   lastExport?: string;
+  autoCopy?: boolean;
+  autoDownload?: boolean | 'markdown' | 'zip';
 }
 
 export interface StorageInfo {

@@ -551,6 +551,9 @@ export const App: React.FC = () => {
       primaryColor="#6366f1"
       enabled={true}
       storageKey="feedbacker-demo"
+      // Optional: Enable auto-copy and auto-download features
+      // autoCopy={true}
+      // autoDownload="markdown"  // or "zip" or true (defaults to markdown)
       onFeedbackSubmit={(feedback) => {
         console.log('[Demo] New feedback submitted:', feedback);
         // Show a nice notification
