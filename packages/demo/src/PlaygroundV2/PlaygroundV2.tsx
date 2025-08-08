@@ -13,12 +13,10 @@ type Framework = 'mui' | 'antd' | 'chakra';
 
 export const PlaygroundV2: React.FC = () => {
   const [activeFramework, setActiveFramework] = useState<Framework>('mui');
-  const [feedbackActive, setFeedbackActive] = useState(false);
   const { emit } = useFeedbackEvent();
 
   const handleActivateFeedback = () => {
     emit('selection:start', {});
-    setFeedbackActive(true);
   };
 
   const renderDemo = () => {
@@ -66,10 +64,10 @@ export const PlaygroundV2: React.FC = () => {
         </div>
         
         <button
-          className={`btn btn-primary ${feedbackActive ? 'active' : ''}`}
+          className="btn btn-primary"
           onClick={handleActivateFeedback}
         >
-          {feedbackActive ? '✓ Feedback Mode Active' : '🎯 Activate Feedback Mode'}
+          🎯 Activate Feedback Mode
         </button>
       </div>
 

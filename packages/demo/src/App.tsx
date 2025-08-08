@@ -19,7 +19,6 @@ const LandingPage: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [activeCodeTab, setActiveCodeTab] = useState<'install' | 'basic' | 'advanced'>('install');
   const [copiedCode, setCopiedCode] = useState(false);
-  const [feedbackActive, setFeedbackActive] = useState(false);
   const { emit } = useFeedbackEvent();
 
   // Apply theme to document
@@ -110,7 +109,6 @@ function App() {
               className="btn btn-primary" 
               onClick={() => {
                 emit('selection:start', {});
-                setFeedbackActive(true);
               }}
             >
               Try It Live
@@ -142,7 +140,6 @@ function App() {
                 className="btn btn-primary"
                 onClick={() => {
                   emit('selection:start', {});
-                  setFeedbackActive(true);
                 }}
               >
                 🚀 Try It Live
