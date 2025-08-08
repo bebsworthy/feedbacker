@@ -22,7 +22,7 @@ The foundation setup demonstrates excellent attention to detail, strict TypeScri
 ### 1. Project Configuration (`package.json`) ✅
 
 **Strengths:**
-- **Excellent package naming**: `@feedbacker/core` follows npm scoping conventions
+- **Excellent package naming**: `feedbacker-react` clearly indicates React library
 - **Proper exports configuration**: Multiple entry points (ESM/CJS/UMD) with correct field mapping
 - **React 18+ peer dependencies**: Correctly specified as peer dependencies (not dependencies)
 - **Comprehensive build scripts**: Includes development, production, testing, and demo workflows
@@ -238,7 +238,7 @@ The setup provides:
 **CSS Extraction**: Successfully extracts to `dist/feedbacker.css` (11.7KB)  
 **CSS Modules**: Properly scoped classes with `feedbacker-[local]-[hash:base64:5]` pattern  
 **Styling**: Complete design system with variables, responsive design, and accessibility features  
-**Integration**: CSS automatically included in builds, optional manual import via `'@feedbacker/core/styles'`
+**Integration**: CSS automatically included in builds, optional manual import via `'feedbacker-react/styles'`
 
 ## Zero-Config Setup Validation ✅
 **Demo Application**: Demonstrates simple integration:

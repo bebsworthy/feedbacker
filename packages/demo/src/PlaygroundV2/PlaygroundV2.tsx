@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { useFeedbackEvent } from '@feedbacker/core';
+import { useFeedbackEvent } from 'feedbacker-react';
 import { MUIDemo } from './frameworks/mui/MUIDemo';
 import { AntDesignDemo } from './frameworks/antd/AntDesignDemo';
 import { ChakraUIDemo } from './frameworks/chakra/ChakraUIDemo';

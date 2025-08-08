@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@feedbacker/core": "*",
+    "feedbacker-react": "*",
     "@types/prismjs": "^1.26.5",
     "@zumer/snapdom": "^1.9.7",
     "html2canvas": "^1.4.1",

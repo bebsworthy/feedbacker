@@ -101,7 +101,7 @@ The `FeedbackProvider` component accepts the following configuration options:
 - **Description:** Provide a custom capture adapter implementation. This allows you to use any screenshot library by implementing the `CaptureAdapter` interface.
 
 ```jsx
-import { CaptureAdapter } from '@feedbacker/core';
+import { CaptureAdapter } from 'feedbacker-react';
 
 class MyCustomAdapter implements CaptureAdapter {
   name = 'custom';
@@ -125,7 +125,7 @@ class MyCustomAdapter implements CaptureAdapter {
 ## Complete Example
 
 ```jsx
-import { FeedbackProvider } from '@feedbacker/core';
+import { FeedbackProvider } from 'feedbacker-react';
 
 function App() {
   return (

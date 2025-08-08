@@ -10,7 +10,7 @@
 ### ✅ Requirement 1.1: Zero-configuration library setup
 **Status**: COMPLIANT  
 **Evidence**: Package.json exports correctly configured, main/module/types entry points defined, FeedbackProvider component ready for import.  
-**Usage**: `import { FeedbackProvider } from '@feedbacker/core';` works as intended.
+**Usage**: `import { FeedbackProvider } from 'feedbacker-react';` works as intended.
 
 ### ✅ Requirement 10.1: Bundle size <50KB gzipped (excluding html2canvas)
 **Status**: COMPLIANT ✅  
@@ -26,7 +26,7 @@
 **Evidence**: 
 - CSS successfully extracted to `dist/feedbacker.css` (11.7KB)
 - CSS Modules with scoped naming: `feedbacker-[local]-[hash:base64:5]`
-- `import '@feedbacker/core/styles'` works correctly
+- `import 'feedbacker-react/styles'` works correctly
 - All styles properly isolated with unique class prefixes
 
 **Resolution**: CSS extraction now working properly in build process.
@@ -55,7 +55,7 @@
 **Resolution**: CSS files now properly generated in dist/ folder:
 - `dist/feedbacker.css` (11.7KB) contains all styled components
 - CSS Modules working with scoped class names
-- Import `'@feedbacker/core/styles'` functional
+- Import `'feedbacker-react/styles'` functional
 
 ### 2. Bundle Size Optimized ✅  
 **Resolution**: 
@@ -76,8 +76,8 @@
 ### Zero-Configuration Test
 **Verified Working**: ✅
 ```tsx
-import { FeedbackProvider } from '@feedbacker/core';
-import '@feedbacker/core/styles'; // ✅ WORKS - CSS file exists
+import { FeedbackProvider } from 'feedbacker-react';
+import 'feedbacker-react/styles'; // ✅ WORKS - CSS file exists
 ```
 
 **Demo Evidence**:
@@ -110,7 +110,7 @@ import '@feedbacker/core/styles'; // ✅ WORKS - CSS file exists
 
 ### CRITICAL Issues - RESOLVED ✅
 1. ✅ **CSS extraction fixed** - `dist/feedbacker.css` generated (11.7KB)
-2. ✅ **CSS import verified** - `import '@feedbacker/core/styles'` works
+2. ✅ **CSS import verified** - `import 'feedbacker-react/styles'` works
 3. ✅ **Bundle optimization complete** - html2canvas moved to peer dependency
 
 ### RECOMMENDED Items - ADDRESSED ✅
@@ -135,7 +135,7 @@ The foundation demonstrates excellent engineering practices and is now ready for
 
 **RW-A Successfully Addressed**:
 1. ✅ CSS extraction fixed in rollup.config.js
-2. ✅ Verified `import '@feedbacker/core/styles'` works
+2. ✅ Verified `import 'feedbacker-react/styles'` works
 3. ✅ html2canvas moved to optional peer dependencies
 4. ✅ Demo application created showing FeedbackProvider usage
 5. ✅ Bundle sizes verified under 50KB gzipped requirement

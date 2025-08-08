@@ -94,7 +94,7 @@ export type {
 export { CaptureLibrary } from './types/capture';
 
 // CSS is automatically included in the build
-// For manual import: import '@feedbacker/core/styles'
+// For manual import: import 'feedbacker-react/styles'
 
 // Version info
 export const version = '1.0.0';

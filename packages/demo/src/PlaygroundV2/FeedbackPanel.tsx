@@ -3,8 +3,8 @@
  */
 
 import React, { useState } from 'react';
-import { useFeedback } from '@feedbacker/core';
-import { Feedback } from '@feedbacker/core';
+import { useFeedback } from 'feedbacker-react';
+import { Feedback } from 'feedbacker-react';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-markdown';

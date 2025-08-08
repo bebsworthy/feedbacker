@@ -78,10 +78,10 @@ npm publish --access public
 ```
 
 ### 7. Verify Everything
-- [ ] NPM package: https://www.npmjs.com/package/@feedbacker/core
+- [ ] NPM package: https://www.npmjs.com/package/feedbacker-react
 - [ ] Demo site: https://[your-username].github.io/feedbacker/
 - [ ] GitHub Actions: All green
-- [ ] Installation works: `npm install @feedbacker/core`
+- [ ] Installation works: `npm install feedbacker-react`
 
 ## 🎉 Launch Checklist
 

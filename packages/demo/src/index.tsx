@@ -1,6 +1,6 @@
 /**
  * Demo application entry point
- * Showcases the @feedbacker/core library with comprehensive examples
+ * Showcases the feedbacker-react library with comprehensive examples
  */
 
 import React from 'react';

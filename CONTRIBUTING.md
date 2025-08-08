@@ -49,7 +49,7 @@ npm run build:demo
 npm test
 
 # Type checking
-npm run typecheck --workspace=@feedbacker/core
+npm run typecheck --workspace=feedbacker-react
 ```
 
 ## Pull Request Process

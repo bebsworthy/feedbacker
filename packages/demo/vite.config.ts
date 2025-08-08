@@ -7,7 +7,7 @@ export default defineConfig({
   base: process.env.BASE_URL || '/',
   resolve: {
     alias: {
-      '@feedbacker/core': path.resolve(__dirname, '../feedbacker/src')
+      'feedbacker-react': path.resolve(__dirname, '../feedbacker/src')
     }
   },
   server: {

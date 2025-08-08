@@ -56,8 +56,8 @@ npm publish --access public
 ```
 
 ### 8. Verify Publication
-- Check https://www.npmjs.com/package/@feedbacker/core
-- Test installation: `npm install @feedbacker/core`
+- Check https://www.npmjs.com/package/feedbacker-react
+- Test installation: `npm install feedbacker-react`
 - Verify demo deployment on GitHub Pages
 
 ### 9. Post-release
@@ -75,7 +75,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ## NPM Access
 
 Ensure you have:
-1. NPM account with publish access to @feedbacker scope
+1. NPM account with publish access
 2. Logged in: `npm login`
 3. 2FA enabled for security
 
@@ -83,7 +83,7 @@ Ensure you have:
 
 If issues are discovered:
 ```bash
-npm unpublish @feedbacker/core@VERSION
+npm unpublish feedbacker-react@VERSION
 # Fix issues
 # Publish patch version
 ```

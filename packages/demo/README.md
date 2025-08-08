@@ -11,8 +11,8 @@ This demo validates the zero-configuration setup of the Feedbacker core library.
 
 ### ✅ Zero-Configuration Setup
 ```tsx
-import { FeedbackProvider } from '@feedbacker/core';
-import '@feedbacker/core/styles';
+import { FeedbackProvider } from 'feedbacker-react';
+import 'feedbacker-react/styles';
 
 function App() {
   return (
@@ -25,7 +25,7 @@ function App() {
 
 ### ✅ CSS Extraction Working
 - CSS file is properly extracted to `dist/feedbacker.css`
-- Styles can be imported via `@feedbacker/core/styles`
+- Styles can be imported via `feedbacker-react/styles`
 - CSS Modules provide scoped class names
 
 ### ✅ Bundle Size Compliance
@@ -47,7 +47,7 @@ function App() {
 ## Validation Points
 
 1. **Zero Config**: No complex setup required
-2. **CSS Import**: `import '@feedbacker/core/styles'` works
+2. **CSS Import**: `import 'feedbacker-react/styles'` works
 3. **Bundle Size**: Under 50KB gzipped requirement
 4. **Peer Dependencies**: html2canvas properly externalized
 5. **React 18+**: Compatible with latest React versions

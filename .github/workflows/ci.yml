@@ -31,7 +31,7 @@ jobs:
     
     # TypeScript checks temporarily disabled - will fix in follow-up
     # - name: Run TypeScript checks
-    #   run: npm run typecheck --workspace=@feedbacker/core --if-present
+    #   run: npm run typecheck --workspace=feedbacker-react --if-present
     
     - name: Run tests
       run: npm test --if-present

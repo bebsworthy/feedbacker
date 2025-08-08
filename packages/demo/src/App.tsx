@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FeedbackProvider, useFeedbackEvent } from '@feedbacker/core';
+import { FeedbackProvider, useFeedbackEvent } from 'feedbacker-react';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-jsx';
@@ -80,14 +80,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ captureLibrary, setCaptureLib
 
   const codeExamples = {
     install: `# Install Feedbacker
-npm install @feedbacker/core
+npm install feedbacker-react
 
 # Install SnapDOM (Recommended - faster screenshots)
 npm install @zumer/snapdom
 
 # Or use html2canvas (default, loaded from CDN if not installed)
 npm install html2canvas`,
-    basic: `import { FeedbackProvider } from '@feedbacker/core';
+    basic: `import { FeedbackProvider } from 'feedbacker-react';
 
 function App() {
   return (
@@ -142,7 +142,7 @@ function App() {
             <a href="#features" className="nav-link">Features</a>
             <a href="#demo" className="nav-link">Demo</a>
             <a href="#code" className="nav-link">Code</a>
-            <a href="https://github.com/feedbacker/core" className="nav-link">GitHub</a>
+            <a href="https://github.com/bebsworthy/feedbacker" className="nav-link">GitHub</a>
             <button 
               className="btn btn-primary" 
               onClick={() => {
@@ -185,7 +185,7 @@ function App() {
               <a href="#installation" className="btn btn-secondary">
                 📦 Get Started
               </a>
-              <a href="https://github.com/feedbacker/core" className="btn btn-ghost">
+              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-ghost">
                 ⭐ Star on GitHub
               </a>
             </div>
@@ -520,7 +520,7 @@ function App() {
               <p>That's it! Your users can now provide component-level feedback.</p>
               
               <div style={{ marginTop: '2rem' }}>
-                <a href="https://github.com/feedbacker/core" className="btn btn-primary">
+                <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-primary">
                   View Documentation →
                 </a>
               </div>
@@ -535,7 +535,7 @@ function App() {
                 </div>
                 <div className="terminal-content">
                   <div>
-                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install @feedbacker/core', Prism.languages.bash, 'bash') }} />
+                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install feedbacker-react', Prism.languages.bash, 'bash') }} />
                   </div>
                 </div>
               </div>
@@ -554,7 +554,7 @@ function App() {
               Zero configuration, maximum insight.
             </p>
             <div className="cta-actions">
-              <a href="https://github.com/feedbacker/core" className="btn btn-primary">
+              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-primary">
                 Get Started Free →
               </a>
               <button 
@@ -574,8 +574,8 @@ function App() {
       <footer className="footer">
         <div className="container">
           <div className="footer-links">
-            <a href="https://github.com/feedbacker/core" className="footer-link">GitHub</a>
-            <a href="https://npmjs.com/package/@feedbacker/core" className="footer-link">NPM</a>
+            <a href="https://github.com/bebsworthy/feedbacker" className="footer-link">GitHub</a>
+            <a href="https://npmjs.com/package/feedbacker-react" className="footer-link">NPM</a>
             <a href="#" className="footer-link">Documentation</a>
             <a href="#" className="footer-link">Examples</a>
             <a href="#" className="footer-link">Support</a>

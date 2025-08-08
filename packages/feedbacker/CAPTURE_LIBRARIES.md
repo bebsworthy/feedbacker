@@ -27,7 +27,7 @@ npm install @zumer/snapdom
 ### Basic Configuration
 
 ```jsx
-import { FeedbackProvider } from '@feedbacker/core';
+import { FeedbackProvider } from 'feedbacker-react';
 
 // Use html2canvas (default)
 <FeedbackProvider>
@@ -45,7 +45,7 @@ import { FeedbackProvider } from '@feedbacker/core';
 You can create your own capture adapter:
 
 ```jsx
-import { CaptureAdapter } from '@feedbacker/core';
+import { CaptureAdapter } from 'feedbacker-react';
 
 class MyCustomAdapter implements CaptureAdapter {
   name = 'custom';
