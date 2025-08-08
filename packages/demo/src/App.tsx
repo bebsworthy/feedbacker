@@ -1,228 +1,646 @@
 /**
- * Feedbacker Demo Application
- * Showcases the feedbacker library with various component types
- * Includes mobile viewport support and comprehensive testing scenarios
+ * Feedbacker Landing Page
+ * Modern developer-focused landing page with live demo
  */
 
-import React, { useState, useEffect } from 'react';
-import { FeedbackProvider, useFeedback, useFeedbackStorage } from '@feedbacker/core';
-import { Header } from './components/Header';
+import React, { useState, useEffect, useRef } from 'react';
+import { FeedbackProvider, useFeedbackEvent } from '@feedbacker/core';
+import './styles.css';
+
+// Demo Components
 import { ButtonGroup } from './components/ButtonGroup';
 import { Card } from './components/Card';
 import { FormExample } from './components/FormExample';
 import { TableExample } from './components/TableExample';
-import { ModalExample } from './components/ModalExample';
 import { ListExample } from './components/ListExample';
-import { NavigationExample } from './components/NavigationExample';
-import { StatusPanel } from './components/StatusPanel';
-import './styles.css';
 
-interface DemoStats {
-  totalFeedbacks: number;
-  lastUpdated: string;
-  systemStatus: 'initializing' | 'ready' | 'error';
-}
+const LandingPage: React.FC = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [activeCodeTab, setActiveCodeTab] = useState<'install' | 'basic' | 'advanced'>('install');
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [feedbackActive, setFeedbackActive] = useState(false);
+  const { emit } = useFeedbackEvent();
 
-const DemoContent: React.FC = () => {
-  const { feedbacks, exportFeedback } = useFeedback();
-  const { isLoading, error } = useFeedbackStorage();
-  const [stats, setStats] = useState<DemoStats>({
-    totalFeedbacks: 0,
-    lastUpdated: new Date().toISOString(),
-    systemStatus: 'initializing'
-  });
-
+  // Apply theme to document
   useEffect(() => {
-    // Update stats when feedbacks change
-    setStats({
-      totalFeedbacks: feedbacks.length,
-      lastUpdated: new Date().toISOString(),
-      systemStatus: error ? 'error' : 'ready'
-    });
-  }, [feedbacks, error]);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
-  const handleExportMarkdown = async () => {
-    try {
-      await exportFeedback({ 
-        format: 'markdown', 
-        includeImages: false, 
-        includeMetadata: true 
+  // Add scroll animations
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
       });
-    } catch (error) {
-      console.error('Export failed:', error);
+    }, observerOptions);
+
+    document.querySelectorAll('.scroll-fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Add particles to hero
+  useEffect(() => {
+    const particlesContainer = document.querySelector('.hero-particles');
+    if (particlesContainer) {
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 20}s`;
+        particle.style.animationDuration = `${20 + Math.random() * 10}s`;
+        particlesContainer.appendChild(particle);
+      }
     }
+  }, []);
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleExportZip = async () => {
-    try {
-      await exportFeedback({ 
-        format: 'zip', 
-        includeImages: true, 
-        includeMetadata: true 
-      });
-    } catch (error) {
-      console.error('Export failed:', error);
-    }
+  const codeExamples = {
+    install: `npm install @feedbacker/core`,
+    basic: `import { FeedbackProvider } from '@feedbacker/core';
+
+function App() {
+  return (
+    <FeedbackProvider>
+      <YourApp />
+    </FeedbackProvider>
+  );
+}`,
+    advanced: `<FeedbackProvider
+  position="bottom-right"
+  primaryColor="#3b82f6"
+  onFeedbackSubmit={(feedback) => {
+    // Send to your backend
+    api.submitFeedback(feedback);
+  }}
+>
+  <YourApp />
+</FeedbackProvider>`
   };
 
   return (
-    <div className="demo-app">
-      <div className="demo-container">
-        {/* Header Section */}
-        <Header 
-          title="🎯 Feedbacker Demo" 
-          subtitle="Zero-configuration React feedback system"
-        />
+    <div className="landing-page">
+      {/* Navigation */}
+      <nav className="nav">
+        <div className="nav-container">
+          <a href="#" className="nav-logo">
+            🎯 Feedbacker
+          </a>
+          <div className="nav-links">
+            <a href="#features" className="nav-link">Features</a>
+            <a href="#demo" className="nav-link">Demo</a>
+            <a href="#code" className="nav-link">Code</a>
+            <a href="https://github.com/feedbacker/core" className="nav-link">GitHub</a>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => {
+                emit('selection:start', {});
+                setFeedbackActive(true);
+              }}
+            >
+              Try It Live
+            </button>
+          </div>
+        </div>
+      </nav>
 
-        {/* Status Panel */}
-        <StatusPanel 
-          stats={stats}
-          isLoading={isLoading}
-          error={error}
-          onExportMarkdown={handleExportMarkdown}
-          onExportZip={handleExportZip}
-        />
+      {/* Hero Section */}
+      <section className="hero">
+        <div className="hero-background">
+          <div className="hero-gradient"></div>
+          <div className="hero-particles"></div>
+        </div>
+        <div className="container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              ✨ Zero Configuration Required
+            </div>
+            <h1 className="hero-title">
+              Component-Level Feedback in Seconds
+            </h1>
+            <p className="hero-subtitle">
+              The React feedback widget that actually understands your components. 
+              Point, click, and collect contextual feedback with automatic screenshots.
+            </p>
+            <div className="hero-actions">
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  emit('selection:start', {});
+                  setFeedbackActive(true);
+                }}
+              >
+                🚀 Try It Live
+              </button>
+              <a href="#installation" className="btn btn-secondary">
+                📦 Get Started
+              </a>
+              <a href="https://github.com/feedbacker/core" className="btn btn-ghost">
+                ⭐ Star on GitHub
+              </a>
+            </div>
+            <div className="hero-demo">
+              <div className="live-demo-card glass">
+                <p style={{ marginBottom: '1rem', fontSize: '0.875rem', opacity: 0.8 }}>
+                  👆 Click "Try It Live" then select any component on this page
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{'<50KB'}</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Bundle Size</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>1*</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Dep (jszip)</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>2min</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Setup Time</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        {/* Demo Sections */}
-        <section className="demo-section">
-          <h2>Interactive Components</h2>
-          <p>Test component selection and feedback on these various UI elements:</p>
+      {/* How It Works */}
+      <section className="how-it-works">
+        <div className="container">
+          <h2 className="section-title">How It Works</h2>
+          <p className="section-subtitle">
+            Three simple steps to start collecting meaningful feedback
+          </p>
+          <div className="steps-grid">
+            <div className="step-card scroll-fade-in">
+              <div className="step-number">1</div>
+              <h3 className="step-title">Wrap Your App</h3>
+              <p className="step-description">
+                Add FeedbackProvider around your app. That's it. No configuration needed.
+              </p>
+              <div className="step-arrow">→</div>
+            </div>
+            <div className="step-card scroll-fade-in">
+              <div className="step-number">2</div>
+              <h3 className="step-title">Users Select Components</h3>
+              <p className="step-description">
+                Users hover and click on any React component. We detect it automatically.
+              </p>
+              <div className="step-arrow">→</div>
+            </div>
+            <div className="step-card scroll-fade-in">
+              <div className="step-number">3</div>
+              <h3 className="step-title">Collect Rich Feedback</h3>
+              <p className="step-description">
+                Get feedback with component context, screenshots, and browser info.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - Bento Grid */}
+      <section id="features" className="features">
+        <div className="container">
+          <h2 className="section-title">Powerful Features</h2>
+          <p className="section-subtitle">
+            Everything you need for better feedback collection
+          </p>
+          <div className="features-grid">
+            <div className="feature-card large scroll-fade-in">
+              <div className="feature-icon">🎯</div>
+              <h3 className="feature-title">Smart Component Detection</h3>
+              <p className="feature-description">
+                Automatically detects React components using multiple strategies including React DevTools integration, 
+                Fiber tree inspection, and intelligent DOM heuristics.
+              </p>
+              <div className="feature-demo">
+                <code style={{ fontSize: '0.875rem', color: 'var(--brand-violet)' }}>
+                  Component: Button → Card → App
+                </code>
+              </div>
+            </div>
+            
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">📸</div>
+              <h3 className="feature-title">Auto Screenshots</h3>
+              <p className="feature-description">
+                Captures screenshots automatically. html2canvas loaded from CDN only when needed.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">📱</div>
+              <h3 className="feature-title">Mobile Ready</h3>
+              <p className="feature-description">
+                Touch gestures, haptic feedback, and responsive UI for all devices.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">💾</div>
+              <h3 className="feature-title">Local Storage</h3>
+              <p className="feature-description">
+                All feedback stored locally with automatic cleanup and export options.
+              </p>
+            </div>
+
+            <div className="feature-card wide scroll-fade-in">
+              <div className="feature-icon">🚀</div>
+              <h3 className="feature-title">Performance First</h3>
+              <p className="feature-description">
+                RequestIdleCallback optimization, debounced interactions, and React.memo throughout. 
+                Zero performance impact when inactive.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">🎨</div>
+              <h3 className="feature-title">Fully Customizable</h3>
+              <p className="feature-description">
+                Theme colors, positioning, and complete control over the UI.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">📤</div>
+              <h3 className="feature-title">Export Options</h3>
+              <p className="feature-description">
+                Export as Markdown or ZIP with images and metadata included.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">🔒</div>
+              <h3 className="feature-title">Privacy First</h3>
+              <p className="feature-description">
+                No external requests. All data stays in the browser until you export.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Playground */}
+      <section id="demo" className="playground">
+        <div className="container playground-container">
+          <div className="playground-header">
+            <h2 className="section-title">Interactive Playground</h2>
+            <p className="section-subtitle">
+              Test the feedback system on these live components
+            </p>
+            <div className="playground-controls">
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  emit('selection:start', {});
+                  setFeedbackActive(true);
+                }}
+              >
+                🎯 Activate Feedback Mode
+              </button>
+            </div>
+          </div>
           
-          {/* Button Group */}
-          <div className="component-demo">
-            <h3>Button Groups</h3>
-            <ButtonGroup />
-          </div>
-
-          {/* Cards */}
-          <div className="component-demo">
-            <h3>Card Components</h3>
-            <div className="card-grid">
+          <div className="playground-grid">
+            <div className="playground-card">
+              <h4>Button Components</h4>
+              <ButtonGroup />
+            </div>
+            
+            <div className="playground-card">
+              <h4>Card Component</h4>
               <Card 
-                title="Product Card"
-                content="This card represents a product listing with actions."
-                actions={['View', 'Edit', 'Delete']}
-              />
-              <Card 
-                title="User Profile"
-                content="A user profile card with personal information."
-                actions={['View Profile', 'Send Message']}
-              />
-              <Card 
-                title="Settings Panel"
-                content="Configuration options and preferences."
-                actions={['Save', 'Reset', 'Cancel']}
+                title="Sample Card"
+                content="This is a demo card component you can select."
+                actions={['Action 1', 'Action 2']}
               />
             </div>
-          </div>
 
-          {/* Form Example */}
-          <div className="component-demo">
-            <h3>Form Components</h3>
-            <FormExample />
-          </div>
-
-          {/* Table Example */}
-          <div className="component-demo">
-            <h3>Data Table</h3>
-            <TableExample />
-          </div>
-
-          {/* Navigation Example */}
-          <div className="component-demo">
-            <h3>Navigation Elements</h3>
-            <NavigationExample />
-          </div>
-
-          {/* List Example */}
-          <div className="component-demo">
-            <h3>List Components</h3>
-            <ListExample />
-          </div>
-
-          {/* Modal Example */}
-          <div className="component-demo">
-            <h3>Modal Dialogs</h3>
-            <ModalExample />
-          </div>
-        </section>
-
-        {/* Usage Instructions */}
-        <section className="demo-section instructions">
-          <h2>How to Use</h2>
-          <div className="instruction-grid">
-            <div className="instruction-item">
-              <h4>🖱️ Desktop</h4>
-              <p>Hover over components to highlight them, then click to provide feedback.</p>
+            <div className="playground-card">
+              <h4>Form Elements</h4>
+              <FormExample />
             </div>
-            <div className="instruction-item">
-              <h4>📱 Mobile</h4>
-              <p>Touch and drag to select components. Tap to confirm selection and provide feedback.</p>
+
+            <div className="playground-card">
+              <h4>Data Table</h4>
+              <div style={{ maxHeight: '200px', overflow: 'auto' }}>
+                <TableExample />
+              </div>
             </div>
-            <div className="instruction-item">
-              <h4>⌨️ Keyboard</h4>
-              <p>Press <kbd>Esc</kbd> to exit component selection mode at any time.</p>
+
+            <div className="playground-card">
+              <h4>List Component</h4>
+              <ListExample />
             </div>
-            <div className="instruction-item">
-              <h4>📸 Screenshots</h4>
-              <p>Screenshots are automatically captured when providing feedback (requires user permission).</p>
-            </div>
-            <div className="instruction-item">
-              <h4>💾 Storage</h4>
-              <p>All feedback is stored locally in your browser. Export options are available.</p>
-            </div>
-            <div className="instruction-item">
-              <h4>🚀 Zero Config</h4>
-              <p>No setup required - just wrap your app with FeedbackProvider and you're ready to go!</p>
+
+            <div className="playground-card">
+              <h4>Status Badge</h4>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span className="btn btn-success">Active</span>
+                <span className="btn btn-secondary">Pending</span>
+                <span className="btn btn-ghost">Inactive</span>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Technical Details */}
-        <section className="demo-section technical">
-          <h2>Technical Implementation</h2>
-          <div className="tech-grid">
-            <div className="tech-item">
-              <h4>Bundle Size</h4>
-              <p>ESM: &lt; 50KB gzipped<br />Zero dependencies in core bundle</p>
+      {/* Code Examples */}
+      <section id="code" className="code-section">
+        <div className="container">
+          <h2 className="section-title">Quick Start</h2>
+          <p className="section-subtitle">
+            Get up and running in under 2 minutes
+          </p>
+          
+          <div className="code-tabs">
+            <button 
+              className={`code-tab ${activeCodeTab === 'install' ? 'active' : ''}`}
+              onClick={() => setActiveCodeTab('install')}
+            >
+              Installation
+            </button>
+            <button 
+              className={`code-tab ${activeCodeTab === 'basic' ? 'active' : ''}`}
+              onClick={() => setActiveCodeTab('basic')}
+            >
+              Basic Usage
+            </button>
+            <button 
+              className={`code-tab ${activeCodeTab === 'advanced' ? 'active' : ''}`}
+              onClick={() => setActiveCodeTab('advanced')}
+            >
+              Advanced
+            </button>
+          </div>
+          
+          <div className="code-block">
+            <div className="code-header">
+              <span className="code-lang">
+                {activeCodeTab === 'install' ? 'bash' : 'jsx'}
+              </span>
+              <button 
+                className={`code-copy ${copiedCode ? 'copied' : ''}`}
+                onClick={() => handleCopyCode(codeExamples[activeCodeTab])}
+              >
+                {copiedCode ? '✓ Copied' : 'Copy'}
+              </button>
             </div>
-            <div className="tech-item">
-              <h4>Performance</h4>
-              <p>RequestIdleCallback optimization<br />Debounced interactions</p>
+            <pre>
+              <code>{codeExamples[activeCodeTab]}</code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="stats">
+        <div className="container">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-number">{'<50KB'}</div>
+              <div className="stat-label">Gzipped Size</div>
             </div>
-            <div className="tech-item">
-              <h4>Compatibility</h4>
-              <p>React 18+<br />Modern browsers with ES6</p>
+            <div className="stat-card">
+              <div className="stat-number">JSZip</div>
+              <div className="stat-label">Only Dependency</div>
             </div>
-            <div className="tech-item">
-              <h4>Detection</h4>
-              <p>React DevTools integration<br />Fiber tree inspection<br />DOM heuristics</p>
+            <div className="stat-card">
+              <div className="stat-number">100%</div>
+              <div className="stat-label">TypeScript</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">2min</div>
+              <div className="stat-label">Setup Time</div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Footer */}
-        <footer className="demo-footer">
-          <p>Built with ❤️ using <strong>@feedbacker/core</strong></p>
-          <p>Ready for production use in any React application</p>
-        </footer>
-      </div>
+      {/* Comparison Table */}
+      <section className="comparison">
+        <div className="container">
+          <h2 className="section-title">Why Feedbacker?</h2>
+          <p className="section-subtitle">
+            Compare with traditional feedback methods
+          </p>
+          
+          <table className="comparison-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Feedbacker</th>
+                <th>Generic Forms</th>
+                <th>Screenshot Tools</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Component Detection</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>Automatic Screenshots</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="check">✓</span></td>
+              </tr>
+              <tr>
+                <td>Zero Configuration</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>React Integration</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>Mobile Support</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>Local Storage</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>Export Options</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="check">✓</span></td>
+              </tr>
+              <tr>
+                <td>Minimal Dependencies</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Installation Section */}
+      <section id="installation" className="installation">
+        <div className="container">
+          <h2 className="section-title">Get Started Today</h2>
+          <p className="section-subtitle">
+            Join developers who are collecting better feedback
+          </p>
+          
+          <div className="install-grid">
+            <div className="install-content">
+              <h3>1. Install the package</h3>
+              <p>Add Feedbacker to your React project with npm or yarn.</p>
+              
+              <h3>2. Wrap your app</h3>
+              <p>Import and wrap your app with the FeedbackProvider component.</p>
+              
+              <h3>3. Start collecting</h3>
+              <p>That's it! Your users can now provide component-level feedback.</p>
+              
+              <div style={{ marginTop: '2rem' }}>
+                <a href="https://github.com/feedbacker/core" className="btn btn-primary">
+                  View Documentation →
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <div className="terminal">
+                <div className="terminal-header">
+                  <span className="terminal-dot red"></span>
+                  <span className="terminal-dot yellow"></span>
+                  <span className="terminal-dot green"></span>
+                </div>
+                <div className="terminal-content">
+                  <div>
+                    <span className="terminal-prompt">$</span> npm install @feedbacker/core
+                  </div>
+                  <div style={{ marginTop: '1rem', opacity: 0.7 }}>
+                    <span className="terminal-prompt">$</span> npm install --save-dev @types/react
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2 className="cta-title">Ready to Improve Your Feedback?</h2>
+            <p className="cta-description">
+              Start collecting meaningful, contextual feedback from your users today.
+              Zero configuration, maximum insight.
+            </p>
+            <div className="cta-actions">
+              <a href="https://github.com/feedbacker/core" className="btn btn-primary">
+                Get Started Free →
+              </a>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  emit('selection:start', {});
+                  setFeedbackActive(true);
+                }}
+              >
+                Try Demo Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-links">
+            <a href="https://github.com/feedbacker/core" className="footer-link">GitHub</a>
+            <a href="https://npmjs.com/package/@feedbacker/core" className="footer-link">NPM</a>
+            <a href="#" className="footer-link">Documentation</a>
+            <a href="#" className="footer-link">Examples</a>
+            <a href="#" className="footer-link">Support</a>
+          </div>
+          <p className="footer-credits">
+            Built with ❤️ by developers, for developers<br />
+            © 2024 Feedbacker. MIT Licensed.
+          </p>
+        </div>
+      </footer>
+
+      {/* Theme Toggle */}
+      <button 
+        className="theme-toggle"
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        aria-label="Toggle theme"
+      >
+        <span className="theme-icon">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </span>
+      </button>
     </div>
   );
 };
 
+// Main App with FeedbackProvider
 export const App: React.FC = () => {
   return (
     <FeedbackProvider
       position="bottom-right"
-      primaryColor="#3b82f6"
+      primaryColor="#6366f1"
       enabled={true}
       storageKey="feedbacker-demo"
       onFeedbackSubmit={(feedback) => {
         console.log('[Demo] New feedback submitted:', feedback);
+        // Show a nice notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 0.5rem;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+          z-index: 10000;
+          animation: slideInUp 0.3s ease-out;
+        `;
+        notification.textContent = '✅ Feedback submitted successfully!';
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          notification.style.animation = 'slideOutDown 0.3s ease-out';
+          setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
       }}
     >
-      <DemoContent />
+      <LandingPage />
     </FeedbackProvider>
   );
 };
