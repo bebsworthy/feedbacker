@@ -2,7 +2,7 @@
  * FeedbackPanel - Displays captured feedback in JSON and Markdown formats
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFeedback } from '@feedbacker/core';
 import { Feedback } from '@feedbacker/core';
 
@@ -12,26 +12,13 @@ interface FeedbackPanelProps {
 
 export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ className }) => {
   const [activeTab, setActiveTab] = useState<'json' | 'markdown'>('json');
-  const [capturedFeedback, setCapturedFeedback] = useState<Feedback[]>([]);
   
-  // Try to use the feedback hook, but handle if it's not available
-  let feedbackList: Feedback[] = [];
-  let clearAllFeedback: (() => void) | undefined;
-  
-  try {
-    const feedbackData = useFeedback();
-    if (feedbackData) {
-      feedbackList = Array.isArray(feedbackData.feedbackList) ? feedbackData.feedbackList : [];
-      clearAllFeedback = feedbackData.clearAllFeedback;
-    }
-  } catch (error) {
-    console.warn('[FeedbackPanel] Could not access feedback context:', error);
-  }
+  // Use the feedback hook properly
+  const feedbackData = useFeedback();
+  const feedbackList = feedbackData?.feedbackList || [];
+  const clearAllFeedback = feedbackData?.clearAllFeedback;
 
-  useEffect(() => {
-    // Update captured feedback when feedbackList changes
-    setCapturedFeedback([...feedbackList]);
-  }, [feedbackList]);
+  // No need for separate state - use feedbackList directly
 
   const formatJSON = (feedback: Feedback[]): string => {
     if (feedback.length === 0) {
@@ -75,7 +62,6 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
     if (clearAllFeedback) {
       clearAllFeedback();
     }
-    setCapturedFeedback([]);
   };
 
   return (
@@ -100,7 +86,7 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
           <button 
             className="clear-btn"
             onClick={handleClear}
-            disabled={capturedFeedback.length === 0}
+            disabled={feedbackList.length === 0}
           >
             Clear
           </button>
@@ -110,19 +96,19 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
       <div className="feedback-panel-content">
         {activeTab === 'json' ? (
           <pre className="code-display json-display">
-            <code>{formatJSON(capturedFeedback)}</code>
+            <code>{formatJSON(feedbackList)}</code>
           </pre>
         ) : (
           <div className="markdown-display">
-            <pre>{formatMarkdown(capturedFeedback)}</pre>
+            <pre>{formatMarkdown(feedbackList)}</pre>
           </div>
         )}
       </div>
 
-      {capturedFeedback.length > 0 && (
+      {feedbackList.length > 0 && (
         <div className="feedback-panel-footer">
           <span className="feedback-count">
-            {capturedFeedback.length} feedback item{capturedFeedback.length !== 1 ? 's' : ''} captured
+            {feedbackList.length} feedback item{feedbackList.length !== 1 ? 's' : ''} captured
           </span>
         </div>
       )}
