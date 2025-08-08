@@ -17,9 +17,9 @@ export class SnapDOMAdapter implements CaptureAdapter {
       // Check for required browser APIs
       const canvas = document.createElement('canvas');
       return !!(
-        canvas.getContext &&
+        canvas.getContext('2d') &&
         window.HTMLCanvasElement &&
-        window.HTMLCanvasElement.prototype.toDataURL &&
+        typeof window.HTMLCanvasElement.prototype.toDataURL === 'function' &&
         // SnapDOM requires modern browser features
         window.MutationObserver &&
         window.ResizeObserver

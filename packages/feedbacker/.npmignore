@@ -1,0 +1,43 @@
+# Source files
+src/
+demo/
+
+# Config files
+rollup.config.js
+tsconfig.json
+.eslintrc
+.prettierrc
+
+# Development files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+
+# Documentation
+*.md
+!README.md
+!LICENSE
+documentation/
+
+# Build artifacts
+*.tsbuildinfo
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Development dependencies config
+node_modules/

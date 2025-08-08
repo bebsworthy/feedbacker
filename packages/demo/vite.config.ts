@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.BASE_URL || '/',
   resolve: {
     alias: {
       '@feedbacker/core': path.resolve(__dirname, '../feedbacker/src')

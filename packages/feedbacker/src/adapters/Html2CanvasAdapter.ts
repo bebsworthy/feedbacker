@@ -17,7 +17,7 @@ export class Html2CanvasAdapter implements CaptureAdapter {
       // Check for required browser APIs
       const canvas = document.createElement('canvas');
       return !!(
-        canvas.getContext &&
+        canvas.getContext('2d') &&
         window.HTMLCanvasElement &&
         window.HTMLCanvasElement.prototype.toDataURL
       );

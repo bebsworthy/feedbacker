@@ -1,6 +1,6 @@
 {
   "name": "@feedbacker/core",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "A drop-in React feedback system for component-level feedback capture during development and design review",
   "keywords": [
@@ -9,7 +9,14 @@
     "component",
     "development",
     "ui",
-    "ux"
+    "ux",
+    "screenshot",
+    "bug-report",
+    "user-feedback",
+    "component-feedback",
+    "react-component",
+    "feedback-widget",
+    "feedback-tool"
   ],
   "author": "Feedbacker Team",
   "license": "MIT",
@@ -89,5 +96,9 @@
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

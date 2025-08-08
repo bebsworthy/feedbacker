@@ -220,7 +220,7 @@ export class CaptureManager {
     
     return {
       name: this.currentAdapter.name,
-      version: this.currentAdapter.version
+      ...(this.currentAdapter.version && { version: this.currentAdapter.version })
     };
   }
 

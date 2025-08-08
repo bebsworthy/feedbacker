@@ -534,7 +534,7 @@ export function isScreenshotSupported(): boolean {
   try {
     // Check for required APIs
     return !!(
-      document.createElement('canvas').getContext &&
+      document.createElement('canvas').getContext('2d') &&
       window.HTMLCanvasElement &&
       window.HTMLCanvasElement.prototype.toDataURL
     );
