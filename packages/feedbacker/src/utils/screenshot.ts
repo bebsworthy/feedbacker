@@ -25,6 +25,64 @@ interface ScreenshotResult {
 }
 
 /**
+ * Get the effective background color by walking up the DOM tree
+ * This helps ensure text is visible in screenshots
+ */
+function getEffectiveBackgroundColor(element: HTMLElement): string | null {
+  let currentElement: HTMLElement | null = element;
+  let depth = 0;
+  const maxDepth = 20; // Limit traversal to avoid performance issues
+  
+  while (currentElement && depth < maxDepth) {
+    const computedStyle = window.getComputedStyle(currentElement);
+    const bgColor = computedStyle.backgroundColor;
+    
+    // Check if we found a non-transparent background
+    if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+      // Check if it has some opacity
+      const rgbaMatch = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (rgbaMatch) {
+        const alpha = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+        if (alpha > 0.1) { // Consider backgrounds with > 10% opacity
+          return bgColor;
+        }
+      } else {
+        // RGB or hex color (non-transparent)
+        return bgColor;
+      }
+    }
+    
+    // Check if we've reached the body or html element
+    if (currentElement === document.body || currentElement === document.documentElement) {
+      // Get the body or html background as final fallback
+      const bodyBg = computedStyle.backgroundColor;
+      if (bodyBg && bodyBg !== 'transparent' && bodyBg !== 'rgba(0, 0, 0, 0)') {
+        return bodyBg;
+      }
+      
+      // Use white or black based on color scheme preference
+      const colorScheme = computedStyle.colorScheme || 'light';
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Check for common dark mode indicators
+      const isDarkMode = colorScheme === 'dark' || 
+                        prefersDark || 
+                        document.documentElement.classList.contains('dark') ||
+                        document.documentElement.getAttribute('data-theme') === 'dark';
+      
+      return isDarkMode ? '#1a1a1a' : '#ffffff';
+    }
+    
+    currentElement = currentElement.parentElement;
+    depth++;
+  }
+  
+  // Default fallback based on system preference
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return prefersDark ? '#1a1a1a' : '#ffffff';
+}
+
+/**
  * Capture screenshot of a specific element
  */
 export async function captureElementScreenshot(
@@ -42,9 +100,14 @@ export async function captureElementScreenshot(
       };
     }
 
+    // Detect effective background color if not provided
+    const effectiveBgColor = options.backgroundColor !== undefined ? 
+      options.backgroundColor : 
+      getEffectiveBackgroundColor(element);
+    
     const defaultOptions = {
       quality: 0.8,
-      backgroundColor: null, // Transparent background
+      backgroundColor: effectiveBgColor, // Use detected or provided background
       scale: Math.min(window.devicePixelRatio || 1, 2), // Max 2x for performance
       useCORS: true, // Enable CORS (Requirement 8.3)
       allowTaint: false, // Prevent tainting canvas initially
@@ -308,7 +371,7 @@ export function getRecommendedOptions(): ScreenshotOptions {
     scale: isHighDPI ? Math.min(window.devicePixelRatio, 2) : 1,
     maxWidth: isMobile ? 800 : 1200,
     maxHeight: isMobile ? 600 : 900,
-    backgroundColor: null,
+    // backgroundColor will be auto-detected if not provided
     useCORS: true,
     allowTaint: false
   };
