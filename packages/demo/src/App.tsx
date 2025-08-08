@@ -200,8 +200,8 @@ function App() {
                     <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Bundle Size</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>1*</div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Dep (jszip)</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>Pluggable</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Capture Library</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>2min</div>
@@ -266,7 +266,7 @@ function App() {
               </p>
               <div className="feature-demo">
                 <code style={{ fontSize: '0.875rem', color: 'var(--brand-violet)' }}>
-                  Component: Button → Card → App
+                  Component: App → Card → Button
                 </code>
               </div>
             </div>
@@ -408,8 +408,8 @@ function App() {
               <div className="stat-label">Gzipped Size</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">JSZip</div>
-              <div className="stat-label">Only Dependency</div>
+              <div className="stat-number">Pluggable</div>
+              <div className="stat-label">Capture Library</div>
             </div>
             <div className="stat-card">
               <div className="stat-number">100%</div>
@@ -536,9 +536,6 @@ function App() {
                 <div className="terminal-content">
                   <div>
                     <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install @feedbacker/core', Prism.languages.bash, 'bash') }} />
-                  </div>
-                  <div style={{ marginTop: '1rem', opacity: 0.7 }}>
-                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install --save-dev @types/react', Prism.languages.bash, 'bash') }} />
                   </div>
                 </div>
               </div>
