@@ -8,9 +8,8 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { ComponentInfo } from '../types';
-import { useComponentDetection } from '../hooks/useComponentDetection';
+import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { debounce, throttle, performanceMonitor } from '../utils/performance';
-import styles from '../styles/feedbacker.module.css';
 
 interface OverlayPosition {
   top: number;
@@ -24,6 +23,8 @@ export const ComponentOverlay: React.FC = React.memo(() => {
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition | null>(null);
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const animationFrameRef = useRef<number>();
+
+  console.log('[ComponentOverlay] Render - isActive:', isActive, 'hoveredComponent:', hoveredComponent, 'overlayPosition:', overlayPosition);
 
   // Memoized debounced position update function
   const debouncedUpdatePosition = useMemo(() => {
@@ -127,51 +128,94 @@ export const ComponentOverlay: React.FC = React.memo(() => {
     return null;
   }
 
+  // Calculate tooltip position
+  const tooltipHeight = 40; // Approximate tooltip height
+  const tooltipMargin = 8; // Space between tooltip and component
+  const minSpaceRequired = tooltipHeight + tooltipMargin;
+  
+  // Get viewport dimensions
+  const viewportHeight = window.innerHeight;
+  const componentTop = overlayPosition.top - window.pageYOffset;
+  const componentBottom = componentTop + overlayPosition.height;
+  
+  // Calculate visible bounds of the component
+  const visibleTop = Math.max(0, componentTop);
+  const visibleBottom = Math.min(viewportHeight, componentBottom);
+  const visibleHeight = visibleBottom - visibleTop;
+  const visibleCenter = visibleTop + (visibleHeight / 2);
+  
+  // Determine available space
+  const spaceAbove = componentTop;
+  const spaceBelow = viewportHeight - componentBottom;
+  
+  let tooltipTop: number;
+  
+  // If not enough space above AND below, center the tooltip in the VISIBLE area
+  if (spaceAbove < minSpaceRequired && spaceBelow < minSpaceRequired) {
+    tooltipTop = visibleCenter - (tooltipHeight / 2);
+  } 
+  // Place above if there's enough space, or if there's more space above than below
+  else if (spaceAbove >= minSpaceRequired || (spaceAbove > spaceBelow && spaceAbove > tooltipHeight)) {
+    tooltipTop = componentTop - tooltipHeight - tooltipMargin;
+  } 
+  // Otherwise place below
+  else {
+    tooltipTop = componentBottom + tooltipMargin;
+  }
+
   return (
     <>
       {/* Main overlay highlighting the component */}
       <div
-        className={`${styles.componentOverlay} ${styles.componentOverlayVisible}`}
+        data-feedback-overlay="highlight"
         style={{
-          position: 'absolute',
-          top: `${overlayPosition.top}px`,
-          left: `${overlayPosition.left}px`,
+          position: 'fixed',
+          top: `${overlayPosition.top - window.pageYOffset}px`,
+          left: `${overlayPosition.left - window.pageXOffset}px`,
           width: `${overlayPosition.width}px`,
           height: `${overlayPosition.height}px`,
           pointerEvents: 'none',
-          zIndex: 9990
+          zIndex: 9998,
+          border: '2px solid #3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+          borderRadius: '4px',
+          boxShadow: '0 0 0 1px rgba(59, 130, 246, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
+          transition: 'all 0.1s ease'
+        }}
+      />
+      
+      {/* Component info tooltip */}
+      <div 
+        data-feedback-overlay="label"
+        style={{
+          position: 'fixed',
+          top: `${tooltipTop}px`,
+          left: `${overlayPosition.left - window.pageXOffset}px`,
+          maxWidth: `${Math.min(300, overlayPosition.width)}px`,
+          minWidth: '120px',
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          color: '#ffffff',
+          padding: '6px 10px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
         }}
       >
-        {/* Border highlight */}
-        <div className={styles.componentBorder} />
-        
-        {/* Background overlay with opacity */}
-        <div className={styles.componentBackground} />
-        
-        {/* Component info tooltip */}
-        <div 
-          className={styles.componentTooltip}
-          style={{
-            position: 'absolute',
-            top: overlayPosition.height > 40 ? '8px' : '-40px',
-            left: '8px',
-            maxWidth: `${Math.max(200, overlayPosition.width - 16)}px`
-          }}
-        >
-          <div className={styles.componentTooltipContent}>
-            <div className={styles.componentName}>{componentInfo.name}</div>
-            {componentInfo.path && (
-              <div className={styles.componentPath} title={componentInfo.path}>
-                {componentInfo.path}
-              </div>
-            )}
-          </div>
-          <div className={styles.componentTooltipArrow} />
+        <div style={{ fontWeight: 'bold', marginBottom: componentInfo?.path ? '2px' : '0' }}>
+          {componentInfo?.name}
         </div>
+        {componentInfo?.path && (
+          <div style={{ opacity: 0.8, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={componentInfo.path}>
+            {componentInfo.path}
+          </div>
+        )}
       </div>
-      
-      {/* Detection cursor overlay for mobile */}
-      <div className={styles.detectionCursor} />
     </>
   );
 });

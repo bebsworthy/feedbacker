@@ -8,7 +8,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useFeedbackContext } from '../../context/FeedbackContext';
 import { useFeedbackEvent } from '../../hooks/useFeedbackEvent';
 import { FABAction } from './FABAction';
-import { PlusIcon, CloseIcon, MessageIcon, ListIcon, DraftIndicator } from '../../icons';
+import { MegaphoneIcon, CloseIcon, MessageIcon, ListIcon, DraftIndicator } from '../../icons';
 import { debounce } from '../../utils/performance';
 
 interface FABProps {
@@ -20,7 +20,7 @@ export const FAB: React.FC<FABProps> = React.memo(({
   position = 'bottom-right',
   className = '' 
 }) => {
-  const { draft, isActive } = useFeedbackContext();
+  const { draft, isActive, feedbacks } = useFeedbackContext();
   const { emit } = useFeedbackEvent();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -124,15 +124,17 @@ export const FAB: React.FC<FABProps> = React.memo(({
       id: "new-feedback",
       label: "New feedback",
       icon: <MessageIcon size={20} />,
-      onClick: handleNewFeedback
+      onClick: handleNewFeedback,
+      badgeCount: undefined
     },
     {
       id: "show-manager",
       label: "Show manager",
       icon: <ListIcon size={20} />,
-      onClick: handleShowManager
+      onClick: handleShowManager,
+      badgeCount: feedbacks.length
     }
-  ], [handleNewFeedback, handleShowManager]);
+  ], [handleNewFeedback, handleShowManager, feedbacks.length]);
 
   // Zero impact when inactive - early return (Requirement 10.4)
   if (!isActive) {
@@ -145,17 +147,20 @@ export const FAB: React.FC<FABProps> = React.memo(({
       className={`feedbacker-fab ${className}`}
       style={positionStyles}
     >
-      {/* Action buttons - only show when expanded */}
-      {isExpanded && (
+      {/* Action buttons - render ABOVE FAB when position is BOTTOM */}
+      {isExpanded && position.includes('bottom') && (
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'column-reverse',
             gap: '8px',
             opacity: isExpanded ? 1 : 0,
             transform: isExpanded ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.95)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transformOrigin: position.includes('bottom') ? 'bottom' : 'top'
+            transformOrigin: 'bottom',
+            position: 'absolute',
+            bottom: '64px',
+            right: 0
           }}
         >
           {actionList.map(action => (
@@ -165,6 +170,7 @@ export const FAB: React.FC<FABProps> = React.memo(({
               label={action.label}
               icon={action.icon}
               onClick={action.onClick}
+              badgeCount={action.badgeCount}
             />
           ))}
         </div>
@@ -195,15 +201,15 @@ export const FAB: React.FC<FABProps> = React.memo(({
           justifyContent: 'center',
           boxShadow: 'var(--fb-shadow, 0 4px 12px rgba(0, 0, 0, 0.15))',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: isExpanded ? 'rotate(45deg)' : 'rotate(0deg)',
+          transform: 'rotate(0deg)',
           outline: 'none'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = `scale(1.1) ${isExpanded ? 'rotate(45deg)' : 'rotate(0deg)'}`;
+          e.currentTarget.style.transform = 'scale(1.1)';
           e.currentTarget.style.boxShadow = 'var(--fb-shadow, 0 6px 16px rgba(0, 0, 0, 0.2))';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = `scale(1) ${isExpanded ? 'rotate(45deg)' : 'rotate(0deg)'}`;
+          e.currentTarget.style.transform = 'scale(1)';
           e.currentTarget.style.boxShadow = 'var(--fb-shadow, 0 4px 12px rgba(0, 0, 0, 0.15))';
         }}
         onFocus={(e) => {
@@ -217,13 +223,68 @@ export const FAB: React.FC<FABProps> = React.memo(({
         {/* Draft indicator */}
         {draft && <DraftIndicator />}
         
+        {/* Feedback count badge */}
+        {feedbacks.length > 0 && !isExpanded && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-4px',
+              minWidth: '20px',
+              height: '20px',
+              borderRadius: '10px',
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              border: '2px solid #ffffff',
+              zIndex: 1
+            }}
+          >
+            {feedbacks.length > 99 ? '99+' : feedbacks.length}
+          </div>
+        )}
+        
         {/* Main icon */}
         {isExpanded ? (
           <CloseIcon size={24} color="#ffffff" />
         ) : (
-          <PlusIcon size={24} color="#ffffff" />
+          <MegaphoneIcon size={24} color="#ffffff" />
         )}
       </button>
+
+      {/* Action buttons - render BELOW FAB when position is TOP */}
+      {isExpanded && position.includes('top') && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            opacity: isExpanded ? 1 : 0,
+            transform: isExpanded ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transformOrigin: 'top',
+            position: 'absolute',
+            top: '64px',
+            right: 0
+          }}
+        >
+          {actionList.map(action => (
+            <FABAction
+              key={action.id}
+              id={action.id}
+              label={action.label}
+              icon={action.icon}
+              onClick={action.onClick}
+              badgeCount={action.badgeCount}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

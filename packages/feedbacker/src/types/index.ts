@@ -168,6 +168,7 @@ export interface UseComponentDetectionResult {
   activate: () => void;
   deactivate: () => void;
   selectedComponent: ComponentInfo | null;
+  hoveredComponent: ComponentInfo | null;
 }
 
 export interface UseFeedbackStorageResult {

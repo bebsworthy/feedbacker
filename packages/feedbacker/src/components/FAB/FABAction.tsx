@@ -11,6 +11,7 @@ interface FABActionProps {
   icon: React.ReactNode;
   onClick: () => void;
   className?: string;
+  badgeCount?: number;
 }
 
 export const FABAction: React.FC<FABActionProps> = React.memo(({
@@ -18,7 +19,8 @@ export const FABAction: React.FC<FABActionProps> = React.memo(({
   label,
   icon,
   onClick,
-  className = ''
+  className = '',
+  badgeCount
 }) => {
   return (
     <button
@@ -28,6 +30,7 @@ export const FABAction: React.FC<FABActionProps> = React.memo(({
       aria-label={label}
       data-action={id}
       style={{
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
@@ -65,6 +68,31 @@ export const FABAction: React.FC<FABActionProps> = React.memo(({
         e.currentTarget.style.outline = 'none';
       }}
     >
+      {/* Badge count */}
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            minWidth: '20px',
+            height: '20px',
+            borderRadius: '10px',
+            backgroundColor: '#ef4444',
+            color: '#ffffff',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 4px',
+            border: '2px solid #ffffff',
+            zIndex: 1
+          }}
+        >
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </div>
+      )}
       <span style={{ display: 'flex', alignItems: 'center' }}>
         {icon}
       </span>
