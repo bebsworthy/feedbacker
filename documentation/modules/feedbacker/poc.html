@@ -1,0 +1,1108 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageSquare, X, Send, Target, Info, Bug } from 'lucide-react';
+
+// Multiple methods to detect React components
+const getReactFiberFromElement = (element) => {
+  // Method 1: Check for React DevTools global hook
+  if (window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+    try {
+      const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+      if (hook.getFiberByHostInstance) {
+        const fiber = hook.getFiberByHostInstance(element);
+        if (fiber) return fiber;
+      }
+    } catch (e) {
+      // Continue to other methods
+    }
+  }
+  
+  // Method 2: Check React fiber keys (React 16+)
+  const fiberKeys = Object.keys(element).filter(key => 
+    key.startsWith('__reactFiber') || 
+    key.startsWith('__reactInternalInstance') ||
+    key.startsWith('_reactInternalFiber')
+  );
+  
+  if (fiberKeys.length > 0) {
+    return element[fiberKeys[0]];
+  }
+  
+  // Method 3: Walk up the DOM tree looking for React roots
+  let current = element;
+  while (current && current !== document.body) {
+    const keys = Object.keys(current).filter(key => 
+      key.startsWith('__reactFiber') || 
+      key.startsWith('__reactInternalInstance') ||
+      key.startsWith('_reactInternalFiber') ||
+      key.startsWith('__reactContainer')
+    );
+    
+    if (keys.length > 0) {
+      return current[keys[0]];
+    }
+    current = current.parentElement;
+  }
+  
+  return null;
+};
+
+// Get component name with better fallbacks
+const getComponentName = (fiber) => {
+  if (!fiber) return null;
+  
+  // Direct component name
+  if (fiber.type && typeof fiber.type !== 'string') {
+    if (fiber.type.displayName) return fiber.type.displayName;
+    if (fiber.type.name) return fiber.type.name;
+  }
+  
+  // Check for lazy components
+  if (fiber.type && fiber.type._payload && fiber.type._payload._result) {
+    const result = fiber.type._payload._result;
+    if (result.displayName) return result.displayName;
+    if (result.name) return result.name;
+  }
+  
+  // Walk up fiber tree to find component
+  let current = fiber.return;
+  while (current) {
+    if (current.type && typeof current.type !== 'string') {
+      if (current.type.displayName) return current.type.displayName;
+      if (current.type.name) return current.type.name;
+    }
+    current = current.return;
+  }
+  
+  return null;
+};
+
+// Fallback: Detect React components by analyzing DOM structure
+const detectReactComponentsFromDOM = () => {
+  const components = new Map();
+  
+  // Look for elements that likely represent React components
+  const allElements = Array.from(document.querySelectorAll('*'));
+  
+  allElements.forEach(element => {
+    // Skip obviously non-component elements
+    if (['script', 'style', 'meta', 'link', 'title'].includes(element.tagName.toLowerCase())) {
+      return;
+    }
+    
+    // Try to get React fiber
+    const fiber = getReactFiberFromElement(element);
+    const componentName = getComponentName(fiber);
+    
+    // If we found a component name, or if element looks like a component
+    if (componentName || isLikelyReactComponent(element)) {
+      const name = componentName || guessComponentName(element);
+      if (name) {
+        components.set(element, {
+          name,
+          element,
+          fiber,
+          props: getPropsFromFiber(fiber) || {}
+        });
+      }
+    }
+  });
+  
+  return components;
+};
+
+// Heuristics to detect if an element is likely a React component
+const isLikelyReactComponent = (element) => {
+  // Has React-like class names or data attributes
+  const className = element.className || '';
+  const hasReactClasses = /^[A-Z]/.test(className) || className.includes('_');
+  
+  // Has structure that suggests it's a component boundary
+  const hasComponentStructure = element.children.length > 0 && 
+    Array.from(element.children).some(child => child.tagName);
+  
+  // Has event handlers (likely React)
+  const hasEventHandlers = Object.keys(element).some(key => 
+    key.startsWith('__reactEventHandlers') || key.startsWith('__reactProps')
+  );
+  
+  return hasReactClasses || hasComponentStructure || hasEventHandlers;
+};
+
+// Guess component name from element characteristics
+const guessComponentName = (element) => {
+  // Try className
+  const className = element.className || '';
+  if (className) {
+    const classes = className.split(' ');
+    const componentClass = classes.find(cls => 
+      /^[A-Z]/.test(cls) && cls.length > 2
+    );
+    if (componentClass) return componentClass;
+  }
+  
+  // Try data attributes
+  const dataComponent = element.getAttribute('data-component') || 
+                        element.getAttribute('data-testid');
+  if (dataComponent) return dataComponent;
+  
+  // Try id
+  const id = element.id;
+  if (id && /^[A-Z]/.test(id)) return id;
+  
+  // Fallback to tag name if it looks custom
+  const tagName = element.tagName.toLowerCase();
+  if (tagName.includes('-')) return tagName;
+  
+  return null;
+};
+
+// Get props from fiber with fallbacks
+const getPropsFromFiber = (fiber) => {
+  if (!fiber) return {};
+  
+  try {
+    const props = { ...(fiber.memoizedProps || fiber.pendingProps || {}) };
+    // Clean up functions and complex objects
+    Object.keys(props).forEach(key => {
+      if (typeof props[key] === 'function') {
+        props[key] = '[Function]';
+      } else if (React.isValidElement(props[key])) {
+        props[key] = '[React Element]';
+      } else if (typeof props[key] === 'object' && props[key] !== null) {
+        props[key] = '[Object]';
+      }
+    });
+    return props;
+  } catch (e) {
+    return {};
+  }
+};
+
+// Enhanced component scanner with debugging
+const useComponentScanner = () => {
+  const [components, setComponents] = useState(new Map());
+  const [debugInfo, setDebugInfo] = useState('');
+  
+  useEffect(() => {
+    const scanForComponents = () => {
+      console.log('🔍 Scanning for React components...');
+      
+      const componentMap = detectReactComponentsFromDOM();
+      
+      console.log(`📊 Found ${componentMap.size} potential components:`, 
+        Array.from(componentMap.values()).map(c => c.name)
+      );
+      
+      setComponents(componentMap);
+      setDebugInfo(`Found ${componentMap.size} components`);
+    };
+    
+    // Initial scan
+    scanForComponents();
+    
+    // Re-scan on DOM changes with debouncing
+    let scanTimeout;
+    const observer = new MutationObserver(() => {
+      clearTimeout(scanTimeout);
+      scanTimeout = setTimeout(scanForComponents, 500);
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
+    
+    return () => {
+      observer.disconnect();
+      clearTimeout(scanTimeout);
+    };
+  }, []);
+  
+  return { components, debugInfo };
+};
+
+// Mobile-friendly overlay with drag-to-target interaction
+const ComponentOverlay = ({ components, isActive, onComponentSelect, debugInfo }) => {
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+  const [overlayRect, setOverlayRect] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                    window.innerWidth <= 768 || 
+                    'ontouchstart' in document.documentElement;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Update overlay position when element changes or on scroll
+  useEffect(() => {
+    if (selectedElement) {
+      const updateRect = () => {
+        const rect = selectedElement.getBoundingClientRect();
+        setOverlayRect(rect);
+      };
+      
+      updateRect();
+      
+      const handleScroll = () => updateRect();
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleScroll);
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleScroll);
+      };
+    }
+  }, [selectedElement]);
+  
+  // Helper function to find component under point
+  const findComponentUnderPoint = (x, y) => {
+    // Temporarily disable overlay pointer events
+    const overlayElements = document.querySelectorAll('[data-feedback-overlay]');
+    overlayElements.forEach(el => el.style.pointerEvents = 'none');
+    
+    let elementUnderPoint = document.elementFromPoint(x, y);
+    
+    // Re-enable overlay pointer events
+    overlayElements.forEach(el => el.style.pointerEvents = '');
+    
+    // Find the closest component
+    let foundComponent = null;
+    let current = elementUnderPoint;
+    
+    while (current && current !== document.body && !foundComponent) {
+      if (components.has(current)) {
+        foundComponent = current;
+        break;
+      }
+      current = current.parentElement;
+    }
+    
+    return foundComponent;
+  };
+  
+  useEffect(() => {
+    if (!isActive) {
+      setSelectedElement(null);
+      setOverlayRect(null);
+      setIsDragging(false);
+      return;
+    }
+    
+    if (isMobile) {
+      // Mobile: Enhanced touch interaction with drag-to-target
+      const handleTouchStart = (e) => {
+        const touch = e.touches[0];
+        setTouchPosition({ x: touch.clientX, y: touch.clientY });
+        setIsDragging(true);
+        
+        // Prevent scrolling during feedback selection
+        e.preventDefault();
+        
+        const foundComponent = findComponentUnderPoint(touch.clientX, touch.clientY);
+        
+        if (foundComponent) {
+          setSelectedElement(foundComponent);
+          // Haptic feedback on initial selection
+          if (navigator.vibrate) {
+            navigator.vibrate(30);
+          }
+        }
+      };
+      
+      const handleTouchMove = (e) => {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        setTouchPosition({ x: touch.clientX, y: touch.clientY });
+        
+        // Prevent scrolling during drag
+        e.preventDefault();
+        
+        const foundComponent = findComponentUnderPoint(touch.clientX, touch.clientY);
+        
+        // Only update if we found a different component
+        if (foundComponent && foundComponent !== selectedElement) {
+          setSelectedElement(foundComponent);
+          // Light haptic feedback when changing targets
+          if (navigator.vibrate) {
+            navigator.vibrate(20);
+          }
+        }
+      };
+      
+      const handleTouchEnd = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        
+        if (!selectedElement) return;
+        
+        const componentData = components.get(selectedElement);
+        if (componentData) {
+          console.log('🎯 Selected component (touch release):', componentData);
+          // Stronger haptic feedback on selection
+          if (navigator.vibrate) {
+            navigator.vibrate([50, 50, 50]);
+          }
+          onComponentSelect({
+            ...componentData,
+            rect: selectedElement.getBoundingClientRect()
+          });
+        }
+      };
+      
+      // Add passive: false to prevent default scrolling behavior
+      document.addEventListener('touchstart', handleTouchStart, { passive: false });
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd, { passive: false });
+      
+      return () => {
+        document.removeEventListener('touchstart', handleTouchStart);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    } else {
+      // Desktop: Mouse-based interaction (existing logic)
+      const handleMouseMove = (e) => {
+        setTouchPosition({ x: e.clientX, y: e.clientY });
+        
+        const foundComponent = findComponentUnderPoint(e.clientX, e.clientY);
+        
+        if (foundComponent !== selectedElement) {
+          setSelectedElement(foundComponent);
+        }
+      };
+      
+      const handleClick = (e) => {
+        if (!isActive || !selectedElement) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const componentData = components.get(selectedElement);
+        if (componentData) {
+          console.log('🎯 Selected component (click):', componentData);
+          onComponentSelect({
+            ...componentData,
+            rect: selectedElement.getBoundingClientRect()
+          });
+        }
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove, { passive: false });
+      document.addEventListener('click', handleClick, true);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('click', handleClick, true);
+      };
+    }
+  }, [isActive, components, selectedElement, onComponentSelect, isMobile, isDragging]);
+  
+  if (!isActive) return null;
+  
+  return (
+    <>
+      {/* Desktop debug overlay (hidden on mobile) */}
+      {!isMobile && (
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          left: '10px',
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 9997,
+          fontFamily: 'monospace',
+          pointerEvents: 'none'
+        }}>
+          <div>🔍 {debugInfo}</div>
+          <div>📍 Mouse: {touchPosition.x}, {touchPosition.y}</div>
+          <div>🎯 Hovered: {selectedElement ? components.get(selectedElement)?.name || 'Element' : 'None'}</div>
+        </div>
+      )}
+      
+      {/* Mobile instruction overlay with drag hint */}
+      {isMobile && isActive && (
+        <div style={{
+          position: 'fixed',
+          bottom: '100px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0, 0, 0, 0.9)',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          zIndex: 9997,
+          textAlign: 'center',
+          maxWidth: '90vw',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          pointerEvents: 'none'
+        }}>
+          <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+            {isDragging ? '🎯 Drag to target • Release to select' : '👆 Touch & drag to target components'}
+          </div>
+          <div style={{ fontSize: '12px', opacity: 0.9 }}>
+            {debugInfo} • {isDragging ? 'Keep dragging...' : 'Touch screen to start'}
+          </div>
+        </div>
+      )}
+      
+      {/* Component highlight */}
+      {selectedElement && overlayRect && (() => {
+        const componentData = components.get(selectedElement);
+        
+        // Mobile-friendly label positioning
+        const labelTop = isMobile 
+          ? (overlayRect.top > 50 ? overlayRect.top - 40 : overlayRect.bottom + 12)
+          : (overlayRect.top > 35 ? overlayRect.top - 32 : overlayRect.bottom + 8);
+        const labelLeft = Math.max(8, Math.min(overlayRect.left, window.innerWidth - (isMobile ? 180 : 200)));
+        
+        return (
+          <>
+            {/* Main highlight box */}
+            <div 
+              data-feedback-overlay="highlight"
+              style={{
+                position: 'fixed',
+                top: overlayRect.top,
+                left: overlayRect.left,
+                width: overlayRect.width,
+                height: overlayRect.height,
+                pointerEvents: 'none',
+                zIndex: 9998,
+                border: isDragging && isMobile ? '4px solid #3b82f6' : (isMobile ? '3px solid #3b82f6' : '2px solid #3b82f6'),
+                backgroundColor: isDragging && isMobile ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+                borderRadius: '4px',
+                boxShadow: isDragging && isMobile 
+                  ? '0 0 0 3px rgba(59, 130, 246, 0.5), inset 0 0 0 3px rgba(255, 255, 255, 0.7), 0 8px 25px rgba(59, 130, 246, 0.3)'
+                  : isMobile 
+                    ? '0 0 0 2px rgba(59, 130, 246, 0.4), inset 0 0 0 2px rgba(255, 255, 255, 0.6)'
+                    : '0 0 0 1px rgba(59, 130, 246, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
+                transition: isMobile ? 'all 0.1s ease' : 'none'
+              }}
+            />
+            
+            {/* Component label */}
+            <div 
+              data-feedback-overlay="label"
+              style={{
+                position: 'fixed',
+                top: labelTop,
+                left: labelLeft,
+                background: isDragging && isMobile ? '#1d4ed8' : '#3b82f6',
+                color: 'white',
+                padding: isMobile ? '8px 12px' : '4px 8px',
+                borderRadius: '6px',
+                fontSize: isMobile ? '14px' : '12px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                boxShadow: isDragging && isMobile 
+                  ? '0 6px 20px rgba(0,0,0,0.4)' 
+                  : '0 4px 12px rgba(0,0,0,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                zIndex: 9999,
+                pointerEvents: 'none',
+                maxWidth: isMobile ? '180px' : '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                transform: isDragging && isMobile ? 'scale(1.05)' : 'scale(1)',
+                transition: isMobile ? 'all 0.1s ease' : 'none'
+              }}
+            >
+              <Target size={isMobile ? 14 : 12} />
+              {componentData?.name || 'Component'}
+              {isMobile && (
+                <span style={{ fontSize: '10px', opacity: 0.9 }}>
+                  {isDragging ? ' • Release' : ' • Drag'}
+                </span>
+              )}
+            </div>
+          </>
+        );
+      })()}
+    </>
+  );
+};
+
+// Mobile-friendly Feedback Modal
+const FeedbackModal = ({ isOpen, onClose, selectedComponent, onSubmit }) => {
+  const [comment, setComment] = useState('');
+  const [screenshot, setScreenshot] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect mobile
+  useEffect(() => {
+    const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                  window.innerWidth <= 768;
+    setIsMobile(mobile);
+  }, []);
+  
+  useEffect(() => {
+    if (isOpen && selectedComponent) {
+      captureComponentScreenshot();
+    }
+  }, [isOpen, selectedComponent]);
+  
+  const captureComponentScreenshot = async () => {
+    if (!selectedComponent?.element) return;
+    
+    setIsCapturing(true);
+    setError('');
+    
+    try {
+      if (window.html2canvas) {
+        const canvas = await window.html2canvas(selectedComponent.element, {
+          backgroundColor: '#ffffff',
+          scale: isMobile ? 1 : 2, // Lower scale on mobile for performance
+          logging: false,
+          useCORS: true,
+          allowTaint: true
+        });
+        setScreenshot(canvas.toDataURL('image/png'));
+      } else {
+        setError('Screenshot capture not available');
+      }
+    } catch (error) {
+      console.error('Screenshot capture failed:', error);
+      setError('Failed to capture screenshot');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+  
+  const handleSubmit = () => {
+    if (!comment.trim()) return;
+    
+    const feedbackData = {
+      componentName: selectedComponent?.name,
+      comment: comment.trim(),
+      url: window.location.href,
+      pathname: window.location.pathname,
+      timestamp: new Date().toISOString(),
+      screenshot: screenshot,
+      componentProps: selectedComponent?.props,
+      isMobile: isMobile,
+      browserInfo: {
+        userAgent: navigator.userAgent,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        }
+      },
+      elementInfo: {
+        tagName: selectedComponent?.element?.tagName,
+        className: selectedComponent?.element?.className,
+        id: selectedComponent?.element?.id,
+        rect: selectedComponent?.rect
+      }
+    };
+    
+    console.log('📝 Submitting feedback:', feedbackData);
+    onSubmit(feedbackData);
+    setComment('');
+    setScreenshot(null);
+    setError('');
+    onClose();
+  };
+  
+  if (!isOpen) return null;
+  
+  const modalStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: isMobile ? 'flex-end' : 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+    padding: isMobile ? '0' : '20px'
+  };
+  
+  const contentStyle = {
+    background: 'white',
+    borderRadius: isMobile ? '16px 16px 0 0' : '12px',
+    padding: isMobile ? '24px 20px 20px' : '24px',
+    width: isMobile ? '100%' : '90%',
+    maxWidth: isMobile ? '100%' : '500px',
+    maxHeight: isMobile ? '85vh' : '90vh',
+    overflow: 'auto',
+    boxShadow: isMobile 
+      ? '0 -10px 25px -5px rgba(0, 0, 0, 0.1)' 
+      : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+    ...(isMobile && {
+      borderBottomLeftRadius: '0',
+      borderBottomRightRadius: '0'
+    })
+  };
+  
+  return (
+    <div style={modalStyle}>
+      <div style={contentStyle}>
+        {/* Mobile handle */}
+        {isMobile && (
+          <div style={{
+            width: '40px',
+            height: '4px',
+            background: '#d1d5db',
+            borderRadius: '2px',
+            margin: '0 auto 20px',
+            flexShrink: 0
+          }} />
+        )}
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start', 
+          marginBottom: '20px' 
+        }}>
+          <h3 style={{ 
+            fontSize: isMobile ? '20px' : '18px', 
+            fontWeight: '600', 
+            margin: 0, 
+            color: '#1f2937',
+            lineHeight: '1.3',
+            paddingRight: '12px'
+          }}>
+            Feedback for: <span style={{ color: '#3b82f6' }}>{selectedComponent?.name}</span>
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: isMobile ? '8px' : '4px',
+              borderRadius: '6px',
+              color: '#6b7280',
+              flexShrink: 0,
+              marginTop: '-4px'
+            }}
+          >
+            <X size={isMobile ? 24 : 20} />
+          </button>
+        </div>
+        
+        {isCapturing && (
+          <div style={{ 
+            marginBottom: '16px', 
+            padding: '12px', 
+            background: '#f3f4f6', 
+            borderRadius: '8px', 
+            textAlign: 'center',
+            fontSize: isMobile ? '16px' : '14px'
+          }}>
+            📸 Capturing screenshot...
+          </div>
+        )}
+        
+        {error && (
+          <div style={{ 
+            marginBottom: '16px', 
+            padding: '12px', 
+            background: '#fef2f2', 
+            border: '1px solid #fecaca', 
+            borderRadius: '8px', 
+            color: '#dc2626', 
+            fontSize: isMobile ? '16px' : '14px'
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+        
+        {screenshot && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ 
+              display: 'block', 
+              fontSize: isMobile ? '16px' : '14px', 
+              fontWeight: '500', 
+              marginBottom: '8px' 
+            }}>
+              Component Screenshot:
+            </label>
+            <img src={screenshot} alt="Component screenshot" style={{
+              width: '100%', 
+              border: '1px solid #d1d5db', 
+              borderRadius: '8px',
+              maxHeight: isMobile ? '150px' : '200px', 
+              objectFit: 'contain', 
+              backgroundColor: '#f9fafb'
+            }} />
+          </div>
+        )}
+        
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ 
+            display: 'block', 
+            fontSize: isMobile ? '16px' : '14px', 
+            fontWeight: '500', 
+            marginBottom: '8px' 
+          }}>
+            Your Feedback:
+          </label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="What feedback do you have about this component?"
+            style={{
+              width: '100%', 
+              padding: isMobile ? '16px' : '12px', 
+              border: '1px solid #d1d5db',
+              borderRadius: '8px', 
+              resize: 'vertical', 
+              minHeight: isMobile ? '120px' : '100px',
+              fontSize: isMobile ? '16px' : '14px', 
+              outline: 'none',
+              fontFamily: 'inherit'
+            }}
+            autoFocus={!isMobile} // Don't auto-focus on mobile to prevent keyboard popup
+          />
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          gap: isMobile ? '16px' : '12px',
+          ...(isMobile && {
+            paddingBottom: '20px' // Extra padding for mobile
+          })
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: isMobile ? '14px 20px' : '8px 16px', 
+              border: '1px solid #d1d5db', 
+              borderRadius: '8px',
+              background: 'white', 
+              cursor: 'pointer',
+              fontSize: isMobile ? '16px' : '14px',
+              fontWeight: '500',
+              minHeight: isMobile ? '48px' : 'auto'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!comment.trim()}
+            style={{
+              padding: isMobile ? '14px 20px' : '8px 16px', 
+              border: 'none', 
+              borderRadius: '8px',
+              background: comment.trim() ? '#3b82f6' : '#9ca3af',
+              color: 'white', 
+              cursor: comment.trim() ? 'pointer' : 'not-allowed',
+              fontSize: isMobile ? '16px' : '14px',
+              fontWeight: '500',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              minHeight: isMobile ? '48px' : 'auto'
+            }}
+          >
+            <Send size={isMobile ? 18 : 16} />
+            Submit Feedback
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Mobile-friendly Main Feedback System
+const ReactFeedbackSystem = ({ 
+  onFeedbackSubmit = (data) => console.log('Feedback:', data),
+  position = 'top-right',
+  enabled = true 
+}) => {
+  const [isActive, setIsActive] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [feedbackCount, setFeedbackCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  const { components, debugInfo } = useComponentScanner();
+  
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                    window.innerWidth <= 768 || 
+                    'ontouchstart' in document.documentElement;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  const handleComponentSelect = (componentData) => {
+    console.log('🎯 Component selected:', componentData);
+    setSelectedComponent(componentData);
+    setModalOpen(true);
+    setIsActive(false);
+  };
+  
+  const handleFeedbackSubmit = (feedbackData) => {
+    console.log('📤 Submitting feedback:', feedbackData);
+    onFeedbackSubmit(feedbackData);
+    setFeedbackCount(prev => prev + 1);
+  };
+  
+  const toggleActive = () => {
+    console.log('🔄 Toggling feedback mode:', !isActive);
+    setIsActive(!isActive);
+  };
+  
+  if (!enabled) return null;
+  
+  // Mobile-friendly button positioning
+  const getButtonPosition = () => {
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 9999
+      };
+    } else {
+      return {
+        position: 'fixed',
+        [position.includes('top') ? 'top' : 'bottom']: '20px',
+        [position.includes('right') ? 'right' : 'left']: '20px',
+        zIndex: 9999
+      };
+    }
+  };
+  
+  const buttonStyle = {
+    ...getButtonPosition(),
+    padding: isMobile ? '16px 20px' : '12px 16px',
+    borderRadius: isMobile ? '12px' : '8px',
+    border: 'none',
+    fontSize: isMobile ? '16px' : '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: isActive ? '#dc2626' : '#3b82f6',
+    color: 'white',
+    boxShadow: isMobile 
+      ? '0 8px 25px -5px rgba(0, 0, 0, 0.2), 0 4px 10px -5px rgba(0, 0, 0, 0.1)' 
+      : '0 4px 12px rgba(0, 0, 0, 0.15)',
+    fontFamily: 'system-ui',
+    minHeight: isMobile ? '56px' : 'auto', // Better touch target
+    transition: 'all 0.2s ease'
+  };
+  
+  const getInstructionPosition = () => {
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        bottom: '90px', // Above the button
+        right: '20px',
+        left: '20px',
+        zIndex: 9999
+      };
+    } else {
+      return {
+        position: 'fixed',
+        [position.includes('top') ? 'top' : 'bottom']: '70px',
+        [position.includes('right') ? 'right' : 'left']: '20px',
+        zIndex: 9999,
+        maxWidth: '280px'
+      };
+    }
+  };
+  
+  return (
+    <>
+      <button
+        onClick={toggleActive}
+        style={buttonStyle}
+        onTouchStart={(e) => {
+          // Add touch feedback on mobile
+          if (isMobile) {
+            e.target.style.transform = 'scale(0.95)';
+          }
+        }}
+        onTouchEnd={(e) => {
+          if (isMobile) {
+            e.target.style.transform = 'scale(1)';
+          }
+        }}
+        onMouseEnter={(e) => {
+          if (!isMobile) {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isMobile) {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+          }
+        }}
+      >
+        <MessageSquare size={isMobile ? 20 : 16} />
+        {isActive ? 'Exit Feedback' : 'Give Feedback'}
+        {feedbackCount > 0 && (
+          <span style={{
+            background: '#f59e0b', 
+            borderRadius: '12px', 
+            padding: isMobile ? '4px 8px' : '2px 6px',
+            fontSize: isMobile ? '14px' : '12px', 
+            minWidth: isMobile ? '24px' : '18px', 
+            textAlign: 'center',
+            fontWeight: '700'
+          }}>
+            {feedbackCount}
+          </span>
+        )}
+      </button>
+      
+      {isActive && (
+        <div style={{
+          ...getInstructionPosition(),
+          background: isMobile ? 'rgba(31, 41, 55, 0.95)' : '#1f2937',
+          color: 'white',
+          padding: isMobile ? '16px 20px' : '12px 16px',
+          borderRadius: isMobile ? '12px' : '8px',
+          fontSize: isMobile ? '16px' : '14px',
+          backdropFilter: isMobile ? 'blur(10px)' : 'none',
+          boxShadow: isMobile ? '0 8px 25px rgba(0, 0, 0, 0.3)' : 'none'
+        }}>
+          <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+            {isMobile ? '🎯 Touch & Drag Mode' : '🎯 Feedback Mode Active'}
+          </div>
+          <div style={{ fontSize: isMobile ? '14px' : '12px', opacity: 0.9 }}>
+            {isMobile 
+              ? `${debugInfo}. Touch & drag to target, release to select.`
+              : `${debugInfo}. Hover over elements to highlight components.`
+            }
+          </div>
+        </div>
+      )}
+      
+      <ComponentOverlay
+        components={components}
+        isActive={isActive}
+        onComponentSelect={handleComponentSelect}
+        debugInfo={debugInfo}
+      />
+      
+      <FeedbackModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        selectedComponent={selectedComponent}
+        onSubmit={handleFeedbackSubmit}
+      />
+    </>
+  );
+};
+
+// Demo App - exactly the same as before
+const ExistingReactApp = () => {
+  const [count, setCount] = useState(0);
+  
+  const Header = () => (
+    <header style={{ background: '#3b82f6', color: 'white', padding: '20px' }}>
+      <h1 style={{ margin: 0, fontSize: '24px' }}>My Existing React App</h1>
+      <p style={{ margin: '8px 0 0 0', opacity: 0.9 }}>This app requires no modifications!</p>
+    </header>
+  );
+  
+  const Counter = () => (
+    <div style={{ background: '#f3f4f6', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
+      <h2 style={{ margin: '0 0 16px 0' }}>Counter Component</h2>
+      <div style={{ fontSize: '32px', fontWeight: 'bold', margin: '16px 0', color: '#1f2937' }}>
+        {count}
+      </div>
+      <button 
+        onClick={() => setCount(count + 1)}
+        style={{
+          background: '#10b981', color: 'white', border: 'none', padding: '12px 24px',
+          borderRadius: '6px', fontSize: '16px', cursor: 'pointer', marginRight: '8px'
+        }}
+      >
+        Increment
+      </button>
+      <button 
+        onClick={() => setCount(0)}
+        style={{
+          background: '#ef4444', color: 'white', border: 'none', padding: '12px 24px',
+          borderRadius: '6px', fontSize: '16px', cursor: 'pointer'
+        }}
+      >
+        Reset
+      </button>
+    </div>
+  );
+  
+  const ProductList = () => (
+    <div style={{ marginTop: '24px' }}>
+      <h2 style={{ marginBottom: '16px' }}>Product List Component</h2>
+      <div style={{ display: 'grid', gap: '16px' }}>
+        {['Product A', 'Product B', 'Product C'].map((product, index) => (
+          <div key={index} style={{
+            border: '1px solid #d1d5db', borderRadius: '8px', padding: '16px', background: 'white'
+          }}>
+            <h3 style={{ margin: '0 0 8px 0' }}>{product}</h3>
+            <p style={{ margin: '0', color: '#6b7280' }}>Description for {product.toLowerCase()}.</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  
+  return (
+    <div style={{ minHeight: '100vh', background: '#ffffff' }}>
+      <Header />
+      <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+        <Counter />
+        <ProductList />
+      </div>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <>
+      <ExistingReactApp />
+      <ReactFeedbackSystem 
+        onFeedbackSubmit={(data) => {
+          console.log('💾 Feedback data received:', data);
+          // Here you would send to your backend
+        }}
+        position="top-right"
+        enabled={true}
+      />
+    </>
+  );
+};
+
+export default App;
