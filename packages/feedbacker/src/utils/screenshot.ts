@@ -25,6 +25,103 @@ interface ScreenshotResult {
 }
 
 /**
+ * Detect if an element uses gradient text effect
+ */
+function hasGradientText(element: HTMLElement): boolean {
+  const computedStyle = window.getComputedStyle(element);
+  
+  // Check for transparent text fill
+  const textFillColor = computedStyle.getPropertyValue('-webkit-text-fill-color');
+  const isTransparentFill = textFillColor === 'transparent' || textFillColor === 'rgba(0, 0, 0, 0)';
+  
+  // Check for background-clip: text
+  const backgroundClip = computedStyle.getPropertyValue('background-clip') || 
+                         computedStyle.getPropertyValue('-webkit-background-clip');
+  const hasTextClip = backgroundClip === 'text';
+  
+  return isTransparentFill && hasTextClip;
+}
+
+/**
+ * Get all elements with gradient text within a container
+ */
+function findGradientTextElements(container: HTMLElement): HTMLElement[] {
+  const elements: HTMLElement[] = [];
+  
+  // Check the container itself
+  if (hasGradientText(container)) {
+    elements.push(container);
+  }
+  
+  // Check all descendants
+  const allElements = container.querySelectorAll('*');
+  allElements.forEach(el => {
+    if (el instanceof HTMLElement && hasGradientText(el)) {
+      elements.push(el);
+    }
+  });
+  
+  return elements;
+}
+
+/**
+ * Temporarily fix gradient text for screenshot capture
+ * Returns a restore function to revert changes
+ */
+function temporarilyFixGradientText(elements: HTMLElement[]): () => void {
+  const originalStyles: Map<HTMLElement, {
+    webkitTextFillColor: string;
+    color: string;
+  }> = new Map();
+  
+  elements.forEach(element => {
+    const computedStyle = window.getComputedStyle(element);
+    
+    // Store original styles
+    originalStyles.set(element, {
+      webkitTextFillColor: element.style.webkitTextFillColor || '',
+      color: element.style.color || ''
+    });
+    
+    // Extract a color from the gradient or use a fallback
+    const gradient = computedStyle.backgroundImage;
+    let extractedColor = '#667eea'; // Default purple color
+    
+    // Try to extract first color from gradient
+    const colorMatch = gradient.match(/#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}|rgba?\([^)]+\)/);
+    if (colorMatch) {
+      extractedColor = colorMatch[0];
+    } else {
+      // Use theme-appropriate color
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                    document.documentElement.classList.contains('dark');
+      extractedColor = isDark ? '#a78bfa' : '#7c3aed'; // Purple shades
+    }
+    
+    // Apply temporary solid color
+    element.style.setProperty('-webkit-text-fill-color', extractedColor, 'important');
+    element.style.setProperty('color', extractedColor, 'important');
+  });
+  
+  // Return restore function
+  return () => {
+    originalStyles.forEach((styles, element) => {
+      if (styles.webkitTextFillColor) {
+        element.style.webkitTextFillColor = styles.webkitTextFillColor;
+      } else {
+        element.style.removeProperty('-webkit-text-fill-color');
+      }
+      
+      if (styles.color) {
+        element.style.color = styles.color;
+      } else {
+        element.style.removeProperty('color');
+      }
+    });
+  };
+}
+
+/**
  * Get the effective background color by walking up the DOM tree
  * This helps ensure text is visible in screenshots
  */
@@ -118,10 +215,24 @@ export async function captureElementScreenshot(
       ...options
     };
 
+    // Find and temporarily fix gradient text elements
+    const gradientTextElements = findGradientTextElements(element);
+    let restoreGradientText: (() => void) | null = null;
+    
+    if (gradientTextElements.length > 0) {
+      console.log('[Feedbacker] Found gradient text elements, applying temporary fix');
+      restoreGradientText = temporarilyFixGradientText(gradientTextElements);
+    }
+
     // First attempt with CORS enabled and no taint allowance
     try {
       const canvas = await html2canvas(element, defaultOptions);
       const dataUrl = canvas.toDataURL('image/png', defaultOptions.quality);
+      
+      // Restore gradient text after capture
+      if (restoreGradientText) {
+        restoreGradientText();
+      }
       
       // Apply size constraints if specified
       if (options.maxWidth || options.maxHeight) {
@@ -155,6 +266,11 @@ export async function captureElementScreenshot(
         const canvas = await html2canvas(element, fallbackOptions);
         const dataUrl = canvas.toDataURL('image/png', defaultOptions.quality);
         
+        // Restore gradient text after capture
+        if (restoreGradientText) {
+          restoreGradientText();
+        }
+        
         // Apply size constraints if specified
         if (options.maxWidth || options.maxHeight) {
           const resizedDataUrl = await resizeImage(dataUrl, {
@@ -176,6 +292,11 @@ export async function captureElementScreenshot(
       } catch (taintError) {
         console.warn('[Feedbacker] Screenshot failed even with allowTaint:', taintError);
         
+        // Restore gradient text on error
+        if (restoreGradientText) {
+          restoreGradientText();
+        }
+        
         return {
           success: false,
           error: 'Screenshot capture failed due to CORS restrictions',
@@ -184,6 +305,10 @@ export async function captureElementScreenshot(
       }
     }
   } catch (error) {
+    // Restore gradient text on error
+    if (restoreGradientText) {
+      restoreGradientText();
+    }
     console.error('[Feedbacker] Screenshot capture error:', error);
     
     return {
