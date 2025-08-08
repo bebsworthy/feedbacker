@@ -25,21 +25,28 @@ interface ScreenshotResult {
 }
 
 /**
- * Detect if an element uses gradient text effect
+ * Detect if an element uses gradient text effect or other problematic CSS
  */
 function hasGradientText(element: HTMLElement): boolean {
   const computedStyle = window.getComputedStyle(element);
   
   // Check for transparent text fill
   const textFillColor = computedStyle.getPropertyValue('-webkit-text-fill-color');
-  const isTransparentFill = textFillColor === 'transparent' || textFillColor === 'rgba(0, 0, 0, 0)';
+  const isTransparentFill = textFillColor === 'transparent' || 
+                            textFillColor === 'rgba(0, 0, 0, 0)' ||
+                            textFillColor.includes('transparent');
   
   // Check for background-clip: text
   const backgroundClip = computedStyle.getPropertyValue('background-clip') || 
                          computedStyle.getPropertyValue('-webkit-background-clip');
-  const hasTextClip = backgroundClip === 'text';
+  const hasTextClip = backgroundClip === 'text' || backgroundClip.includes('text');
   
-  return isTransparentFill && hasTextClip;
+  // Check if element has gradient background
+  const backgroundImage = computedStyle.backgroundImage;
+  const hasGradient = backgroundImage.includes('gradient');
+  
+  // Return true if it's a gradient text element OR has problematic combination
+  return (isTransparentFill && hasTextClip) || (hasGradient && hasTextClip);
 }
 
 /**
@@ -65,22 +72,32 @@ function findGradientTextElements(container: HTMLElement): HTMLElement[] {
 }
 
 /**
- * Temporarily fix gradient text for screenshot capture
+ * Temporarily fix gradient text and problematic CSS for screenshot capture
  * Returns a restore function to revert changes
  */
 function temporarilyFixGradientText(elements: HTMLElement[]): () => void {
   const originalStyles: Map<HTMLElement, {
     webkitTextFillColor: string;
     color: string;
+    backgroundClip: string;
+    webkitBackgroundClip: string;
+    animation: string;
+    opacity: string;
+    transform: string;
   }> = new Map();
   
   elements.forEach(element => {
     const computedStyle = window.getComputedStyle(element);
     
-    // Store original styles
+    // Store original inline styles
     originalStyles.set(element, {
       webkitTextFillColor: element.style.webkitTextFillColor || '',
-      color: element.style.color || ''
+      color: element.style.color || '',
+      backgroundClip: element.style.backgroundClip || '',
+      webkitBackgroundClip: element.style.webkitBackgroundClip || '',
+      animation: element.style.animation || '',
+      opacity: element.style.opacity || '',
+      transform: element.style.transform || ''
     });
     
     // Extract a color from the gradient or use a fallback
@@ -98,14 +115,22 @@ function temporarilyFixGradientText(elements: HTMLElement[]): () => void {
       extractedColor = isDark ? '#a78bfa' : '#7c3aed'; // Purple shades
     }
     
-    // Apply temporary solid color
+    console.log(`[Feedbacker] Fixing gradient text for ${element.tagName}.${element.className}, using color: ${extractedColor}`);
+    
+    // Apply temporary solid color and disable problematic CSS
     element.style.setProperty('-webkit-text-fill-color', extractedColor, 'important');
     element.style.setProperty('color', extractedColor, 'important');
+    element.style.setProperty('background-clip', 'border-box', 'important');
+    element.style.setProperty('-webkit-background-clip', 'border-box', 'important');
+    element.style.setProperty('animation', 'none', 'important');
+    element.style.setProperty('opacity', '1', 'important');
+    element.style.setProperty('transform', 'none', 'important');
   });
   
   // Return restore function
   return () => {
     originalStyles.forEach((styles, element) => {
+      // Restore or remove each property
       if (styles.webkitTextFillColor) {
         element.style.webkitTextFillColor = styles.webkitTextFillColor;
       } else {
@@ -116,6 +141,36 @@ function temporarilyFixGradientText(elements: HTMLElement[]): () => void {
         element.style.color = styles.color;
       } else {
         element.style.removeProperty('color');
+      }
+      
+      if (styles.backgroundClip) {
+        element.style.backgroundClip = styles.backgroundClip;
+      } else {
+        element.style.removeProperty('background-clip');
+      }
+      
+      if (styles.webkitBackgroundClip) {
+        element.style.webkitBackgroundClip = styles.webkitBackgroundClip;
+      } else {
+        element.style.removeProperty('-webkit-background-clip');
+      }
+      
+      if (styles.animation) {
+        element.style.animation = styles.animation;
+      } else {
+        element.style.removeProperty('animation');
+      }
+      
+      if (styles.opacity) {
+        element.style.opacity = styles.opacity;
+      } else {
+        element.style.removeProperty('opacity');
+      }
+      
+      if (styles.transform) {
+        element.style.transform = styles.transform;
+      } else {
+        element.style.removeProperty('transform');
       }
     });
   };
@@ -222,6 +277,9 @@ export async function captureElementScreenshot(
     if (gradientTextElements.length > 0) {
       console.log('[Feedbacker] Found gradient text elements, applying temporary fix');
       restoreGradientText = temporarilyFixGradientText(gradientTextElements);
+      
+      // Small delay to ensure browser has rendered the changes
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     // First attempt with CORS enabled and no taint allowance
