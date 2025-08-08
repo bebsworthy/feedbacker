@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { useFeedback } from '@feedbacker/core';
 import { Feedback } from '@feedbacker/core';
+import { highlightJSON, highlightMarkdown } from './syntaxHighlight';
 
 interface FeedbackPanelProps {
   className?: string;
@@ -15,8 +16,8 @@ export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ className }) => {
   
   // Use the feedback hook properly
   const feedbackData = useFeedback();
-  const feedbackList = feedbackData?.feedbackList || [];
-  const clearAllFeedback = feedbackData?.clearAllFeedback;
+  const feedbackList = feedbackData?.feedbacks || [];
+  const clearAllFeedback = feedbackData?.clearAll;
 
   // No need for separate state - use feedbackList directly
 
@@ -96,12 +97,12 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
       <div className="feedback-panel-content">
         {activeTab === 'json' ? (
           <pre className="code-display json-display">
-            <code>{formatJSON(feedbackList)}</code>
+            <code dangerouslySetInnerHTML={{ __html: highlightJSON(formatJSON(feedbackList)) }} />
           </pre>
         ) : (
-          <div className="markdown-display">
-            <pre>{formatMarkdown(feedbackList)}</pre>
-          </div>
+          <pre className="code-display markdown-display">
+            <code dangerouslySetInnerHTML={{ __html: highlightMarkdown(formatMarkdown(feedbackList)) }} />
+          </pre>
         )}
       </div>
 

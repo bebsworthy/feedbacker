@@ -503,7 +503,6 @@ function App() {
                 className="btn btn-secondary"
                 onClick={() => {
                   emit('selection:start', {});
-                  setFeedbackActive(true);
                 }}
               >
                 Try Demo Again

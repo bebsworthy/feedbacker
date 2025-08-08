@@ -19,6 +19,7 @@ export function useComponentDetection(): UseComponentDetectionResult {
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const idleCallbackId = useRef<number | null>(null);
   const lastDetectedElement = useRef<HTMLElement | null>(null);
+  const lastMousePosition = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize detection chain on first use
   const initializeDetectionChain = useCallback(() => {
@@ -91,8 +92,10 @@ export function useComponentDetection(): UseComponentDetectionResult {
   // Throttled mouse move handler for better performance (Requirement 10.3)
   const handleMouseMove = useMemo(
     () => throttle((event: MouseEvent) => {
+      // Always track mouse position, even when not active
+      lastMousePosition.current = { x: event.clientX, y: event.clientY };
+      
       if (!isActiveRef.current) {
-        console.log('[useComponentDetection] Mouse move but not active');
         return;
       }
 
@@ -249,8 +252,35 @@ export function useComponentDetection(): UseComponentDetectionResult {
     setIsActive(true);
     // Cursor styling
     document.body.style.cursor = 'crosshair';
-  }, [isActive]);
+    
+    // Immediately detect element under current mouse position
+    if (lastMousePosition.current) {
+      const elementUnderMouse = document.elementFromPoint(
+        lastMousePosition.current.x, 
+        lastMousePosition.current.y
+      ) as HTMLElement;
+      
+      if (elementUnderMouse) {
+        console.log('[useComponentDetection] Immediately detecting element under mouse:', elementUnderMouse.tagName);
+        detectComponentOptimized(elementUnderMouse);
+      }
+    }
+  }, [isActive, detectComponentOptimized]);
 
+  // Setup global mouse position tracking
+  useEffect(() => {
+    // Track mouse position globally (even when not active)
+    const globalMouseTracker = (event: MouseEvent) => {
+      lastMousePosition.current = { x: event.clientX, y: event.clientY };
+    };
+    
+    document.addEventListener('mousemove', globalMouseTracker);
+    
+    return () => {
+      document.removeEventListener('mousemove', globalMouseTracker);
+    };
+  }, []);
+  
   // Setup and cleanup event listeners when active state changes
   useEffect(() => {
     if (isActive) {
