@@ -7,13 +7,17 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ComponentInfo, Feedback, Draft } from '../types';
 import { FAB } from './FAB/FAB';
 import { FeedbackModal } from './FeedbackModal/FeedbackModal';
-import { ManagerSidebar } from './ManagerSidebar/ManagerSidebar';
+import { FeedbackManager } from './ManagerSidebar/FeedbackManager';
 import { ComponentOverlay } from './ComponentOverlay';
+import { ExportDialog } from './ManagerSidebar/ExportDialog';
+import { ConfirmDialog } from './ManagerSidebar/ConfirmDialog';
 import { useFeedbackStorage } from '../hooks/useFeedbackStorage';
 import { useFeedbackEvent } from '../hooks/useFeedbackEvent';
+import { useFeedback } from '../hooks/useFeedback';
 import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { useFeedbackContext } from '../context/FeedbackContext';
 import { captureScreenshotWithFallback as captureScreenshot } from '../utils/screenshot';
+import { captureHtmlSnippet, formatHtmlSnippet } from '../utils/htmlSnippet';
 
 interface FeedbackProviderInnerProps {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -36,6 +40,8 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
   
   // Manager sidebar state
   const [isManagerOpen, setIsManagerOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
   
   // Context hooks (these require FeedbackContextProvider)
   const { 
@@ -51,6 +57,9 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
   // Storage synchronization
   useFeedbackStorage(storageKey);
   
+  // Export functionality
+  const { exportFeedback } = useFeedback();
+  
   // Component detection
   const { activate, deactivate, selectedComponent } = useComponentDetection();
   
@@ -60,15 +69,24 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
   // Handle component selection
   useEffect(() => {
     if (selectedComponent && selectedComponent.element) {
+      // Capture HTML snippet from the selected element
+      const htmlSnippet = formatHtmlSnippet(captureHtmlSnippet(selectedComponent.element));
+      
+      // Add HTML snippet to component info
+      const componentInfoWithHtml = {
+        ...selectedComponent,
+        htmlSnippet
+      };
+      
       // Capture screenshot when component is selected
       captureScreenshot(selectedComponent.element).then(result => {
-        setModalComponentInfo(selectedComponent);
+        setModalComponentInfo(componentInfoWithHtml);
         setModalScreenshot(result.dataUrl);
         setIsModalOpen(true);
         deactivate();
       }).catch(error => {
         console.error('[Feedbacker] Screenshot capture failed:', error);
-        setModalComponentInfo(selectedComponent);
+        setModalComponentInfo(componentInfoWithHtml);
         setModalScreenshot(null);
         setIsModalOpen(true);
         deactivate();
@@ -99,10 +117,22 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
       }
     });
 
+    const unsubscribeExportOpen = on('export:open', () => {
+      console.log('[FeedbackProvider] Opening export dialog');
+      setIsExportDialogOpen(true);
+    });
+
+    const unsubscribeClearConfirm = on('clearall:confirm', () => {
+      console.log('[FeedbackProvider] Opening clear all confirmation');
+      setIsConfirmClearOpen(true);
+    });
+
     return () => {
       unsubscribeSelectionStart();
       unsubscribeManagerOpen();
       unsubscribeDraftRestore();
+      unsubscribeExportOpen();
+      unsubscribeClearConfirm();
     };
   }, [on, activate, draft]);
 
@@ -118,7 +148,8 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
           ...existingFeedback,
           comment,
           screenshot: screenshot || existingFeedback.screenshot,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          htmlSnippet: (modalComponentInfo as any).htmlSnippet || existingFeedback.htmlSnippet
         };
         // Delete old and add updated
         deleteFeedback(editingFeedbackId);
@@ -145,7 +176,8 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
             width: screen.width,
             height: screen.height
           }
-        }
+        },
+        htmlSnippet: (modalComponentInfo as any).htmlSnippet || undefined
       };
       addFeedback(feedback);
       onFeedbackSubmit?.(feedback);
@@ -186,16 +218,47 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
     setIsManagerOpen(false);
   }, []);
 
-  const handleManagerExport = useCallback(async (format: 'markdown' | 'zip') => {
-    emit('feedback:export', { format, feedbacks });
-  }, [emit, feedbacks]);
+  const handleManagerExport = useCallback(async (format: 'markdown' | 'zip', feedbacksToExport?: Feedback[]) => {
+    try {
+      // If specific feedbacks provided, export those; otherwise export all
+      const targetFeedbacks = feedbacksToExport || feedbacks;
+      
+      if (format === 'markdown') {
+        const { MarkdownExporter } = await import('../export/MarkdownExporter');
+        const markdown = MarkdownExporter.exportAsMarkdown(targetFeedbacks);
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `feedback-${new Date().toISOString().split('T')[0]}.md`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        const { ZipExporter } = await import('../export/ZipExporter');
+        const zipBlob = await ZipExporter.exportAsZip(targetFeedbacks);
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `feedback-${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('[Feedbacker] Export failed:', error);
+    }
+  }, [feedbacks]);
 
   const handleEditFeedback = useCallback((feedback: Feedback) => {
     // Open modal with existing feedback data for editing
     setModalComponentInfo({
       name: feedback.componentName,
       path: feedback.componentPath,
-      element: document.body // Placeholder element
+      element: document.body, // Placeholder element
+      htmlSnippet: feedback.htmlSnippet
     });
     setModalScreenshot(feedback.screenshot || null);
     setModalInitialComment(feedback.comment);
@@ -223,8 +286,8 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
         onSaveDraft={handleModalSaveDraft}
       />
       
-      {/* Manager sidebar */}
-      <ManagerSidebar
+      {/* Feedback Manager - Full screen */}
+      <FeedbackManager
         isOpen={isManagerOpen}
         feedbacks={feedbacks}
         onClose={handleManagerClose}
@@ -232,6 +295,31 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
         onEditFeedback={handleEditFeedback}
         onClearAll={clearAllFeedbacks}
         onExport={handleManagerExport}
+      />
+      
+      {/* Export dialog */}
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onExport={async (format) => {
+          await handleManagerExport(format);
+          setIsExportDialogOpen(false);
+        }}
+        onCancel={() => setIsExportDialogOpen(false)}
+      />
+      
+      {/* Clear all confirmation */}
+      <ConfirmDialog
+        isOpen={isConfirmClearOpen}
+        title="Clear All Feedback"
+        message="Are you sure you want to delete all feedback? This action cannot be undone."
+        confirmLabel="Clear All"
+        cancelLabel="Cancel"
+        isDanger={true}
+        onConfirm={() => {
+          clearAllFeedbacks();
+          setIsConfirmClearOpen(false);
+        }}
+        onCancel={() => setIsConfirmClearOpen(false)}
       />
       
       {/* Floating Action Button */}

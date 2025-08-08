@@ -86,11 +86,7 @@ export class ZipExporter {
 
     let markdown = this.generateHeaderWithImages(sortedFeedbacks);
     markdown += '\n\n';
-    markdown += this.generateTableOfContents(sortedFeedbacks);
-    markdown += '\n\n';
     markdown += this.generateFeedbackItemsWithImages(sortedFeedbacks);
-    markdown += '\n\n';
-    markdown += this.generateFooterWithImages();
 
     return markdown;
   }
@@ -99,7 +95,7 @@ export class ZipExporter {
    * Generate header for ZIP markdown
    */
   private static generateHeaderWithImages(feedbacks: Feedback[]): string {
-    const timestamp = new Date().toISOString().split('T')[0];
+    const timestamp = new Date().toISOString();
     const totalFeedback = feedbacks.length;
     const componentsCount = new Set(feedbacks.map(f => f.componentName)).size;
     const imagesCount = feedbacks.filter(f => f.screenshot).length;
@@ -111,26 +107,10 @@ export class ZipExporter {
       '## Summary',
       `- **Total feedback items:** ${totalFeedback}`,
       `- **Components with feedback:** ${componentsCount}`,
-      `- **Screenshots included:** ${imagesCount}`,
-      `- **Export format:** Full ZIP with images`
+      `- **Screenshots included:** ${imagesCount}`
     ].join('\n');
   }
 
-  /**
-   * Generate table of contents
-   */
-  private static generateTableOfContents(feedbacks: Feedback[]): string {
-    let toc = '## Table of Contents\n';
-    
-    feedbacks.forEach((feedback, index) => {
-      const anchor = this.generateAnchor(feedback.componentName, feedback.id);
-      const timestamp = new Date(feedback.timestamp).toLocaleDateString();
-      const hasImage = feedback.screenshot ? ' 📷' : '';
-      toc += `${index + 1}. [${feedback.componentName}](#${anchor}) - ${timestamp}${hasImage}\n`;
-    });
-
-    return toc;
-  }
 
   /**
    * Generate feedback items with image references
@@ -145,19 +125,22 @@ export class ZipExporter {
    * Generate single feedback item with image references
    */
   private static generateFeedbackItemWithImages(feedback: Feedback, index: number): string {
-    const anchor = this.generateAnchor(feedback.componentName, feedback.id);
-    const timestamp = new Date(feedback.timestamp).toLocaleString();
+    const timestamp = feedback.timestamp; // Already in ISO format
     
-    let item = `## ${index}. ${feedback.componentName} {#${anchor}}\n\n`;
+    let item = `## ${index}. ${feedback.componentName}\n\n`;
     
-    // Screenshot (if available)
+    // Screenshot FIRST (if available)
     if (feedback.screenshot) {
       const imageName = this.generateImageName(feedback);
       item += `![Screenshot of ${feedback.componentName}](images/${imageName})\n\n`;
     }
     
+    // Feedback Comment
+    item += '### Feedback\n';
+    item += this.formatComment(feedback.comment);
+    
     // Component Information
-    item += '### Component Information\n';
+    item += '\n\n### Component Information\n';
     item += `- **Component:** ${feedback.componentName}\n`;
     item += `- **Path:** ${feedback.componentPath.join(' > ')}\n`;
     item += `- **URL:** ${feedback.url}\n`;
@@ -165,13 +148,19 @@ export class ZipExporter {
     
     // Browser Information
     item += '\n### Browser Information\n';
-    item += `- **Platform:** ${feedback.browserInfo.platform}\n`;
+    if (feedback.browserInfo.platform) {
+      item += `- **Platform:** ${feedback.browserInfo.platform}\n`;
+    }
     item += `- **Viewport:** ${feedback.browserInfo.viewport.width} x ${feedback.browserInfo.viewport.height}\n`;
     item += `- **User Agent:** ${feedback.browserInfo.userAgent}\n`;
     
-    // Feedback Comment
-    item += '\n### Feedback\n';
-    item += this.formatComment(feedback.comment);
+    // HTML Snippet (if available)
+    if (feedback.htmlSnippet) {
+      item += '\n### HTML Snippet\n';
+      item += '```html\n';
+      item += feedback.htmlSnippet;
+      item += '\n```\n';
+    }
     
     // Metadata (if available)
     if (feedback.metadata && Object.keys(feedback.metadata).length > 0) {
@@ -185,7 +174,7 @@ export class ZipExporter {
   }
 
   /**
-   * Generate JSON data with complete information
+   * Generate JSON data with image paths instead of embedded data
    */
   private static generateJsonData(feedbacks: Feedback[]): any {
     return {
@@ -197,12 +186,22 @@ export class ZipExporter {
         totalItems: feedbacks.length,
         itemsWithScreenshots: feedbacks.filter(f => f.screenshot).length
       },
-      feedbacks: feedbacks.map(feedback => ({
-        ...feedback,
-        // Keep the base64 screenshot data in JSON for programmatic access
-        screenshot: feedback.screenshot || null,
-        exportedImagePath: feedback.screenshot ? `images/${this.generateImageName(feedback)}` : null
-      }))
+      feedbacks: feedbacks.map(feedback => {
+        const result: any = {
+          ...feedback,
+          screenshot: undefined  // Remove embedded screenshot
+        };
+        
+        // Add exportedImagePath if screenshot exists
+        if (feedback.screenshot) {
+          result.exportedImagePath = `images/${this.generateImageName(feedback)}`;
+        }
+        
+        // Remove the screenshot property entirely
+        delete result.screenshot;
+        
+        return result;
+      })
     };
   }
 
@@ -297,27 +296,6 @@ export class ZipExporter {
     return `${base}-${shortId}`;
   }
 
-  /**
-   * Generate footer for ZIP markdown
-   */
-  private static generateFooterWithImages(): string {
-    return [
-      '## Export Information',
-      '',
-      `- **Generated by:** Feedbacker Library`,
-      `- **Generated at:** ${new Date().toISOString()}`,
-      `- **Format:** Full ZIP Export`,
-      '',
-      '### Contents',
-      '- `feedback.md` - This markdown report with image references',
-      '- `feedback.json` - Complete feedback data in JSON format',
-      '- `images/` - All screenshots as individual image files',
-      '',
-      '---',
-      '',
-      '*This report was generated automatically from collected feedback data. All images are included as separate files in the images/ folder.*'
-    ].join('\n');
-  }
 
   /**
    * Generate ZIP filename

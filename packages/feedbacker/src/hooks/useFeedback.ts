@@ -9,9 +9,6 @@ import { useFeedbackContext } from '../context/FeedbackContext';
 import { MarkdownExporter } from '../export/MarkdownExporter';
 import { ZipExporter } from '../export/ZipExporter';
 
-const markdownExporter = new MarkdownExporter();
-const zipExporter = new ZipExporter();
-
 export const useFeedback = (): UseFeedbackResult => {
   const {
     feedbacks,
@@ -56,7 +53,7 @@ export const useFeedback = (): UseFeedbackResult => {
       }
 
       if (options.format === 'markdown') {
-        const markdown = markdownExporter.exportAsMarkdown(feedbacks);
+        const markdown = MarkdownExporter.exportAsMarkdown(feedbacks);
         
         // Create and download the markdown file
         const blob = new Blob([markdown], { type: 'text/markdown' });
@@ -70,7 +67,7 @@ export const useFeedback = (): UseFeedbackResult => {
         URL.revokeObjectURL(url);
         
       } else if (options.format === 'zip') {
-        const zipBlob = await zipExporter.exportAsZip(feedbacks);
+        const zipBlob = await ZipExporter.exportAsZip(feedbacks);
         
         // Create and download the zip file
         const url = URL.createObjectURL(zipBlob);

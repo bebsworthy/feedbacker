@@ -12,6 +12,7 @@ export interface Feedback {
   url: string;
   timestamp: string;
   browserInfo: BrowserInfo;
+  htmlSnippet?: string | undefined;
   metadata?: Record<string, any> | undefined;
 }
 
@@ -27,6 +28,7 @@ export interface ComponentInfo {
   name: string;
   path: string[];  
   element: HTMLElement;
+  htmlSnippet?: string | undefined;
   props?: Record<string, any> | undefined;
   fiber?: any | undefined; // ReactFiber type - will be properly typed when React internals are available
 }

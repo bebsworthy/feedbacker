@@ -8,7 +8,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useFeedbackContext } from '../../context/FeedbackContext';
 import { useFeedbackEvent } from '../../hooks/useFeedbackEvent';
 import { FABAction } from './FABAction';
-import { MegaphoneIcon, CloseIcon, MessageIcon, ListIcon, DraftIndicator } from '../../icons';
+import { MegaphoneIcon, CloseIcon, MessageIcon, ListIcon, ArrowDownTrayIcon, TrashIcon, DraftIndicator } from '../../icons';
 import { debounce } from '../../utils/performance';
 
 interface FABProps {
@@ -94,6 +94,18 @@ export const FAB: React.FC<FABProps> = React.memo(({
     emit('draft:restore', {});
   }, [emit]);
 
+  const handleExport = useCallback(() => {
+    console.log('[Feedbacker] Export action triggered');
+    setIsExpanded(false);
+    emit('export:open', {});
+  }, [emit]);
+
+  const handleClearAll = useCallback(() => {
+    console.log('[Feedbacker] Clear all action triggered');
+    setIsExpanded(false);
+    emit('clearall:confirm', {});
+  }, [emit]);
+
   // Memoized position styles calculation
   const positionStyles = useMemo(() => {
     const baseStyles = {
@@ -119,22 +131,45 @@ export const FAB: React.FC<FABProps> = React.memo(({
   }, [position]);
 
   // Memoized action list to prevent unnecessary re-renders
-  const actionList = useMemo(() => [
-    {
-      id: "new-feedback",
-      label: "New feedback",
-      icon: <MessageIcon size={20} />,
-      onClick: handleNewFeedback,
-      badgeCount: undefined
-    },
-    {
-      id: "show-manager",
-      label: "Show manager",
-      icon: <ListIcon size={20} />,
-      onClick: handleShowManager,
-      badgeCount: feedbacks.length
+  const actionList = useMemo(() => {
+    const actions = [
+      {
+        id: "new-feedback",
+        label: "New feedback",
+        icon: <MessageIcon size={20} />,
+        onClick: handleNewFeedback,
+        badgeCount: undefined
+      },
+      {
+        id: "show-manager",
+        label: "Show manager",
+        icon: <ListIcon size={20} />,
+        onClick: handleShowManager,
+        badgeCount: feedbacks.length
+      }
+    ];
+
+    // Only show export if there are feedbacks
+    if (feedbacks.length > 0) {
+      actions.push({
+        id: "export",
+        label: "Export feedback",
+        icon: <ArrowDownTrayIcon size={20} />,
+        onClick: handleExport,
+        badgeCount: undefined
+      });
+      
+      actions.push({
+        id: "clear-all",
+        label: "Clear all",
+        icon: <TrashIcon size={20} />,
+        onClick: handleClearAll,
+        badgeCount: undefined
+      });
     }
-  ], [handleNewFeedback, handleShowManager, feedbacks.length]);
+
+    return actions;
+  }, [handleNewFeedback, handleShowManager, handleExport, handleClearAll, feedbacks.length]);
 
   // Zero impact when inactive - early return (Requirement 10.4)
   if (!isActive) {
