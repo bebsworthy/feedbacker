@@ -18,6 +18,7 @@ export function sanitizeFeedback(feedback: Feedback): Feedback {
     url: sanitizeUrl(feedback.url),
     timestamp: sanitizeTimestamp(feedback.timestamp),
     browserInfo: sanitizeBrowserInfo(feedback.browserInfo),
+    htmlSnippet: feedback.htmlSnippet ? sanitizeString(feedback.htmlSnippet, 5000) : undefined,
     metadata: feedback.metadata ? sanitizeMetadata(feedback.metadata) : undefined
   };
 }
@@ -43,6 +44,7 @@ export function sanitizeComponentInfo(componentInfo: ComponentInfo): ComponentIn
     name: sanitizeString(componentInfo.name),
     path: sanitizeArray(componentInfo.path, sanitizeString),
     element: componentInfo.element, // DOM elements are not sanitized
+    htmlSnippet: componentInfo.htmlSnippet ? sanitizeString(componentInfo.htmlSnippet, 5000) : undefined,
     props: componentInfo.props ? sanitizeProps(componentInfo.props) : undefined,
     fiber: componentInfo.fiber // React fiber is not sanitized
   };

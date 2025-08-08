@@ -6,7 +6,7 @@
 import { Feedback, Draft, StorageManager as IStorageManager, StorageInfo, FeedbackStore } from '../types';
 import { migrateData } from './migrations';
 import { validateStorageData } from '../utils/validation';
-import { sanitizeFeedback } from '../utils/sanitize';
+import { sanitizeFeedback, sanitizeDraft } from '../utils/sanitize';
 
 // Re-export the interfaces from types for convenience
 export type { FeedbackStore, StorageInfo, StorageManager } from '../types';
@@ -91,7 +91,8 @@ export class LocalStorageManager implements IStorageManager {
   async saveDraft(draft: Draft): Promise<void> {
     try {
       const store = await this.getStore();
-      store.draft = draft;
+      // Sanitize the draft data before saving
+      store.draft = sanitizeDraft(draft);
       await this.setStore(store);
     } catch (error) {
       console.error('[Feedbacker] Failed to save draft:', error);
