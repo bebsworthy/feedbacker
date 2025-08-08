@@ -10,7 +10,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ExclamationTriangleIcon } from '../../icons';
-import styles from '../../styles/feedbacker.module.css';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -75,11 +74,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles['feedbacker-root']}>
+    <div className="feedbacker-root">
       {/* Backdrop */}
       <div 
-        className={`${styles['feedbacker-modal-backdrop']} ${styles['visible']}`}
-        style={{ zIndex: 'calc(var(--feedbacker-z-sidebar) + 1)' }}
+        className="feedbacker-modal-backdrop visible"
+        style={{ zIndex: 99999 }}
         onClick={onCancel}
       />
       
@@ -96,27 +95,27 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 'calc(var(--feedbacker-z-sidebar) + 2)',
+          zIndex: 100000,
           
-          background: 'var(--feedbacker-bg-primary)',
-          border: '1px solid var(--feedbacker-border-primary)',
-          borderRadius: 'var(--feedbacker-radius-lg)',
-          boxShadow: 'var(--feedbacker-shadow-xl)',
+          background: 'white',
+          border: '1px solid #e5e7eb',
+          borderRadius: '12px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
           
           width: '90vw',
           maxWidth: '400px',
-          padding: 'var(--feedbacker-space-6)',
+          padding: '24px',
           
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--feedbacker-space-4)'
+          gap: '16px'
         }}
       >
         {/* Header with Icon */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--feedbacker-space-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
           {isDanger && (
             <div style={{
-              color: 'var(--feedbacker-error)',
+              color: '#ef4444',
               flexShrink: 0,
               marginTop: '2px'
             }}>
@@ -129,9 +128,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               id="confirm-title"
               style={{
                 margin: 0,
-                fontSize: 'var(--feedbacker-font-size-lg)',
+                fontSize: '18px',
                 fontWeight: 600,
-                color: 'var(--feedbacker-text-primary)'
+                color: '#1f2937'
               }}
             >
               {title}
@@ -140,9 +139,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <p 
               id="confirm-message"
               style={{
-                margin: 'var(--feedbacker-space-2) 0 0 0',
-                fontSize: 'var(--feedbacker-font-size-base)',
-                color: 'var(--feedbacker-text-secondary)',
+                margin: '8px 0 0 0',
+                fontSize: '14px',
+                color: '#6b7280',
                 lineHeight: 1.5
               }}
             >
@@ -155,11 +154,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <div style={{ 
           display: 'flex', 
           justifyContent: 'flex-end', 
-          gap: 'var(--feedbacker-space-2)' 
+          gap: '8px' 
         }}>
           <button
             ref={cancelButtonRef}
-            className={`${styles['feedbacker-button']} ${styles['feedbacker-button-secondary']}`}
+            className="feedbacker-btn feedbacker-btn-secondary"
             onClick={onCancel}
             type="button"
           >
@@ -167,10 +166,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </button>
           
           <button
-            className={`${styles['feedbacker-button']} ${
+            className={`feedbacker-btn ${
               isDanger 
-                ? styles['feedbacker-button-danger'] 
-                : styles['feedbacker-button-primary']
+                ? 'feedbacker-btn-danger' 
+                : 'feedbacker-btn-primary'
             }`}
             onClick={onConfirm}
             type="button"

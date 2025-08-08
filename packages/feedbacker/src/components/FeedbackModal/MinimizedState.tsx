@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { ComponentInfo } from '../../types';
-import styles from '../../styles/feedbacker.module.css';
 
 interface MinimizedStateProps {
   componentInfo: ComponentInfo | null;
@@ -27,10 +26,28 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
   const componentName = componentInfo?.name || 'Unknown Component';
 
   return (
-    <div className={styles['minimized-feedback']}>
+    <div className="feedbacker-modal-minimized" style={{
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      background: 'white',
+      borderRadius: '8px',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      zIndex: 9999
+    }}>
       {/* Main minimized indicator */}
       <div 
-        className={styles['minimized-indicator']}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          transition: 'transform 0.2s ease'
+        }}
         onClick={onRestore}
         role="button"
         tabIndex={0}
@@ -44,7 +61,7 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
       >
         {/* Draft status indicator */}
         {isDirty && (
-          <div className={styles['minimized-draft-indicator']}>
+          <div style={{ position: 'absolute', top: '-4px', right: '-4px' }}>
             <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
               <circle cx="4" cy="4" r="4" fill="orange" />
             </svg>
@@ -52,7 +69,7 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
         )}
 
         {/* Component icon */}
-        <div className={styles['minimized-icon']}>
+        <div style={{ color: '#3b82f6', flexShrink: 0 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path 
               d="M2 3a1 1 0 011-1h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" 
@@ -71,7 +88,7 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
 
         {/* Screenshot indicator */}
         {hasScreenshot && (
-          <div className={styles['minimized-screenshot-indicator']}>
+          <div style={{ color: '#6b7280', flexShrink: 0 }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path 
                 d="M1 9V3a1 1 0 011-1h8a1 1 0 011 1v6a1 1 0 01-1 1H2a1 1 0 01-1-1z" 
@@ -86,13 +103,13 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
         )}
 
         {/* Component name */}
-        <span className={styles['minimized-text']}>
+        <span style={{ fontSize: '14px', fontWeight: 500, color: '#1f2937' }}>
           {componentName}
         </span>
 
         {/* Restore icon */}
         <svg 
-          className={styles['minimized-restore-icon']} 
+          style={{ color: '#6b7280', marginLeft: '8px' }} 
           width="12" 
           height="12" 
           viewBox="0 0 12 12" 
@@ -111,7 +128,19 @@ export const MinimizedState: React.FC<MinimizedStateProps> = ({
       {/* Discard button */}
       <button
         type="button"
-        className={styles['minimized-discard']}
+        style={{
+          padding: '8px',
+          background: 'transparent',
+          border: 'none',
+          color: '#6b7280',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'color 0.2s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+        onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
         onClick={onDiscard}
         title="Discard draft"
         aria-label="Discard feedback draft"

@@ -4,7 +4,7 @@
  */
 
 // Import base styles - this ensures CSS gets processed by Rollup
-import './styles/feedbacker.module.css';
+import './styles/feedbacker.css';
 
 // Main provider component
 export { FeedbackProvider } from './components/FeedbackProvider';

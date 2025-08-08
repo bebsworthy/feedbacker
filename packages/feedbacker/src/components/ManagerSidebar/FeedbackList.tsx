@@ -19,7 +19,6 @@ import {
   ChevronUpIcon,
   ComputerDesktopIcon 
 } from '../../icons';
-import styles from '../../styles/feedbacker.module.css';
 
 interface FeedbackListProps {
   feedbacks: Feedback[];
@@ -147,7 +146,7 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
           {/* Actions */}
           <div className="feedback-actions">
             <button
-              className={`${styles['feedbacker-button']} ${styles['feedbacker-button-secondary']}`}
+              className="feedbacker-btn feedbacker-btn-secondary"
               onClick={handleEdit}
               title="Edit feedback"
             >
@@ -155,7 +154,7 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
               Edit
             </button>
             <button
-              className={`${styles['feedbacker-button']} ${styles['feedbacker-button-danger']}`}
+              className="feedbacker-btn feedbacker-btn-danger"
               onClick={handleDelete}
               title="Delete feedback"
             >

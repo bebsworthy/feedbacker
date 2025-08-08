@@ -53,13 +53,6 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Update comment when initialComment prop changes (for editing different feedback)
-  useEffect(() => {
-    setComment(initialComment);
-    initialCommentRef.current = initialComment;
-    setIsDirty(false);
-  }, [initialComment]);
-
   // Track dirty state
   useEffect(() => {
     const hasChanges = comment.trim() !== initialCommentRef.current.trim();
@@ -176,28 +169,19 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const componentName = componentInfo?.name || 'Unknown Component';
   const componentPath = componentInfo?.path?.join(' → ') || '';
 
-  if (!isOpen) return null;
-
-  if (isMinimized) {
-    return (
-      <MinimizedState
-        componentName={componentName}
-        onRestore={onRestore}
-      />
-    );
-  }
-
   return (
     <>
       {/* Modal backdrop */}
       <div 
-        className="feedbacker-modal-backdrop"
+        className="feedbacker-modal-backdrop visible"
         onClick={handleCancel}
+        style={{ display: isOpen && !isMinimized ? 'flex' : 'none' }}
       />
       
       {/* Modal */}
       <div 
         className={`feedbacker-modal ${isMobile ? 'feedbacker-modal-mobile' : ''}`}
+        style={{ display: isOpen && !isMinimized ? 'flex' : 'none' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
@@ -239,7 +223,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             {/* Close button */}
             <button
               type="button"
-              className="feedbacker-btn-icon"
+              className={styles['feedbacker-modal-close']}
               onClick={handleCancel}
               aria-label="Close feedback modal"
             >
@@ -257,36 +241,36 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="feedbacker-modal-body">
+        <div className={styles['feedbacker-modal-body']}>
           {/* Screenshot preview */}
           {screenshot && (
-            <div style={{ marginBottom: '16px' }}>
+            <div className={styles['screenshot-preview']}>
               <img 
                 src={screenshot} 
                 alt="Component screenshot"
-                className="feedbacker-screenshot-preview"
+                className={styles['screenshot-image']}
               />
             </div>
           )}
           
           {/* Comment textarea */}
-          <div className="feedbacker-form-group">
-            <label htmlFor="feedback-comment" className="feedbacker-label">
+          <div className={styles['form-group']}>
+            <label htmlFor="feedback-comment" className={styles['form-label']}>
               Your feedback:
             </label>
             <textarea
               id="feedback-comment"
               ref={textareaRef}
-              className="feedbacker-textarea"
+              className={styles['feedbacker-textarea']}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Describe the issue or suggestion..."
               rows={6}
               aria-describedby="feedback-modal-description"
             />
-            <div id="feedback-modal-description" style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+            <div id="feedback-modal-description" className={styles['form-help']}>
               {isDirty && (
-                <span style={{ color: '#10b981' }}>
+                <span className={styles['draft-indicator']}>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <circle cx="6" cy="6" r="6" fill="orange" />
                   </svg>
@@ -298,17 +282,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="feedbacker-modal-footer">
+        <div className={styles['feedbacker-modal-footer']}>
           <button
             type="button"
-            className={`feedbacker-btn feedbacker-btn-secondary`}
+            className={`${styles['feedbacker-button']} ${styles['feedbacker-button-secondary']}`}
             onClick={handleCancel}
           >
             Cancel
           </button>
           <button
             type="button"
-            className={`feedbacker-btn feedbacker-btn-primary`}
+            className={`${styles['feedbacker-button']} ${styles['feedbacker-button-primary']}`}
             onClick={handleSubmit}
             disabled={!comment.trim()}
           >
@@ -319,25 +303,25 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
       {/* Draft protection warning */}
       {showDraftWarning && (
-        <div className="feedbacker-modal-backdrop visible" onClick={handleDiscardDraft}>
-          <div className="feedbacker-modal" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginBottom: '16px' }}>
+        <div className={styles['draft-warning-overlay']}>
+          <div className={styles['draft-warning-modal']}>
+            <h3 className={styles['draft-warning-title']}>
               You have unsaved changes
             </h3>
-            <p style={{ marginBottom: '24px', color: '#6b7280' }}>
+            <p className={styles['draft-warning-text']}>
               Would you like to keep your draft or discard the changes?
             </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className={styles['draft-warning-actions']}>
               <button
                 type="button"
-                className={`feedbacker-btn feedbacker-btn-danger`}
+                className={`${styles['feedbacker-button']} ${styles['feedbacker-button-danger']}`}
                 onClick={handleDiscardDraft}
               >
                 Discard
               </button>
               <button
                 type="button"
-                className={`feedbacker-btn feedbacker-btn-primary`}
+                className={`${styles['feedbacker-button']} ${styles['feedbacker-button-primary']}`}
                 onClick={handleKeepDraft}
               >
                 Keep Draft

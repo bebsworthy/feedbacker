@@ -1,7 +1,5 @@
 declare const styles: {
-  readonly overlay: string;
-  readonly fab: string;
-  readonly fabButton: string;
+  readonly [key: string]: string;
 };
 
 export default styles;

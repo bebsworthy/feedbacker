@@ -10,7 +10,6 @@
 
 import React, { useEffect, useRef } from 'react';
 import { DocumentTextIcon, ArchiveBoxIcon } from '../../icons';
-import styles from '../../styles/feedbacker.module.css';
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -74,11 +73,11 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles['feedbacker-root']}>
+    <div className="feedbacker-root">
       {/* Backdrop */}
       <div 
-        className={`${styles['feedbacker-modal-backdrop']} ${styles['visible']}`}
-        style={{ zIndex: 'calc(var(--feedbacker-z-sidebar) + 1)' }}
+        className="feedbacker-modal-backdrop visible"
+        style={{ zIndex: 99999 }}
         onClick={onCancel}
       />
       
@@ -94,20 +93,20 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 'calc(var(--feedbacker-z-sidebar) + 2)',
+          zIndex: 100000,
           
-          background: 'var(--feedbacker-bg-primary)',
-          border: '1px solid var(--feedbacker-border-primary)',
-          borderRadius: 'var(--feedbacker-radius-lg)',
-          boxShadow: 'var(--feedbacker-shadow-xl)',
+          background: 'white',
+          border: '1px solid #e5e7eb',
+          borderRadius: '12px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
           
           width: '90vw',
           maxWidth: '500px',
-          padding: 'var(--feedbacker-space-6)',
+          padding: '24px',
           
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--feedbacker-space-4)'
+          gap: '16px'
         }}
       >
         {/* Header */}
@@ -116,25 +115,25 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             id="export-title"
             style={{
               margin: 0,
-              fontSize: 'var(--feedbacker-font-size-lg)',
+              fontSize: '18px',
               fontWeight: 600,
-              color: 'var(--feedbacker-text-primary)'
+              color: '#1f2937'
             }}
           >
             Export Feedback
           </h3>
           
           <p style={{
-            margin: 'var(--feedbacker-space-2) 0 0 0',
-            fontSize: 'var(--feedbacker-font-size-base)',
-            color: 'var(--feedbacker-text-secondary)'
+            margin: '8px 0 0 0',
+            fontSize: '14px',
+            color: '#6b7280'
           }}>
             Export {feedbackCount} feedback item{feedbackCount !== 1 ? 's' : ''} in your preferred format.
           </p>
         </div>
 
         {/* Export Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--feedbacker-space-3)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Markdown Export */}
           <button
             ref={markdownButtonRef}
@@ -143,30 +142,30 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 'var(--feedbacker-space-3)',
-              padding: 'var(--feedbacker-space-4)',
+              gap: '12px',
+              padding: '16px',
               
-              background: 'var(--feedbacker-bg-secondary)',
-              border: '1px solid var(--feedbacker-border-primary)',
-              borderRadius: 'var(--feedbacker-radius-md)',
+              background: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
               
               cursor: 'pointer',
-              transition: 'all var(--feedbacker-transition-fast)',
+              transition: 'all 0.2s ease',
               textAlign: 'left'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--feedbacker-bg-tertiary)';
-              e.currentTarget.style.borderColor = 'var(--feedbacker-border-focus)';
+              e.currentTarget.style.background = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#3b82f6';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--feedbacker-bg-secondary)';
-              e.currentTarget.style.borderColor = 'var(--feedbacker-border-primary)';
+              e.currentTarget.style.background = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
             }}
           >
             <div style={{ 
               width: '24px', 
               height: '24px', 
-              color: 'var(--feedbacker-primary)',
+              color: '#3b82f6',
               flexShrink: 0,
               marginTop: '2px'
             }}>
@@ -176,16 +175,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <div>
               <h4 style={{
                 margin: 0,
-                fontSize: 'var(--feedbacker-font-size-base)',
+                fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--feedbacker-text-primary)'
+                color: '#1f2937'
               }}>
                 Text Only (.md)
               </h4>
               <p style={{
-                margin: 'var(--feedbacker-space-1) 0 0 0',
-                fontSize: 'var(--feedbacker-font-size-sm)',
-                color: 'var(--feedbacker-text-secondary)',
+                margin: '4px 0 0 0',
+                fontSize: '12px',
+                color: '#6b7280',
                 lineHeight: 1.4
               }}>
                 Markdown file with feedback comments and metadata. Images are excluded to keep file size small.
@@ -200,30 +199,30 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 'var(--feedbacker-space-3)',
-              padding: 'var(--feedbacker-space-4)',
+              gap: '12px',
+              padding: '16px',
               
-              background: 'var(--feedbacker-bg-secondary)',
-              border: '1px solid var(--feedbacker-border-primary)',
-              borderRadius: 'var(--feedbacker-radius-md)',
+              background: '#f9fafb',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
               
               cursor: 'pointer',
-              transition: 'all var(--feedbacker-transition-fast)',
+              transition: 'all 0.2s ease',
               textAlign: 'left'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--feedbacker-bg-tertiary)';
-              e.currentTarget.style.borderColor = 'var(--feedbacker-border-focus)';
+              e.currentTarget.style.background = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#3b82f6';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--feedbacker-bg-secondary)';
-              e.currentTarget.style.borderColor = 'var(--feedbacker-border-primary)';
+              e.currentTarget.style.background = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
             }}
           >
             <div style={{ 
               width: '24px', 
               height: '24px', 
-              color: 'var(--feedbacker-primary)',
+              color: '#3b82f6',
               flexShrink: 0,
               marginTop: '2px'
             }}>
@@ -233,16 +232,16 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             <div>
               <h4 style={{
                 margin: 0,
-                fontSize: 'var(--feedbacker-font-size-base)',
+                fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--feedbacker-text-primary)'
+                color: '#1f2937'
               }}>
                 Full Export (.zip)
               </h4>
               <p style={{
-                margin: 'var(--feedbacker-space-1) 0 0 0',
-                fontSize: 'var(--feedbacker-font-size-sm)',
-                color: 'var(--feedbacker-text-secondary)',
+                margin: '4px 0 0 0',
+                fontSize: '12px',
+                color: '#6b7280',
                 lineHeight: 1.4
               }}>
                 ZIP archive with feedback.md, feedback.json, and all screenshots in an images/ folder.
@@ -257,7 +256,7 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
           justifyContent: 'flex-end' 
         }}>
           <button
-            className={`${styles['feedbacker-button']} ${styles['feedbacker-button-secondary']}`}
+            className="feedbacker-btn feedbacker-btn-secondary"
             onClick={onCancel}
             type="button"
           >

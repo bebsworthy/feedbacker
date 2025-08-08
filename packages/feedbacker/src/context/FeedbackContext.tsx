@@ -14,6 +14,7 @@ interface FeedbackContextValue {
   
   // Actions
   addFeedback: (feedback: Feedback) => void;
+  loadFeedbackFromStorage: (feedback: Feedback) => void;
   updateFeedback: (id: string, updates: Partial<Feedback>) => void;
   deleteFeedback: (id: string) => void;
   clearAllFeedbacks: () => void;
@@ -45,9 +46,28 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
   const [error, setError] = useState<Error | null>(null);
 
   const addFeedback = useCallback((feedback: Feedback) => {
-    setFeedbacks(prev => [feedback, ...prev]);
+    setFeedbacks(prev => {
+      // Check if feedback with this ID already exists
+      if (prev.some(f => f.id === feedback.id)) {
+        return prev; // Don't add duplicate
+      }
+      return [feedback, ...prev];
+    });
+    // Always trigger onFeedbackSubmit for addFeedback - this is for new feedback
     onFeedbackSubmit?.(feedback);
   }, [onFeedbackSubmit]);
+
+  // Separate method for loading feedback from storage - doesn't trigger onFeedbackSubmit
+  const loadFeedbackFromStorage = useCallback((feedback: Feedback) => {
+    setFeedbacks(prev => {
+      // Check if feedback with this ID already exists
+      if (prev.some(f => f.id === feedback.id)) {
+        return prev; // Don't add duplicate
+      }
+      return [feedback, ...prev];
+    });
+    // Do NOT trigger onFeedbackSubmit - this is existing feedback from storage
+  }, []);
 
   const updateFeedback = useCallback((id: string, updates: Partial<Feedback>) => {
     setFeedbacks(prev => 
@@ -98,6 +118,7 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     
     // Actions
     addFeedback,
+    loadFeedbackFromStorage,
     updateFeedback,
     deleteFeedback,
     clearAllFeedbacks,
@@ -116,6 +137,7 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     isActive,
     error,
     addFeedback,
+    loadFeedbackFromStorage,
     updateFeedback,
     deleteFeedback,
     clearAllFeedbacks,

@@ -5,7 +5,7 @@
  * Requirements: 3.1, 3.2, 3.3, 3.6, 9.2, 9.3, 10.2, 10.3, 10.4
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { UseComponentDetectionResult, ComponentInfo } from '../types';
 import { DetectionChain, DevToolsStrategy, FiberStrategy, HeuristicStrategy, FallbackStrategy } from '../detection';
 import { requestIdleCallback, cancelIdleCallback, debounce, throttle, performanceMonitor } from '../utils/performance';
@@ -50,7 +50,10 @@ export function useComponentDetection(): UseComponentDetectionResult {
     }
   }, [initializeDetectionChain]);
 
-  // Optimized detection function that avoids duplicate work
+  // State for hovering vs selected
+  const [hoveredComponent, setHoveredComponent] = useState<ComponentInfo | null>(null);
+  
+  // Optimized detection function that avoids duplicate work - for hover only
   const detectComponentOptimized = useCallback((element: HTMLElement): void => {
     // Skip if same element as last detection
     if (lastDetectedElement.current === element) {
@@ -68,28 +71,38 @@ export function useComponentDetection(): UseComponentDetectionResult {
     idleCallbackId.current = requestIdleCallback((deadline) => {
       if (deadline.timeRemaining() > 5 || deadline.didTimeout) {
         const componentInfo = detectComponent(element);
-        setSelectedComponent(componentInfo);
+        setHoveredComponent(componentInfo); // Set hovered, not selected!
       } else {
         // Re-schedule if not enough time
         idleCallbackId.current = requestIdleCallback((deadline) => {
           const componentInfo = detectComponent(element);
-          setSelectedComponent(componentInfo);
+          setHoveredComponent(componentInfo); // Set hovered, not selected!
         }, { timeout: 100 });
       }
     }, { timeout: 50 });
   }, [detectComponent]);
 
+  // Create a ref to track active state for event handlers
+  const isActiveRef = useRef(isActive);
+  useEffect(() => {
+    isActiveRef.current = isActive;
+  }, [isActive]);
+
   // Throttled mouse move handler for better performance (Requirement 10.3)
-  const handleMouseMove = useCallback(
-    throttle((event: MouseEvent) => {
-      if (!isActive) return;
+  const handleMouseMove = useMemo(
+    () => throttle((event: MouseEvent) => {
+      if (!isActiveRef.current) {
+        console.log('[useComponentDetection] Mouse move but not active');
+        return;
+      }
 
       const target = event.target as HTMLElement;
       if (target) {
+        console.log('[useComponentDetection] Detecting component for:', target.tagName);
         detectComponentOptimized(target);
       }
     }, 16), // ~60fps
-    [isActive, detectComponentOptimized]
+    [detectComponentOptimized]
   );
 
   // Mobile touch-and-drag interaction handlers
@@ -163,18 +176,23 @@ export function useComponentDetection(): UseComponentDetectionResult {
   }, [isActive, detectComponent]);
 
   // Mouse click handler for desktop selection
-  const handleClick = useCallback((event: MouseEvent) => {
-    if (!isActive) return;
-    
-    const target = event.target as HTMLElement;
-    if (target) {
-      event.preventDefault();
-      event.stopPropagation();
+  const handleClick = useMemo(
+    () => (event: MouseEvent) => {
+      if (!isActiveRef.current) return;
       
-      const componentInfo = detectComponent(target);
-      setSelectedComponent(componentInfo);
-    }
-  }, [isActive, detectComponent]);
+      const target = event.target as HTMLElement;
+      if (target) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const componentInfo = detectComponent(target);
+        setSelectedComponent(componentInfo); // This triggers the modal
+        setHoveredComponent(null); // Clear hover
+        console.log('[useComponentDetection] Component CLICKED and selected:', componentInfo);
+      }
+    }, 
+    [detectComponent]
+  );
 
   // Deactivate component detection - ensures zero impact when inactive (Requirement 10.4)
   const deactivate = useCallback(() => {
@@ -182,6 +200,7 @@ export function useComponentDetection(): UseComponentDetectionResult {
     
     setIsActive(false);
     setSelectedComponent(null);
+    setHoveredComponent(null);
     
     // Cancel any pending idle callbacks
     if (idleCallbackId.current !== null) {
@@ -207,20 +226,28 @@ export function useComponentDetection(): UseComponentDetectionResult {
   }, [isActive, handleMouseMove, handleTouchMove]);
 
   // ESC key handler to exit component selection mode (Requirement 3.6)
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!isActive) return;
-    
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      deactivate();
-    }
-  }, [isActive, deactivate]);
+  const handleKeyDown = useMemo(
+    () => (event: KeyboardEvent) => {
+      if (!isActiveRef.current) return;
+      
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        deactivate();
+      }
+    },
+    [deactivate]
+  );
 
   // Activate component detection
   const activate = useCallback(() => {
-    if (isActive) return;
+    console.log('[useComponentDetection] activate called, current isActive:', isActive);
+    if (isActive) {
+      console.log('[useComponentDetection] Already active, returning');
+      return;
+    }
     
+    console.log('[useComponentDetection] Setting isActive to true');
     setIsActive(true);
     
     // Add event listeners for desktop interaction
@@ -263,6 +290,7 @@ export function useComponentDetection(): UseComponentDetectionResult {
     isActive,
     activate,
     deactivate,
-    selectedComponent
+    selectedComponent,
+    hoveredComponent
   };
 }

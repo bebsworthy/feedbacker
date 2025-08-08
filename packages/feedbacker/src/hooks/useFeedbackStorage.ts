@@ -13,7 +13,7 @@ export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResul
   const [error, setError] = useState<Error | null>(null);
   
   const storageManager = useRef(createStorageManager(storageKey));
-  const { feedbacks, draft, addFeedback, saveDraft, clearDraft, setError: setContextError } = useFeedbackContext();
+  const { feedbacks, draft, addFeedback, loadFeedbackFromStorage, saveDraft, clearDraft, setError: setContextError } = useFeedbackContext();
   
   // Sync with storage on mount and when feedbacks change
   useEffect(() => {
@@ -30,7 +30,8 @@ export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResul
 
         if (mounted) {
           // Only update if we're still mounted
-          storedFeedbacks.forEach(feedback => addFeedback(feedback));
+          // Use loadFeedbackFromStorage to avoid triggering onFeedbackSubmit
+          storedFeedbacks.forEach(feedback => loadFeedbackFromStorage(feedback));
           
           if (storedDraft) {
             saveDraft(storedDraft.componentInfo, storedDraft.comment, storedDraft.screenshot);
@@ -56,7 +57,7 @@ export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResul
     return () => {
       mounted = false;
     };
-  }, [addFeedback, saveDraft, setContextError]);
+  }, [loadFeedbackFromStorage, saveDraft, setContextError]);
 
   // Save feedbacks to storage when they change
   useEffect(() => {
@@ -64,13 +65,18 @@ export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResul
 
     const saveToStorage = async () => {
       try {
-        // Save each feedback that's not already in storage
-        for (const feedback of feedbacks) {
-          await storageManager.current.save(feedback);
+        if (feedbacks.length === 0) {
+          // If feedbacks array is empty, clear storage
+          await storageManager.current.clear();
+        } else {
+          // Save each feedback that's not already in storage
+          for (const feedback of feedbacks) {
+            await storageManager.current.save(feedback);
+          }
+          
+          // Perform cleanup if needed
+          await storageManager.current.cleanup();
         }
-        
-        // Perform cleanup if needed
-        await storageManager.current.cleanup();
         
         setError(null);
       } catch (err) {
@@ -82,9 +88,7 @@ export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResul
     };
 
     // Debounce storage saves to avoid excessive writes
-    if (feedbacks.length > 0) {
-      timeoutId = setTimeout(saveToStorage, 500);
-    }
+    timeoutId = setTimeout(saveToStorage, 500);
 
     return () => {
       if (timeoutId) {

@@ -34,7 +34,8 @@ export interface ComponentInfo {
 export interface BrowserInfo {
   userAgent: string;
   viewport: { width: number; height: number };
-  platform: string;
+  screen?: { width: number; height: number };
+  platform?: string;
 }
 
 export interface FeedbackProviderProps {

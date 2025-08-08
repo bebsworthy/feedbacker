@@ -15,7 +15,7 @@ import { FeedbackList } from './FeedbackList';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExportDialog } from './ExportDialog';
 import { TrashIcon, XMarkIcon, ArrowDownTrayIcon } from '../../icons';
-import styles from '../../styles/feedbacker.module.css';
+import '../../styles/feedbacker.css';
 
 interface ManagerSidebarProps {
   isOpen: boolean;
@@ -138,39 +138,40 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className={styles['feedbacker-root']}>
+    <div className="feedbacker-root">
       {/* Backdrop */}
       <div 
         ref={backdropRef}
-        className={`${styles['feedbacker-modal-backdrop']} ${styles['visible']}`}
-        style={{ zIndex: 'var(--feedbacker-z-sidebar)' }}
+        className="feedbacker-modal-backdrop visible"
+        style={{ zIndex: 99999 }}
       />
       
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className={`${styles['feedbacker-sidebar']} ${isOpen ? styles['open'] : ''}`}
+        className={`feedbacker-sidebar ${isOpen ? 'open' : ''}`}
+        style={{ zIndex: 100000 }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="sidebar-title"
       >
         {/* Header */}
-        <div className={styles['feedbacker-modal-header']}>
+        <div className="feedbacker-modal-header">
           <div>
-            <h2 id="sidebar-title" className={styles['feedbacker-modal-title']}>
+            <h2 id="sidebar-title" className="feedbacker-modal-title">
               Feedback Manager
             </h2>
-            <p className={styles['form-help']}>
+            <p className="form-help" style={{ fontSize: '14px', color: 'var(--fb-text-secondary)', marginTop: '4px' }}>
               {feedbacks.length} feedback item{feedbacks.length !== 1 ? 's' : ''}
             </p>
           </div>
           
-          <div className={styles['modal-header-actions']}>
+          <div className="modal-header-actions" style={{ display: 'flex', gap: '8px' }}>
             {feedbacks.length > 0 && (
               <>
                 {/* Export button */}
                 <button
-                  className={`${styles['feedbacker-button']} ${styles['feedbacker-button-secondary']}`}
+                  className="feedbacker-btn feedbacker-btn-secondary"
                   onClick={handleExportClick}
                   title="Export feedback"
                   aria-label="Export feedback"
@@ -180,7 +181,7 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
                 
                 {/* Clear all button */}
                 <button
-                  className={`${styles['feedbacker-button']} ${styles['feedbacker-button-danger']}`}
+                  className="feedbacker-btn feedbacker-btn-danger"
                   onClick={handleClearAllConfirm}
                   title="Clear all feedback"
                   aria-label="Clear all feedback"
@@ -192,7 +193,7 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
             
             {/* Close button */}
             <button
-              className={styles['feedbacker-modal-close']}
+              className="feedbacker-btn-icon"
               onClick={onClose}
               aria-label="Close sidebar"
             >
@@ -202,7 +203,7 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
         </div>
 
         {/* Body */}
-        <div className={styles['feedbacker-modal-body']}>
+        <div className="feedbacker-modal-body">
           {feedbacks.length === 0 ? (
             <div style={{ 
               textAlign: 'center', 

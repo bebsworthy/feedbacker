@@ -20,7 +20,7 @@ interface OverlayPosition {
 }
 
 export const ComponentOverlay: React.FC = React.memo(() => {
-  const { isActive, selectedComponent } = useComponentDetection();
+  const { isActive, hoveredComponent } = useComponentDetection();
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition | null>(null);
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const animationFrameRef = useRef<number>();
@@ -28,7 +28,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
   // Memoized debounced position update function
   const debouncedUpdatePosition = useMemo(() => {
     return debounce(() => {
-      if (!selectedComponent || !isActive) {
+      if (!hoveredComponent || !isActive) {
         setOverlayPosition(null);
         setIsVisible(false);
         return;
@@ -36,7 +36,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
 
       const endMark = performanceMonitor.mark('overlay-position-update');
       
-      const element = selectedComponent.element;
+      const element = hoveredComponent.element;
       if (!element || !document.body.contains(element)) {
         setOverlayPosition(null);
         setIsVisible(false);
@@ -59,7 +59,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
       setIsVisible(true);
       endMark();
     }, 16, { leading: true, trailing: true }); // ~60fps
-  }, [selectedComponent, isActive]);
+  }, [hoveredComponent, isActive]);
 
   // Throttled scroll handler for better performance
   const throttledScrollHandler = useMemo(() => {
@@ -71,9 +71,9 @@ export const ComponentOverlay: React.FC = React.memo(() => {
     }, 16); // ~60fps
   }, [debouncedUpdatePosition]);
 
-  // Update overlay position based on selected component
+  // Update overlay position based on hovered component
   useEffect(() => {
-    if (selectedComponent && isActive) {
+    if (hoveredComponent && isActive) {
       // Initial position update
       debouncedUpdatePosition();
 
@@ -96,7 +96,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
       debouncedUpdatePosition.cancel();
       throttledScrollHandler.cancel();
     }
-  }, [selectedComponent, isActive, debouncedUpdatePosition, throttledScrollHandler]);
+  }, [hoveredComponent, isActive, debouncedUpdatePosition, throttledScrollHandler]);
 
   // Cleanup animation frame on unmount
   useEffect(() => {
@@ -109,16 +109,21 @@ export const ComponentOverlay: React.FC = React.memo(() => {
 
   // Memoized component info to avoid recalculation
   const componentInfo = useMemo(() => {
-    if (!selectedComponent) return null;
+    if (!hoveredComponent) return null;
     
     return {
-      name: selectedComponent.name || 'Unknown Component',
-      path: selectedComponent.path?.join(' → ') || ''
+      name: hoveredComponent.name || 'Unknown Component',
+      path: hoveredComponent.path?.join(' → ') || ''
     };
-  }, [selectedComponent]);
+  }, [hoveredComponent]);
 
-  // Don't render anything if not active or no component selected - zero impact when inactive
-  if (!isActive || !selectedComponent || !overlayPosition || !isVisible || !componentInfo) {
+  // Don't render anything if not active - zero impact when inactive
+  if (!isActive) {
+    return null;
+  }
+  
+  // If no component hovered yet, still return null
+  if (!hoveredComponent || !overlayPosition) {
     return null;
   }
 
@@ -134,7 +139,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
           width: `${overlayPosition.width}px`,
           height: `${overlayPosition.height}px`,
           pointerEvents: 'none',
-          zIndex: 999999
+          zIndex: 9990
         }}
       >
         {/* Border highlight */}
