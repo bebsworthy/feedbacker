@@ -178,10 +178,12 @@ function temporarilyFixGradientText(elements: HTMLElement[]): () => void {
 
 /**
  * Get the effective background color by walking up the DOM tree
- * This helps ensure text is visible in screenshots
+ * Always starts from the parent to avoid issues with rounded corners
  */
 function getEffectiveBackgroundColor(element: HTMLElement): string | null {
-  let currentElement: HTMLElement | null = element;
+  // Start from the parent element to avoid using the element's own background
+  // This prevents issues with rounded corners showing the wrong color
+  let currentElement: HTMLElement | null = element.parentElement;
   let depth = 0;
   const maxDepth = 20; // Limit traversal to avoid performance issues
   
@@ -196,10 +198,12 @@ function getEffectiveBackgroundColor(element: HTMLElement): string | null {
       if (rgbaMatch) {
         const alpha = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
         if (alpha > 0.1) { // Consider backgrounds with > 10% opacity
+          console.log(`[Feedbacker] Using background color from parent: ${bgColor}`);
           return bgColor;
         }
       } else {
         // RGB or hex color (non-transparent)
+        console.log(`[Feedbacker] Using background color from parent: ${bgColor}`);
         return bgColor;
       }
     }
