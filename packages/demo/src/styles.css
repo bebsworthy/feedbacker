@@ -1350,105 +1350,144 @@ pre {
   color: var(--text-secondary);
 }
 
-/* Syntax Highlighting for JSON */
-.json-display .json-key {
-  color: #e06c75;
-  font-weight: 600;
+/* Prism.js overrides for better theme integration */
+.code-block pre[class*="language-"] {
+  background: transparent;
+  margin: 0;
+  padding: 0;
 }
 
-.json-display .json-string {
+.code-block code[class*="language-"] {
+  background: transparent;
+  text-shadow: none;
+}
+
+/* Light theme adjustments for Prism */
+[data-theme="light"] .code-block .token.comment {
+  color: #5c6370;
+}
+
+[data-theme="light"] .code-block .token.keyword {
+  color: #c678dd;
+}
+
+[data-theme="light"] .code-block .token.string {
   color: #98c379;
 }
 
-.json-display .json-number {
+[data-theme="light"] .code-block .token.function {
+  color: #61afef;
+}
+
+[data-theme="light"] .code-block .token.tag {
+  color: #e06c75;
+}
+
+[data-theme="light"] .code-block .token.attr-name {
   color: #d19a66;
 }
 
-.json-display .json-boolean {
-  color: #56b6c2;
-  font-weight: 600;
+[data-theme="light"] .code-block .token.attr-value {
+  color: #98c379;
 }
 
-.json-display .json-null {
+[data-theme="light"] .code-block .token.punctuation {
+  color: #abb2bf;
+}
+
+/* Terminal syntax highlighting */
+.terminal .token.function {
+  color: #e06c75;
+}
+
+.terminal .token.string {
+  color: #98c379;
+}
+
+.terminal .token.operator {
+  color: #61afef;
+}
+
+/* Prism.js overrides for FeedbackPanel */
+.feedback-panel pre[class*="language-"] {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.feedback-panel code[class*="language-"] {
+  background: transparent;
+  text-shadow: none;
+}
+
+/* JSON syntax highlighting adjustments */
+.json-display .token.property {
+  color: #e06c75;
+}
+
+.json-display .token.string {
+  color: #98c379;
+}
+
+.json-display .token.number {
+  color: #d19a66;
+}
+
+.json-display .token.boolean {
+  color: #56b6c2;
+}
+
+.json-display .token.null {
   color: #abb2bf;
   font-style: italic;
 }
 
-.json-display .json-bracket {
-  color: #61afef;
-  font-weight: 600;
-}
-
-/* Syntax Highlighting for Markdown */
-.markdown-display .md-header {
+/* Markdown syntax highlighting adjustments */
+.markdown-display .token.title {
   color: #e06c75;
   font-weight: bold;
-  display: block;
-  margin: 0.5em 0;
 }
 
-.markdown-display .md-bold {
+.markdown-display .token.bold {
   color: #d19a66;
   font-weight: bold;
 }
 
-.markdown-display .md-list {
-  color: #56b6c2;
-  font-weight: bold;
-}
-
-.markdown-display .md-code {
+.markdown-display .token.code {
   color: #98c379;
   background: rgba(255, 255, 255, 0.1);
   padding: 0.1em 0.3em;
   border-radius: 3px;
 }
 
-.markdown-display .md-code-block {
-  color: #98c379;
-  background: rgba(0, 0, 0, 0.2);
-  display: block;
-  padding: 0.5em;
-  margin: 0.5em 0;
-  border-radius: 4px;
-  border-left: 3px solid #98c379;
-}
-
-.markdown-display .md-link {
+.markdown-display .token.url {
   color: #61afef;
   text-decoration: underline;
 }
 
-.markdown-display .md-hr {
-  color: #5c6370;
-  display: block;
-  margin: 1em 0;
-}
-
-/* Dark theme adjustments */
-[data-theme="dark"] .json-display .json-key {
+/* Dark theme adjustments for FeedbackPanel */
+[data-theme="dark"] .json-display .token.property {
   color: #ff79c6;
 }
 
-[data-theme="dark"] .json-display .json-string {
+[data-theme="dark"] .json-display .token.string {
   color: #50fa7b;
 }
 
-[data-theme="dark"] .json-display .json-number {
+[data-theme="dark"] .json-display .token.number {
   color: #f1fa8c;
 }
 
-[data-theme="dark"] .json-display .json-boolean {
+[data-theme="dark"] .json-display .token.boolean {
   color: #8be9fd;
 }
 
-[data-theme="dark"] .markdown-display .md-header {
+[data-theme="dark"] .markdown-display .token.title {
   color: #ff79c6;
 }
 
-[data-theme="dark"] .markdown-display .md-code-block {
+[data-theme="dark"] .markdown-display .token.code {
   background: rgba(255, 255, 255, 0.05);
-  border-left-color: #50fa7b;
 }
 
 /* Responsive adjustments for playground */

@@ -5,7 +5,9 @@
 import React, { useState } from 'react';
 import { useFeedback } from '@feedbacker/core';
 import { Feedback } from '@feedbacker/core';
-import { highlightJSON, highlightMarkdown } from './syntaxHighlight';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-markdown';
 
 interface FeedbackPanelProps {
   className?: string;
@@ -96,12 +98,22 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
       
       <div className="feedback-panel-content">
         {activeTab === 'json' ? (
-          <pre className="code-display json-display">
-            <code dangerouslySetInnerHTML={{ __html: highlightJSON(formatJSON(feedbackList)) }} />
+          <pre className="code-display json-display language-json">
+            <code 
+              className="language-json"
+              dangerouslySetInnerHTML={{ 
+                __html: Prism.highlight(formatJSON(feedbackList), Prism.languages.json, 'json') 
+              }} 
+            />
           </pre>
         ) : (
-          <pre className="code-display markdown-display">
-            <code dangerouslySetInnerHTML={{ __html: highlightMarkdown(formatMarkdown(feedbackList)) }} />
+          <pre className="code-display markdown-display language-markdown">
+            <code 
+              className="language-markdown"
+              dangerouslySetInnerHTML={{ 
+                __html: Prism.highlight(formatMarkdown(feedbackList), Prism.languages.markdown, 'markdown') 
+              }} 
+            />
           </pre>
         )}
       </div>

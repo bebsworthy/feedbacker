@@ -5,6 +5,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { FeedbackProvider, useFeedbackEvent } from '@feedbacker/core';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-bash';
 import './styles.css';
 
 // Demo Components
@@ -354,8 +358,17 @@ function App() {
                 {copiedCode ? '✓ Copied' : 'Copy'}
               </button>
             </div>
-            <pre>
-              <code>{codeExamples[activeCodeTab]}</code>
+            <pre className="language-jsx">
+              <code 
+                className={activeCodeTab === 'install' ? 'language-bash' : 'language-jsx'}
+                dangerouslySetInnerHTML={{ 
+                  __html: Prism.highlight(
+                    codeExamples[activeCodeTab], 
+                    activeCodeTab === 'install' ? Prism.languages.bash : Prism.languages.jsx,
+                    activeCodeTab === 'install' ? 'bash' : 'jsx'
+                  )
+                }}
+              />
             </pre>
           </div>
         </div>
@@ -491,10 +504,10 @@ function App() {
                 </div>
                 <div className="terminal-content">
                   <div>
-                    <span className="terminal-prompt">$</span> npm install @feedbacker/core
+                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install @feedbacker/core', Prism.languages.bash, 'bash') }} />
                   </div>
                   <div style={{ marginTop: '1rem', opacity: 0.7 }}>
-                    <span className="terminal-prompt">$</span> npm install --save-dev @types/react
+                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install --save-dev @types/react', Prism.languages.bash, 'bash') }} />
                   </div>
                 </div>
               </div>

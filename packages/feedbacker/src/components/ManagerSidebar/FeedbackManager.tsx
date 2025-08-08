@@ -3,7 +3,7 @@
  * Groups feedback by day with card-based layout
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Feedback } from '../../types';
 import { XMarkIcon, ArrowDownTrayIcon, TrashIcon, PencilIcon } from '../../icons';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -43,6 +43,13 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   const [localAutoDownloadFormat, setLocalAutoDownloadFormat] = useState<'markdown' | 'zip'>(
     autoDownload === 'zip' ? 'zip' : 'markdown'
   );
+  
+  // Update local format when autoDownload changes
+  useEffect(() => {
+    if (autoDownload && autoDownload !== true && autoDownload !== false) {
+      setLocalAutoDownloadFormat(autoDownload);
+    }
+  }, [autoDownload]);
   
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;

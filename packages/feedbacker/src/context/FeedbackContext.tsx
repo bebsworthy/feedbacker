@@ -49,34 +49,37 @@ interface FeedbackContextProviderProps {
 export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = ({
   children,
   onFeedbackSubmit,
-  autoCopy: propAutoCopy = false,
-  autoDownload: propAutoDownload = false
+  autoCopy: propAutoCopy,
+  autoDownload: propAutoDownload
 }) => {
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [isActive, setIsActive] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [autoCopy, setAutoCopy] = useState(propAutoCopy);
-  const [autoDownload, setAutoDownload] = useState(propAutoDownload);
-  
-  // Load settings from localStorage on mount
-  useEffect(() => {
+  // Initialize settings from localStorage or props
+  const getInitialSettings = () => {
     try {
       const savedSettings = localStorage.getItem('feedbacker-settings');
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);
-        // Props take precedence over saved settings
-        if (propAutoCopy === undefined && settings.autoCopy !== undefined) {
-          setAutoCopy(settings.autoCopy);
-        }
-        if (propAutoDownload === undefined && settings.autoDownload !== undefined) {
-          setAutoDownload(settings.autoDownload);
-        }
+        return {
+          autoCopy: propAutoCopy !== undefined ? propAutoCopy : (settings.autoCopy || false),
+          autoDownload: propAutoDownload !== undefined ? propAutoDownload : (settings.autoDownload || false)
+        };
       }
     } catch (error) {
-      console.error('[Feedbacker] Failed to load settings:', error);
+      console.error('[Feedbacker] Failed to load initial settings:', error);
     }
-  }, []);
+    return {
+      autoCopy: propAutoCopy || false,
+      autoDownload: propAutoDownload || false
+    };
+  };
+
+  const initialSettings = getInitialSettings();
+  
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [isActive, setIsActive] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [autoCopy, setAutoCopy] = useState(initialSettings.autoCopy);
+  const [autoDownload, setAutoDownload] = useState(initialSettings.autoDownload);
 
   // Auto-action helper functions
   const performAutoCopy = useCallback(async (feedback: Feedback) => {
