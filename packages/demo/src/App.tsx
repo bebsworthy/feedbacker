@@ -13,6 +13,7 @@ import { Card } from './components/Card';
 import { FormExample } from './components/FormExample';
 import { TableExample } from './components/TableExample';
 import { ListExample } from './components/ListExample';
+import { PlaygroundV2 } from './PlaygroundV2/PlaygroundV2';
 
 const LandingPage: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -295,70 +296,8 @@ function App() {
         </div>
       </section>
 
-      {/* Live Playground */}
-      <section id="demo" className="playground">
-        <div className="container playground-container">
-          <div className="playground-header">
-            <h2 className="section-title">Interactive Playground</h2>
-            <p className="section-subtitle">
-              Test the feedback system on these live components
-            </p>
-            <div className="playground-controls">
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  emit('selection:start', {});
-                  setFeedbackActive(true);
-                }}
-              >
-                🎯 Activate Feedback Mode
-              </button>
-            </div>
-          </div>
-          
-          <div className="playground-grid">
-            <div className="playground-card">
-              <h4>Button Components</h4>
-              <ButtonGroup />
-            </div>
-            
-            <div className="playground-card">
-              <h4>Card Component</h4>
-              <Card 
-                title="Sample Card"
-                content="This is a demo card component you can select."
-                actions={['Action 1', 'Action 2']}
-              />
-            </div>
-
-            <div className="playground-card">
-              <h4>Form Elements</h4>
-              <FormExample />
-            </div>
-
-            <div className="playground-card">
-              <h4>Data Table</h4>
-              <div style={{ maxHeight: '200px', overflow: 'auto' }}>
-                <TableExample />
-              </div>
-            </div>
-
-            <div className="playground-card">
-              <h4>List Component</h4>
-              <ListExample />
-            </div>
-
-            <div className="playground-card">
-              <h4>Status Badge</h4>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span className="btn btn-success">Active</span>
-                <span className="btn btn-secondary">Pending</span>
-                <span className="btn btn-ghost">Inactive</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Live Playground V2 */}
+      <PlaygroundV2 />
 
       {/* Code Examples */}
       <section id="code" className="code-section">

@@ -1,0 +1,131 @@
+/**
+ * FeedbackPanel - Displays captured feedback in JSON and Markdown formats
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useFeedback } from '@feedbacker/core';
+import { Feedback } from '@feedbacker/core';
+
+interface FeedbackPanelProps {
+  className?: string;
+}
+
+export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ className }) => {
+  const [activeTab, setActiveTab] = useState<'json' | 'markdown'>('json');
+  const [capturedFeedback, setCapturedFeedback] = useState<Feedback[]>([]);
+  
+  // Try to use the feedback hook, but handle if it's not available
+  let feedbackList: Feedback[] = [];
+  let clearAllFeedback: (() => void) | undefined;
+  
+  try {
+    const feedbackData = useFeedback();
+    if (feedbackData) {
+      feedbackList = Array.isArray(feedbackData.feedbackList) ? feedbackData.feedbackList : [];
+      clearAllFeedback = feedbackData.clearAllFeedback;
+    }
+  } catch (error) {
+    console.warn('[FeedbackPanel] Could not access feedback context:', error);
+  }
+
+  useEffect(() => {
+    // Update captured feedback when feedbackList changes
+    setCapturedFeedback([...feedbackList]);
+  }, [feedbackList]);
+
+  const formatJSON = (feedback: Feedback[]): string => {
+    if (feedback.length === 0) {
+      return '{\n  "feedback": [],\n  "message": "No feedback captured yet. Click on components in feedback mode to capture data."\n}';
+    }
+    return JSON.stringify(feedback, null, 2);
+  };
+
+  const formatMarkdown = (feedback: Feedback[]): string => {
+    if (feedback.length === 0) {
+      return '# No Feedback Captured\n\nActivate feedback mode and click on components to capture feedback.';
+    }
+
+    return feedback.map((item, index) => {
+      const componentInfo = item.componentInfo;
+      const browserInfo = item.browserInfo;
+      
+      return `## Feedback #${index + 1}
+
+### Component Information
+- **Component:** ${componentInfo?.name || 'Unknown'}
+- **Path:** ${componentInfo?.path?.join(' > ') || 'N/A'}
+- **Timestamp:** ${new Date(item.timestamp).toLocaleString()}
+
+### Feedback
+${item.comment || 'No comment provided'}
+
+### Browser Information
+- **URL:** ${browserInfo?.url || 'N/A'}
+- **Viewport:** ${browserInfo?.viewport.width}x${browserInfo?.viewport.height}
+- **User Agent:** ${browserInfo?.userAgent || 'N/A'}
+
+${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\`` : ''}
+
+---
+`;
+    }).join('\n');
+  };
+
+  const handleClear = () => {
+    if (clearAllFeedback) {
+      clearAllFeedback();
+    }
+    setCapturedFeedback([]);
+  };
+
+  return (
+    <div className={`feedback-panel ${className || ''}`}>
+      <div className="feedback-panel-header">
+        <h3>Captured Feedback</h3>
+        <div className="feedback-panel-controls">
+          <div className="tab-buttons">
+            <button 
+              className={`tab-btn ${activeTab === 'json' ? 'active' : ''}`}
+              onClick={() => setActiveTab('json')}
+            >
+              JSON
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'markdown' ? 'active' : ''}`}
+              onClick={() => setActiveTab('markdown')}
+            >
+              Markdown
+            </button>
+          </div>
+          <button 
+            className="clear-btn"
+            onClick={handleClear}
+            disabled={capturedFeedback.length === 0}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+      
+      <div className="feedback-panel-content">
+        {activeTab === 'json' ? (
+          <pre className="code-display json-display">
+            <code>{formatJSON(capturedFeedback)}</code>
+          </pre>
+        ) : (
+          <div className="markdown-display">
+            <pre>{formatMarkdown(capturedFeedback)}</pre>
+          </div>
+        )}
+      </div>
+
+      {capturedFeedback.length > 0 && (
+        <div className="feedback-panel-footer">
+          <span className="feedback-count">
+            {capturedFeedback.length} feedback item{capturedFeedback.length !== 1 ? 's' : ''} captured
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
