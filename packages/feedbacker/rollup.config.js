@@ -10,14 +10,16 @@ const external = [
   'react',
   'react-dom',
   'react/jsx-runtime',
-  'html2canvas'
+  'html2canvas',
+  '@zumer/snapdom'
 ];
 
 const globals = {
   'react': 'React',
   'react-dom': 'ReactDOM',
   'react/jsx-runtime': 'React',
-  'html2canvas': 'html2canvas'
+  'html2canvas': 'html2canvas',
+  '@zumer/snapdom': 'SnapDOM'
 };
 
 export default [
@@ -101,7 +103,7 @@ export default [
   // UMD build for browser usage
   {
     input: 'src/index.ts',
-    external: ['react', 'react-dom', 'html2canvas'],
+    external: ['react', 'react-dom', 'html2canvas', '@zumer/snapdom'],
     output: {
       file: 'dist/index.umd.js',
       format: 'umd',

@@ -15,6 +15,8 @@ interface FeedbackContextValue {
   error: Error | null;
   autoCopy: boolean;
   autoDownload: boolean | 'markdown' | 'zip';
+  captureLibrary?: string;
+  captureAdapter?: any;
   
   // Actions
   addFeedback: (feedback: Feedback) => void;
@@ -44,13 +46,17 @@ interface FeedbackContextProviderProps {
   onFeedbackSubmit?: (feedback: Feedback) => void;
   autoCopy?: boolean;
   autoDownload?: boolean | 'markdown' | 'zip';
+  captureLibrary?: string;
+  captureAdapter?: any;
 }
 
 export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = ({
   children,
   onFeedbackSubmit,
   autoCopy: propAutoCopy,
-  autoDownload: propAutoDownload
+  autoDownload: propAutoDownload,
+  captureLibrary,
+  captureAdapter
 }) => {
   // Initialize settings from localStorage or props
   const getInitialSettings = () => {
@@ -231,6 +237,8 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     error,
     autoCopy,
     autoDownload,
+    captureLibrary,
+    captureAdapter,
     
     // Actions
     addFeedback,
@@ -258,6 +266,8 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
     error,
     autoCopy,
     autoDownload,
+    captureLibrary,
+    captureAdapter,
     addFeedback,
     loadFeedbackFromStorage,
     updateFeedback,

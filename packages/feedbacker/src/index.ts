@@ -43,6 +43,14 @@ export {
   isScreenshotSupported,
   getRecommendedOptions
 } from './utils/screenshot';
+export {
+  captureScreenshotWithAdapters,
+  initializeCaptureManager,
+  getAvailableCaptureLibraries,
+  isCaptureLibrarySupported,
+  getCurrentCaptureAdapterInfo,
+  cleanupCaptureResources
+} from './utils/screenshot-adapter';
 export { 
   loadHtml2Canvas,
   lazyLoad,
@@ -58,6 +66,11 @@ export {
   ExportManager 
 } from './export';
 
+// Capture adapters
+export { Html2CanvasAdapter } from './adapters/Html2CanvasAdapter';
+export { SnapDOMAdapter } from './adapters/SnapDOMAdapter';
+export { captureManager } from './adapters/CaptureManager';
+
 // Types and interfaces
 export type {
   Feedback,
@@ -70,6 +83,15 @@ export type {
   UseFeedbackResult,
   UseFeedbackStorageResult
 } from './types';
+
+// Capture types
+export type {
+  CaptureAdapter,
+  CaptureOptions,
+  CaptureResult,
+  CaptureAdapterFactory
+} from './types/capture';
+export { CaptureLibrary } from './types/capture';
 
 // CSS is automatically included in the build
 // For manual import: import '@feedbacker/core/styles'

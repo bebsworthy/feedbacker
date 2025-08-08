@@ -11,7 +11,12 @@ import { FeedbackPanel } from './FeedbackPanel';
 
 type Framework = 'mui' | 'antd' | 'chakra';
 
-export const PlaygroundV2: React.FC = () => {
+interface PlaygroundV2Props {
+  captureLibrary: 'html2canvas' | 'snapdom';
+  setCaptureLibrary: (library: 'html2canvas' | 'snapdom') => void;
+}
+
+export const PlaygroundV2: React.FC<PlaygroundV2Props> = ({ captureLibrary, setCaptureLibrary }) => {
   const [activeFramework, setActiveFramework] = useState<Framework>('mui');
   const { emit } = useFeedbackEvent();
 
@@ -63,6 +68,26 @@ export const PlaygroundV2: React.FC = () => {
           </button>
         </div>
         
+        <div className="capture-library-selector">
+          <span className="capture-label">Screenshot:</span>
+          <div className="capture-tabs">
+            <button
+              className={`capture-tab ${captureLibrary === 'snapdom' ? 'active' : ''}`}
+              onClick={() => setCaptureLibrary('snapdom')}
+              title="SnapDOM - Modern, fast screenshot library"
+            >
+              SnapDOM
+            </button>
+            <button
+              className={`capture-tab ${captureLibrary === 'html2canvas' ? 'active' : ''}`}
+              onClick={() => setCaptureLibrary('html2canvas')}
+              title="html2canvas - Traditional screenshot library"
+            >
+              html2canvas
+            </button>
+          </div>
+        </div>
+        
         <button
           className="btn btn-primary"
           onClick={handleActivateFeedback}
@@ -76,7 +101,7 @@ export const PlaygroundV2: React.FC = () => {
           {renderDemo()}
         </div>
         
-        <FeedbackPanel className="playground-feedback-panel" />
+        <FeedbackPanel className="playground-feedback-panel" captureLibrary={captureLibrary} />
       </div>
     </section>
   );

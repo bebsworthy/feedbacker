@@ -21,6 +21,8 @@ export const FeedbackProviderInternal: React.FC<FeedbackProviderInternalProps> =
   onFeedbackSubmit,
   autoCopy,
   autoDownload,
+  captureLibrary,
+  captureAdapter,
   isReactCompatible
 }) => {
   // If React is not compatible or system is disabled, just render children
@@ -32,7 +34,9 @@ export const FeedbackProviderInternal: React.FC<FeedbackProviderInternalProps> =
     <FeedbackContextProvider 
       onFeedbackSubmit={onFeedbackSubmit}
       autoCopy={autoCopy}
-      autoDownload={autoDownload}>
+      autoDownload={autoDownload}
+      captureLibrary={captureLibrary}
+      captureAdapter={captureAdapter}>
       <div 
         className="feedbacker-root"
         style={{

@@ -19,7 +19,12 @@ import { TableExample } from './components/TableExample';
 import { ListExample } from './components/ListExample';
 import { PlaygroundV2 } from './PlaygroundV2/PlaygroundV2';
 
-const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  captureLibrary: 'html2canvas' | 'snapdom';
+  setCaptureLibrary: (library: 'html2canvas' | 'snapdom') => void;
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ captureLibrary, setCaptureLibrary }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [activeCodeTab, setActiveCodeTab] = useState<'install' | 'basic' | 'advanced'>('install');
   const [copiedCode, setCopiedCode] = useState(false);
@@ -74,12 +79,21 @@ const LandingPage: React.FC = () => {
   };
 
   const codeExamples = {
-    install: `npm install @feedbacker/core`,
+    install: `# Install Feedbacker
+npm install @feedbacker/core
+
+# Install SnapDOM (Recommended - faster screenshots)
+npm install @zumer/snapdom
+
+# Or use html2canvas (default, loaded from CDN if not installed)
+npm install html2canvas`,
     basic: `import { FeedbackProvider } from '@feedbacker/core';
 
 function App() {
   return (
-    <FeedbackProvider>
+    <FeedbackProvider 
+      captureLibrary="snapdom" // Use SnapDOM for 2x faster screenshots
+    >
       <YourApp />
     </FeedbackProvider>
   );
@@ -90,6 +104,9 @@ function App() {
   
   // Theme color for UI elements
   primaryColor="#3b82f6"
+  
+  // Screenshot library: "snapdom" | "html2canvas"
+  captureLibrary="snapdom"
   
   // Enable/disable the feedback system
   enabled={true}
@@ -256,9 +273,9 @@ function App() {
             
             <div className="feature-card scroll-fade-in">
               <div className="feature-icon">📸</div>
-              <h3 className="feature-title">Auto Screenshots</h3>
+              <h3 className="feature-title">Pluggable Screenshots</h3>
               <p className="feature-description">
-                Captures screenshots automatically. html2canvas loaded from CDN only when needed.
+                Choose between SnapDOM (2x faster) or html2canvas. Custom adapters supported.
               </p>
             </div>
 
@@ -310,12 +327,20 @@ function App() {
                 No external requests. All data stays in the browser until you export.
               </p>
             </div>
+
+            <div className="feature-card scroll-fade-in">
+              <div className="feature-icon">🔌</div>
+              <h3 className="feature-title">Pluggable Architecture</h3>
+              <p className="feature-description">
+                Swap capture libraries or implement custom adapters for your needs.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Live Playground V2 */}
-      <PlaygroundV2 />
+      <PlaygroundV2 captureLibrary={captureLibrary} setCaptureLibrary={setCaptureLibrary} />
 
       {/* Code Examples */}
       <section id="code" className="code-section">
@@ -453,6 +478,12 @@ function App() {
                 <td><span className="cross">✗</span></td>
               </tr>
               <tr>
+                <td>Pluggable Capture Libraries</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
                 <td>Export Options</td>
                 <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
@@ -575,6 +606,8 @@ function App() {
 
 // Main App with FeedbackProvider
 export const App: React.FC = () => {
+  const [captureLibrary, setCaptureLibrary] = useState<'html2canvas' | 'snapdom'>('snapdom');
+  
   return (
     <FeedbackProvider
       // Position of the feedback button on the screen
@@ -596,6 +629,11 @@ export const App: React.FC = () => {
       // Change this to avoid conflicts with other instances
       // Default: "feedbacker"
       storageKey="feedbacker-demo"
+      
+      // Screenshot capture library to use
+      // Options: "html2canvas" | "snapdom"
+      // Default: "html2canvas" (but we're using snapdom for better performance)
+      captureLibrary={captureLibrary}
       
       // Automatically copy feedback to clipboard when captured
       // Copies the markdown version of the feedback
@@ -638,7 +676,7 @@ export const App: React.FC = () => {
         }, 3000);
       }}
     >
-      <LandingPage />
+      <LandingPage captureLibrary={captureLibrary} setCaptureLibrary={setCaptureLibrary} />
     </FeedbackProvider>
   );
 };

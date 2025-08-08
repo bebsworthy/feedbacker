@@ -16,7 +16,8 @@ import { useFeedbackEvent } from '../hooks/useFeedbackEvent';
 import { useFeedback } from '../hooks/useFeedback';
 import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { useFeedbackContext } from '../context/FeedbackContext';
-import { captureScreenshotWithFallback as captureScreenshot } from '../utils/screenshot';
+import { captureScreenshotWithAdapters as captureScreenshot } from '../utils/screenshot-adapter';
+import { initializeCaptureManager } from '../utils/screenshot-adapter';
 import { captureHtmlSnippet, formatHtmlSnippet } from '../utils/htmlSnippet';
 
 interface FeedbackProviderInnerProps {
@@ -51,7 +52,9 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
     deleteFeedback, 
     clearAllFeedbacks, 
     saveDraft, 
-    clearDraft 
+    clearDraft,
+    captureLibrary,
+    captureAdapter
   } = useFeedbackContext();
   
   // Storage synchronization
@@ -66,6 +69,13 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
   // Event system
   const { on, emit } = useFeedbackEvent();
 
+  // Initialize capture manager with configured library/adapter
+  useEffect(() => {
+    if (captureLibrary || captureAdapter) {
+      initializeCaptureManager(captureLibrary, captureAdapter);
+    }
+  }, [captureLibrary, captureAdapter]);
+
   // Handle component selection
   useEffect(() => {
     if (selectedComponent && selectedComponent.element) {
@@ -79,9 +89,12 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
       };
       
       // Capture screenshot when component is selected
-      captureScreenshot(selectedComponent.element).then(result => {
+      captureScreenshot(selectedComponent.element, {
+        library: captureLibrary,
+        adapter: captureAdapter
+      }).then(result => {
         setModalComponentInfo(componentInfoWithHtml);
-        setModalScreenshot(result.dataUrl);
+        setModalScreenshot(result.dataUrl || null);
         setIsModalOpen(true);
         deactivate();
       }).catch(error => {

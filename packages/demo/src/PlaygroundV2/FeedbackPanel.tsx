@@ -11,9 +11,10 @@ import 'prismjs/components/prism-markdown';
 
 interface FeedbackPanelProps {
   className?: string;
+  captureLibrary?: 'html2canvas' | 'snapdom';
 }
 
-export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ className }) => {
+export const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ className, captureLibrary }) => {
   const [activeTab, setActiveTab] = useState<'json' | 'markdown'>('json');
   
   // Use the feedback hook properly
@@ -70,7 +71,14 @@ ${item.htmlSnippet ? `### HTML Snippet\n\`\`\`html\n${item.htmlSnippet}\n\`\`\``
   return (
     <div className={`feedback-panel ${className || ''}`}>
       <div className="feedback-panel-header">
-        <h3>Captured Feedback</h3>
+        <div className="panel-header-top">
+          <h3>Captured Feedback</h3>
+          {captureLibrary && (
+            <span className={`capture-library-badge ${captureLibrary}`}>
+              {captureLibrary === 'snapdom' ? '⚡' : '📷'} {captureLibrary}
+            </span>
+          )}
+        </div>
         <div className="feedback-panel-controls">
           <div className="tab-buttons">
             <button 

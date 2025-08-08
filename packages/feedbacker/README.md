@@ -12,7 +12,7 @@ A zero-configuration React feedback system that enables component-level feedback
 ✨ **Zero Configuration** - Just wrap your app and start collecting feedback  
 🎯 **Component-Level** - Users can select specific React components for feedback  
 📱 **Mobile Optimized** - Touch and drag interactions with haptic feedback  
-📸 **Screenshot Capture** - Automatic screenshots with user permission  
+📸 **Screenshot Capture** - Pluggable capture libraries (html2canvas, SnapDOM)  
 💾 **Local Persistence** - Feedback stored locally with export options  
 🚀 **Performance First** - < 50KB bundle with lazy loading and optimizations  
 🎨 **Customizable** - Theming and positioning options  
@@ -73,6 +73,7 @@ That's it! Users can now:
 | `primaryColor` | `string` | `'#3b82f6'` | Primary theme color |
 | `enabled` | `boolean` | `true` | Enable/disable feedback system |
 | `storageKey` | `string` | `'feedbacker'` | LocalStorage key prefix |
+| `captureLibrary` | `'html2canvas' \| 'snapdom'` | `'html2canvas'` | Screenshot capture library |
 | `onFeedbackSubmit` | `(feedback: Feedback) => void` | - | Callback when feedback is submitted |
 
 ## Advanced Usage
@@ -101,6 +102,36 @@ function MyComponent() {
   );
 }
 ```
+
+### Screenshot Capture Libraries
+
+Feedbacker supports multiple screenshot libraries through a pluggable adapter system. Install your preferred library:
+
+```bash
+# Option 1: SnapDOM (Recommended - faster, more accurate)
+npm install @zumer/snapdom
+
+# Option 2: html2canvas (Default - better compatibility)
+npm install html2canvas
+```
+
+Then configure in your provider:
+
+```tsx
+// Use SnapDOM for better performance
+<FeedbackProvider captureLibrary="snapdom">
+  <YourApp />
+</FeedbackProvider>
+
+// Or use html2canvas (default)
+<FeedbackProvider captureLibrary="html2canvas">
+  <YourApp />
+</FeedbackProvider>
+```
+
+**Note**: Libraries are loaded as peer dependencies. If not installed via npm, they will automatically load from CDN as a fallback.
+
+See [CAPTURE_LIBRARIES.md](./CAPTURE_LIBRARIES.md) for detailed documentation and custom adapter implementation.
 
 ### Event System
 

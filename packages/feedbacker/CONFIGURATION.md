@@ -82,6 +82,46 @@ The `FeedbackProvider` component accepts the following configuration options:
 >
 ```
 
+### captureLibrary
+- **Type:** `"html2canvas" | "snapdom" | string`
+- **Default:** `"html2canvas"`
+- **Description:** Specifies which screenshot capture library to use. Built-in options are `"html2canvas"` (default) and `"snapdom"`. You can also specify a custom library name if you've registered a custom adapter.
+
+```jsx
+// Use SnapDOM instead of html2canvas
+<FeedbackProvider captureLibrary="snapdom">
+
+// Use a custom registered library
+<FeedbackProvider captureLibrary="my-custom-library">
+```
+
+### captureAdapter
+- **Type:** `CaptureAdapter`
+- **Default:** `undefined`
+- **Description:** Provide a custom capture adapter implementation. This allows you to use any screenshot library by implementing the `CaptureAdapter` interface.
+
+```jsx
+import { CaptureAdapter } from '@feedbacker/core';
+
+class MyCustomAdapter implements CaptureAdapter {
+  name = 'custom';
+  
+  async isSupported() {
+    return true;
+  }
+  
+  async capture(element, options) {
+    // Your custom capture logic
+    return {
+      success: true,
+      dataUrl: '...'
+    };
+  }
+}
+
+<FeedbackProvider captureAdapter={new MyCustomAdapter()}>
+```
+
 ## Complete Example
 
 ```jsx
@@ -97,6 +137,9 @@ function App() {
       // System Configuration
       enabled={true}
       storageKey="my-app-feedback"
+      
+      // Screenshot Configuration
+      captureLibrary="snapdom"  // Use SnapDOM for better performance
       
       // Auto Actions
       autoCopy={true}

@@ -48,6 +48,8 @@ export interface FeedbackProviderProps {
   onFeedbackSubmit?: (feedback: Feedback) => void;
   autoCopy?: boolean;
   autoDownload?: boolean | 'markdown' | 'zip';
+  captureLibrary?: 'html2canvas' | 'snapdom' | string;
+  captureAdapter?: any; // CaptureAdapter type when imported
   children?: any; // React.ReactNode will be properly typed when React is imported
 }
 
