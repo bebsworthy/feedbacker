@@ -1,5 +1,5 @@
 {
-  "name": "@feedbacker/core",
+  "name": "feedbacker-react",
   "version": "0.1.0",
   "type": "module",
   "description": "A drop-in React feedback system for component-level feedback capture during development and design review",

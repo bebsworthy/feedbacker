@@ -2,8 +2,8 @@
 
 A zero-configuration React feedback system that enables component-level feedback capture with automatic screenshot functionality.
 
-[![Version](https://img.shields.io/npm/v/@feedbacker/core.svg)](https://www.npmjs.com/package/@feedbacker/core)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@feedbacker/core.svg)](https://bundlephobia.com/result?p=@feedbacker/core)
+[![Version](https://img.shields.io/npm/v/feedbacker-react.svg)](https://www.npmjs.com/package/feedbacker-react)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/feedbacker-react.svg)](https://bundlephobia.com/result?p=feedbacker-react)
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
@@ -23,15 +23,15 @@ A zero-configuration React feedback system that enables component-level feedback
 ### Installation
 
 ```bash
-npm install @feedbacker/core
+npm install feedbacker-react
 ```
 
 ### Basic Usage
 
 ```tsx
 import React from 'react';
-import { FeedbackProvider } from '@feedbacker/core';
-import '@feedbacker/core/styles'; // Import styles
+import { FeedbackProvider } from 'feedbacker-react';
+import 'feedbacker-react/styles'; // Import styles
 
 function App() {
   return (
@@ -81,7 +81,7 @@ That's it! Users can now:
 ### Using Hooks
 
 ```tsx
-import { useFeedback, useFeedbackStorage } from '@feedbacker/core';
+import { useFeedback, useFeedbackStorage } from 'feedbacker-react';
 
 function MyComponent() {
   const { feedbacks, addFeedback, exportFeedback } = useFeedback();
@@ -136,7 +136,7 @@ See [CAPTURE_LIBRARIES.md](./CAPTURE_LIBRARIES.md) for detailed documentation an
 ### Event System
 
 ```tsx
-import { useFeedbackEvent } from '@feedbacker/core';
+import { useFeedbackEvent } from 'feedbacker-react';
 
 function CustomComponent() {
   const { on, emit } = useFeedbackEvent();

@@ -2,16 +2,16 @@
 
 React component-level feedback collection with automatic screenshots. Users can click on any React component in your app to provide targeted feedback. The library automatically captures component hierarchy, screenshots, and browser context, making bug reports and feature requests actionable.
 
-[![npm version](https://img.shields.io/npm/v/@feedbacker/core.svg)](https://www.npmjs.com/package/@feedbacker/core)
+[![npm version](https://img.shields.io/npm/v/feedbacker-react.svg)](https://www.npmjs.com/package/feedbacker-react)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/bebsworthy/feedbacker/actions/workflows/ci.yml/badge.svg)](https://github.com/bebsworthy/feedbacker/actions/workflows/ci.yml)
 
-[**Live Demo**](https://bebsworthy.github.io/feedbacker/) | [**Documentation**](#installation) | [**NPM Package**](https://www.npmjs.com/package/@feedbacker/core)
+[**Live Demo**](https://bebsworthy.github.io/feedbacker/) | [**Documentation**](#installation) | [**NPM Package**](https://www.npmjs.com/package/feedbacker-react)
 
 ## Installation
 
 ```bash
-npm install @feedbacker/core
+npm install feedbacker-react
 
 # Optional: Install a capture library (recommended: SnapDOM for 2x faster screenshots)
 npm install @zumer/snapdom
@@ -22,7 +22,7 @@ npm install html2canvas
 ## Quick Start
 
 ```jsx
-import { FeedbackProvider } from '@feedbacker/core';
+import { FeedbackProvider } from 'feedbacker-react';
 
 function App() {
   return (
@@ -106,7 +106,7 @@ Users can now:
 ### Using Hooks
 
 ```jsx
-import { useFeedback, useFeedbackEvent } from '@feedbacker/core';
+import { useFeedback, useFeedbackEvent } from 'feedbacker-react';
 
 function MyComponent() {
   const { 
@@ -169,7 +169,7 @@ function MyComponent() {
 ### Custom Capture Adapter
 
 ```jsx
-import { CaptureAdapter } from '@feedbacker/core';
+import { CaptureAdapter } from 'feedbacker-react';
 
 class CustomAdapter {
   name = 'custom';
@@ -276,7 +276,7 @@ import {
   ComponentInfo, 
   CaptureAdapter,
   FeedbackProviderProps 
-} from '@feedbacker/core';
+} from 'feedbacker-react';
 ```
 
 ## Security Considerations
@@ -293,7 +293,7 @@ import {
 
 ```jsx
 // app/layout.tsx
-import { FeedbackProvider } from '@feedbacker/core';
+import { FeedbackProvider } from 'feedbacker-react';
 
 export default function RootLayout({ children }) {
   return (
@@ -315,7 +315,7 @@ export default function RootLayout({ children }) {
 
 ```jsx
 // main.jsx or index.js
-import { FeedbackProvider } from '@feedbacker/core';
+import { FeedbackProvider } from 'feedbacker-react';
 
 ReactDOM.render(
   <FeedbackProvider>
@@ -393,5 +393,5 @@ MIT
 ## Links
 
 - [GitHub](https://github.com/feedbacker/core)
-- [NPM](https://www.npmjs.com/package/@feedbacker/core)
+- [NPM](https://www.npmjs.com/package/feedbacker-react)
 - [Demo](https://feedbacker.dev)
