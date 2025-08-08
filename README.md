@@ -4,9 +4,9 @@ React component-level feedback collection with automatic screenshots. Users can 
 
 [![npm version](https://img.shields.io/npm/v/@feedbacker/core.svg)](https://www.npmjs.com/package/@feedbacker/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/feedbacker/core/actions/workflows/ci.yml/badge.svg)](https://github.com/feedbacker/core/actions/workflows/ci.yml)
+[![CI](https://github.com/bebsworthy/feedbacker/actions/workflows/ci.yml/badge.svg)](https://github.com/bebsworthy/feedbacker/actions/workflows/ci.yml)
 
-[**Live Demo**](https://feedbacker.github.io/core/) | [**Documentation**](#installation) | [**NPM Package**](https://www.npmjs.com/package/@feedbacker/core)
+[**Live Demo**](https://bebsworthy.github.io/feedbacker/) | [**Documentation**](#installation) | [**NPM Package**](https://www.npmjs.com/package/@feedbacker/core)
 
 ## Installation
 
