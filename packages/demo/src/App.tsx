@@ -81,8 +81,25 @@ function App() {
   );
 }`,
     advanced: `<FeedbackProvider
+  // Position: "top-left" | "top-right" | "bottom-left" | "bottom-right"
   position="bottom-right"
+  
+  // Theme color for UI elements
   primaryColor="#3b82f6"
+  
+  // Enable/disable the feedback system
+  enabled={true}
+  
+  // Storage key for localStorage
+  storageKey="feedbacker"
+  
+  // Auto-copy feedback to clipboard
+  autoCopy={true}
+  
+  // Auto-download: false | true | "markdown" | "zip"
+  autoDownload="markdown"
+  
+  // Handle feedback submission
   onFeedbackSubmit={(feedback) => {
     // Send to your backend
     api.submitFeedback(feedback);
@@ -547,13 +564,43 @@ function App() {
 export const App: React.FC = () => {
   return (
     <FeedbackProvider
+      // Position of the feedback button on the screen
+      // Options: "top-left" | "top-right" | "bottom-left" | "bottom-right"
+      // Default: "bottom-right"
       position="bottom-right"
+      
+      // Primary color for the feedback UI (buttons, highlights, etc.)
+      // Accepts any valid CSS color value
+      // Default: "#3b82f6" (blue)
       primaryColor="#6366f1"
+      
+      // Enable or disable the entire feedback system
+      // Set to false to completely disable feedback collection
+      // Default: true
       enabled={true}
+      
+      // Local storage key for persisting feedback data
+      // Change this to avoid conflicts with other instances
+      // Default: "feedbacker"
       storageKey="feedbacker-demo"
-      // Optional: Enable auto-copy and auto-download features
+      
+      // Automatically copy feedback to clipboard when captured
+      // Copies the markdown version of the feedback
+      // Default: false
       // autoCopy={true}
-      // autoDownload="markdown"  // or "zip" or true (defaults to markdown)
+      
+      // Automatically download feedback when captured
+      // Options: false | true | "markdown" | "zip"
+      // - false: No auto-download (default)
+      // - true: Auto-download as markdown
+      // - "markdown": Download as .md file with text content
+      // - "zip": Download as .zip file including screenshots
+      // Default: false
+      // autoDownload="markdown"
+      
+      // Callback function triggered when feedback is submitted
+      // Receives the complete feedback object
+      // Use this to send feedback to your backend, analytics, etc.
       onFeedbackSubmit={(feedback) => {
         console.log('[Demo] New feedback submitted:', feedback);
         // Show a nice notification
