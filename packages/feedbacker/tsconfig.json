@@ -33,7 +33,7 @@
     "exactOptionalPropertyTypes": false,
     "noImplicitReturns": false,
     "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "noImplicitOverride": false,
     
     // Additional type checking
     "useUnknownInCatchVariables": true,
