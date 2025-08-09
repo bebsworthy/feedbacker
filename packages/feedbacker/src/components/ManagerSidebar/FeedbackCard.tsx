@@ -30,32 +30,36 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      border: '1px solid #e5e7eb',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Screenshot */}
       {feedback.screenshot && (
-        <div style={{
-          width: '100%',
-          height: '160px',
-          backgroundColor: '#f3f4f6',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <img 
-            src={feedback.screenshot} 
+        <div
+          style={{
+            width: '100%',
+            height: '160px',
+            backgroundColor: '#f3f4f6',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <img
+            src={feedback.screenshot}
             alt={`Screenshot of ${feedback.componentName}`}
             style={{
               width: '100%',
@@ -63,48 +67,56 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
               objectFit: 'cover'
             }}
           />
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            color: '#ffffff',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '500'
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              color: '#ffffff',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              fontWeight: '500'
+            }}
+          >
             {formatTime(feedback.timestamp)}
           </div>
         </div>
       )}
 
       {/* Content */}
-      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+      <div
+        style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}
+      >
         {/* Title */}
-        <h4 style={{
-          margin: 0,
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#111827',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }}>
+        <h4
+          style={{
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#111827',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
           {feedback.componentName}
         </h4>
 
         {/* Comment */}
-        <p style={{
-          margin: 0,
-          fontSize: '13px',
-          color: '#6b7280',
-          display: '-webkit-box',
-          WebkitLineClamp: isExpanded ? 'unset' : 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          wordBreak: 'break-word'
-        }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '13px',
+            color: '#6b7280',
+            display: '-webkit-box',
+            WebkitLineClamp: isExpanded ? 'unset' : 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            wordBreak: 'break-word'
+          }}
+        >
           {feedback.comment}
         </p>
 
@@ -141,16 +153,18 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
 
         {/* Expanded details */}
         {isExpanded && (
-          <div style={{
-            padding: '8px',
-            backgroundColor: '#f9fafb',
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#4b5563',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
+          <div
+            style={{
+              padding: '8px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#4b5563',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}
+          >
             {feedback.componentPath.length > 1 && (
               <div>
                 <strong>Path:</strong> {feedback.componentPath.join(' > ')}
@@ -164,15 +178,17 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
             {feedback.htmlSnippet && (
               <div>
                 <strong>HTML:</strong>
-                <pre style={{
-                  margin: '4px 0 0 0',
-                  padding: '4px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '2px',
-                  fontSize: '11px',
-                  overflow: 'auto',
-                  maxHeight: '100px'
-                }}>
+                <pre
+                  style={{
+                    margin: '4px 0 0 0',
+                    padding: '4px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '2px',
+                    fontSize: '11px',
+                    overflow: 'auto',
+                    maxHeight: '100px'
+                  }}
+                >
                   {feedback.htmlSnippet}
                 </pre>
               </div>
@@ -182,13 +198,15 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
       </div>
 
       {/* Actions */}
-      <div style={{
-        padding: '8px 12px',
-        borderTop: '1px solid #e5e7eb',
-        display: 'flex',
-        gap: '4px',
-        justifyContent: 'flex-end'
-      }}>
+      <div
+        style={{
+          padding: '8px 12px',
+          borderTop: '1px solid #e5e7eb',
+          display: 'flex',
+          gap: '4px',
+          justifyContent: 'flex-end'
+        }}
+      >
         <button
           onClick={onEdit}
           title="Edit feedback"

@@ -14,11 +14,7 @@ interface IconProps {
 /**
  * Plus icon for FAB main button
  */
-export const PlusIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
-}) => (
+export const PlusIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor', className }) => (
   <svg
     width={size}
     height={size}
@@ -40,10 +36,10 @@ export const PlusIcon: React.FC<IconProps> = ({
 /**
  * Megaphone icon for FAB main button (feedback announcement)
  */
-export const MegaphoneIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const MegaphoneIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -53,17 +49,17 @@ export const MegaphoneIcon: React.FC<IconProps> = ({
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <path d="M480-360q17 0 28.5-11.5T520-400q0-17-11.5-28.5T480-440q-17 0-28.5 11.5T440-400q0 17 11.5 28.5T480-360Zm-40-160h80v-240h-80v240ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z"/>
+    <path d="M480-360q17 0 28.5-11.5T520-400q0-17-11.5-28.5T480-440q-17 0-28.5 11.5T440-400q0 17 11.5 28.5T480-360Zm-40-160h80v-240h-80v240ZM80-80v-720q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H240L80-80Zm126-240h594v-480H160v525l46-45Zm-46 0v-480 480Z" />
   </svg>
 );
 
 /**
  * Close/X icon for when FAB is expanded
  */
-export const CloseIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const CloseIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -86,10 +82,10 @@ export const CloseIcon: React.FC<IconProps> = ({
 /**
  * Message icon for "New feedback" action
  */
-export const MessageIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
+export const MessageIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -112,11 +108,7 @@ export const MessageIcon: React.FC<IconProps> = ({
 /**
  * List icon for "Show manager" action
  */
-export const ListIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
-}) => (
+export const ListIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor', className }) => (
   <svg
     width={size}
     height={size}
@@ -156,10 +148,10 @@ export const DraftIndicator: React.FC<{ className?: string }> = ({ className }) 
 /**
  * Trash icon for delete actions
  */
-export const TrashIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
+export const TrashIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -182,10 +174,10 @@ export const TrashIcon: React.FC<IconProps> = ({
 /**
  * X Mark icon for close buttons (alternative to CloseIcon)
  */
-export const XMarkIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
+export const XMarkIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -208,10 +200,10 @@ export const XMarkIcon: React.FC<IconProps> = ({
 /**
  * Arrow Down Tray icon for download/export
  */
-export const ArrowDownTrayIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
+export const ArrowDownTrayIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -234,10 +226,10 @@ export const ArrowDownTrayIcon: React.FC<IconProps> = ({
 /**
  * Pencil icon for edit actions
  */
-export const PencilIcon: React.FC<IconProps> = ({ 
-  size = 16, 
-  color = 'currentColor', 
-  className 
+export const PencilIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -260,10 +252,10 @@ export const PencilIcon: React.FC<IconProps> = ({
 /**
  * Photo icon for image/screenshot placeholders
  */
-export const PhotoIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const PhotoIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -286,10 +278,10 @@ export const PhotoIcon: React.FC<IconProps> = ({
 /**
  * Chevron Down icon for expand actions
  */
-export const ChevronDownIcon: React.FC<IconProps> = ({ 
-  size = 16, 
-  color = 'currentColor', 
-  className 
+export const ChevronDownIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -312,10 +304,10 @@ export const ChevronDownIcon: React.FC<IconProps> = ({
 /**
  * Chevron Up icon for collapse actions
  */
-export const ChevronUpIcon: React.FC<IconProps> = ({ 
-  size = 16, 
-  color = 'currentColor', 
-  className 
+export const ChevronUpIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -338,10 +330,10 @@ export const ChevronUpIcon: React.FC<IconProps> = ({
 /**
  * Computer Desktop icon for component placeholders
  */
-export const ComputerDesktopIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
+export const ComputerDesktopIcon: React.FC<IconProps> = ({
+  size = 20,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -364,10 +356,10 @@ export const ComputerDesktopIcon: React.FC<IconProps> = ({
 /**
  * Exclamation Triangle icon for warnings
  */
-export const ExclamationTriangleIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const ExclamationTriangleIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -390,10 +382,10 @@ export const ExclamationTriangleIcon: React.FC<IconProps> = ({
 /**
  * Document Text icon for text/markdown files
  */
-export const DocumentTextIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const DocumentTextIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}
@@ -416,11 +408,7 @@ export const DocumentTextIcon: React.FC<IconProps> = ({
 /**
  * Copy icon for clipboard actions
  */
-export const CopyIcon: React.FC<IconProps> = ({ 
-  size = 20, 
-  color = 'currentColor', 
-  className 
-}) => (
+export const CopyIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor', className }) => (
   <svg
     width={size}
     height={size}
@@ -442,10 +430,10 @@ export const CopyIcon: React.FC<IconProps> = ({
 /**
  * Archive Box icon for ZIP files
  */
-export const ArchiveBoxIcon: React.FC<IconProps> = ({ 
-  size = 24, 
-  color = 'currentColor', 
-  className 
+export const ArchiveBoxIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = 'currentColor',
+  className
 }) => (
   <svg
     width={size}

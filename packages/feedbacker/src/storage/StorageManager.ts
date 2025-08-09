@@ -3,10 +3,17 @@
  * migration functionality, quota detection, corruption recovery, and fallback
  */
 
-import { Feedback, Draft, StorageManager as IStorageManager, StorageInfo, FeedbackStore } from '../types';
+import {
+  Feedback,
+  Draft,
+  StorageManager as IStorageManager,
+  StorageInfo,
+  FeedbackStore
+} from '../types';
 import { migrateData } from './migrations';
 import { validateStorageData } from '../utils/validation';
 import { sanitizeFeedback, sanitizeDraft } from '../utils/sanitize';
+import logger from '../utils/logger';
 
 // Re-export the interfaces from types for convenience
 export type { FeedbackStore, StorageInfo, StorageManager } from '../types';
@@ -45,7 +52,7 @@ export class LocalStorageManager implements IStorageManager {
       localStorage.setItem(testKey, 'test');
       localStorage.removeItem(testKey);
     } catch (error) {
-      console.warn('[Feedbacker] localStorage not available, using memory fallback:', error);
+      logger.warn('localStorage not available, using memory fallback:', error);
       this.useMemoryFallback = true;
     }
   }
@@ -57,18 +64,18 @@ export class LocalStorageManager implements IStorageManager {
     try {
       // Sanitize the feedback data
       const sanitizedFeedback = sanitizeFeedback(feedback);
-      
+
       const store = await this.getStore();
-      
+
       // Check if updating existing or adding new
-      const existingIndex = store.feedbacks.findIndex(f => f.id === sanitizedFeedback.id);
-      
+      const existingIndex = store.feedbacks.findIndex((f) => f.id === sanitizedFeedback.id);
+
       if (existingIndex >= 0) {
         store.feedbacks[existingIndex] = sanitizedFeedback;
       } else {
         // Add new feedback
         store.feedbacks.unshift(sanitizedFeedback);
-        
+
         // Enforce max limit to prevent unlimited growth
         if (store.feedbacks.length > MAX_FEEDBACKS) {
           store.feedbacks = store.feedbacks.slice(0, MAX_FEEDBACKS);
@@ -80,7 +87,7 @@ export class LocalStorageManager implements IStorageManager {
 
       await this.setStore(store);
     } catch (error) {
-      console.error('[Feedbacker] Failed to save feedback:', error);
+      logger.error('Failed to save feedback:', error);
       throw new Error('Failed to save feedback');
     }
   }
@@ -95,7 +102,7 @@ export class LocalStorageManager implements IStorageManager {
       store.draft = sanitizeDraft(draft);
       await this.setStore(store);
     } catch (error) {
-      console.error('[Feedbacker] Failed to save draft:', error);
+      logger.error('Failed to save draft:', error);
       throw new Error('Failed to save draft');
     }
   }
@@ -108,7 +115,7 @@ export class LocalStorageManager implements IStorageManager {
       const store = await this.getStore();
       return store.feedbacks || [];
     } catch (error) {
-      console.error('[Feedbacker] Failed to get feedback items:', error);
+      logger.error('Failed to get feedback items:', error);
       return [];
     }
   }
@@ -121,7 +128,7 @@ export class LocalStorageManager implements IStorageManager {
       const store = await this.getStore();
       return store.draft || null;
     } catch (error) {
-      console.error('[Feedbacker] Failed to get draft:', error);
+      logger.error('Failed to get draft:', error);
       return null;
     }
   }
@@ -132,10 +139,10 @@ export class LocalStorageManager implements IStorageManager {
   async delete(id: string): Promise<void> {
     try {
       const store = await this.getStore();
-      store.feedbacks = store.feedbacks.filter(f => f.id !== id);
+      store.feedbacks = store.feedbacks.filter((f) => f.id !== id);
       await this.setStore(store);
     } catch (error) {
-      console.error('[Feedbacker] Failed to delete feedback:', error);
+      logger.error('Failed to delete feedback:', error);
       throw new Error('Failed to delete feedback');
     }
   }
@@ -153,7 +160,7 @@ export class LocalStorageManager implements IStorageManager {
       };
       await this.setStore(store);
     } catch (error) {
-      console.error('[Feedbacker] Failed to clear feedback data:', error);
+      logger.error('Failed to clear feedback data:', error);
       throw new Error('Failed to clear feedback data');
     }
   }
@@ -173,12 +180,12 @@ export class LocalStorageManager implements IStorageManager {
         total = STORAGE_LIMIT; // Use our limit as reference
       } else {
         // Calculate localStorage usage
-        for (let key in localStorage) {
-          if (localStorage.hasOwnProperty(key)) {
+        for (const key in localStorage) {
+          if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
             used += localStorage[key].length + key.length;
           }
         }
-        
+
         // Use a reasonable estimate for localStorage limit
         // Different browsers have different limits, but 5-10MB is common
         total = STORAGE_LIMIT;
@@ -194,7 +201,7 @@ export class LocalStorageManager implements IStorageManager {
         percentage
       };
     } catch (error) {
-      console.error('[Feedbacker] Failed to get storage info:', error);
+      logger.error('Failed to get storage info:', error);
       return {
         used: 0,
         limit: STORAGE_LIMIT,
@@ -210,11 +217,11 @@ export class LocalStorageManager implements IStorageManager {
   async cleanup(): Promise<void> {
     try {
       const storageInfo = this.getStorageInfo();
-      
+
       // If storage is more than 80% full, remove older feedback
       if (storageInfo.percentage > 80) {
         const store = await this.getStore();
-        
+
         // Sort by timestamp and keep only the 50 most recent
         store.feedbacks = store.feedbacks
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -223,10 +230,10 @@ export class LocalStorageManager implements IStorageManager {
         store.lastCleanup = new Date().toISOString();
         await this.setStore(store);
 
-        console.log('[Feedbacker] Storage cleanup completed, removed old feedback items');
+        logger.info('Storage cleanup completed, removed old feedback items');
       }
     } catch (error) {
-      console.error('[Feedbacker] Failed to cleanup storage:', error);
+      logger.error('Failed to cleanup storage:', error);
     }
   }
 
@@ -240,7 +247,7 @@ export class LocalStorageManager implements IStorageManager {
       }
 
       const data = localStorage.getItem(this.key);
-      
+
       if (!data) {
         return this.getDefaultStore();
       }
@@ -249,14 +256,14 @@ export class LocalStorageManager implements IStorageManager {
       try {
         parsedData = JSON.parse(data);
       } catch (parseError) {
-        console.warn('[Feedbacker] Corrupted data detected, clearing storage');
+        logger.warn('Corrupted data detected, clearing storage');
         await this.handleCorruptedData();
         return this.getDefaultStore();
       }
 
       // Validate the data structure
       if (!validateStorageData(parsedData)) {
-        console.warn('[Feedbacker] Invalid data structure, attempting migration');
+        logger.warn('Invalid data structure, attempting migration');
         return await this.handleDataMigration(parsedData);
       }
 
@@ -267,7 +274,7 @@ export class LocalStorageManager implements IStorageManager {
 
       return parsedData;
     } catch (error) {
-      console.error('[Feedbacker] Failed to get store:', error);
+      logger.error('Failed to get store:', error);
       return this.getDefaultStore();
     }
   }
@@ -283,12 +290,12 @@ export class LocalStorageManager implements IStorageManager {
       }
 
       const data = JSON.stringify(store);
-      
+
       // Check if we're approaching storage limits
       if (data.length > STORAGE_LIMIT * 0.9) {
-        console.warn('[Feedbacker] Approaching storage limit, triggering cleanup');
+        logger.warn('Approaching storage limit, triggering cleanup');
         await this.cleanup();
-        
+
         // Re-serialize after cleanup
         const updatedData = JSON.stringify(store);
         if (updatedData.length > STORAGE_LIMIT) {
@@ -298,8 +305,11 @@ export class LocalStorageManager implements IStorageManager {
 
       localStorage.setItem(this.key, data);
     } catch (error) {
-      if (error.name === 'QuotaExceededError' || error.message.includes('storage')) {
-        console.warn('[Feedbacker] Storage quota exceeded, switching to memory fallback');
+      if (
+        error instanceof Error &&
+        (error.name === 'QuotaExceededError' || error.message.includes('storage'))
+      ) {
+        logger.warn('Storage quota exceeded, switching to memory fallback');
         this.useMemoryFallback = true;
         this.inMemoryFallback = { ...store };
       } else {
@@ -330,27 +340,27 @@ export class LocalStorageManager implements IStorageManager {
       }
       this.inMemoryFallback = this.getDefaultStore();
     } catch (error) {
-      console.error('[Feedbacker] Failed to handle corrupted data:', error);
+      logger.error('Failed to handle corrupted data:', error);
     }
   }
 
   /**
    * Handle data migration
    */
-  private async handleDataMigration(oldData: any): Promise<FeedbackStore> {
+  private async handleDataMigration(oldData: unknown): Promise<FeedbackStore> {
     try {
       const migratedData = await migrateData(oldData, this.version);
-      
+
       if (migratedData) {
         await this.setStore(migratedData);
-        console.log('[Feedbacker] Data migration completed successfully');
+        logger.info('Data migration completed successfully');
         return migratedData;
       } else {
-        console.warn('[Feedbacker] Data migration failed, starting with fresh data');
+        logger.warn('Data migration failed, starting with fresh data');
         return this.getDefaultStore();
       }
     } catch (error) {
-      console.error('[Feedbacker] Data migration error:', error);
+      logger.error('Data migration error:', error);
       return this.getDefaultStore();
     }
   }

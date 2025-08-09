@@ -2,14 +2,14 @@
  * ComponentOverlay Component
  * Renders visual overlay highlighting for selected components
  * Optimized with performance improvements and context integration
- * 
+ *
  * Requirements: 3.1, 3.2, 3.3, 3.6, 9.2, 9.3
  */
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { ComponentInfo } from '../types';
 import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { debounce, throttle, performanceMonitor } from '../utils/performance';
+import logger from '../utils/logger';
 
 interface OverlayPosition {
   top: number;
@@ -21,45 +21,56 @@ interface OverlayPosition {
 export const ComponentOverlay: React.FC = React.memo(() => {
   const { isActive, hoveredComponent } = useComponentDetection();
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition | null>(null);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [, setIsVisible] = useState<boolean>(false);
   const animationFrameRef = useRef<number>();
 
-  console.log('[ComponentOverlay] Render - isActive:', isActive, 'hoveredComponent:', hoveredComponent, 'overlayPosition:', overlayPosition);
+  logger.log(
+    'Render - isActive:',
+    isActive,
+    'hoveredComponent:',
+    hoveredComponent,
+    'overlayPosition:',
+    overlayPosition
+  );
 
   // Memoized debounced position update function
   const debouncedUpdatePosition = useMemo(() => {
-    return debounce(() => {
-      if (!hoveredComponent || !isActive) {
-        setOverlayPosition(null);
-        setIsVisible(false);
-        return;
-      }
+    return debounce(
+      () => {
+        if (!hoveredComponent || !isActive) {
+          setOverlayPosition(null);
+          setIsVisible(false);
+          return;
+        }
 
-      const endMark = performanceMonitor.mark('overlay-position-update');
-      
-      const element = hoveredComponent.element;
-      if (!element || !document.body.contains(element)) {
-        setOverlayPosition(null);
-        setIsVisible(false);
+        const endMark = performanceMonitor.mark('overlay-position-update');
+
+        const element = hoveredComponent.element;
+        if (!element || !document.body.contains(element)) {
+          setOverlayPosition(null);
+          setIsVisible(false);
+          endMark();
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        const position: OverlayPosition = {
+          top: rect.top + scrollTop,
+          left: rect.left + scrollLeft,
+          width: rect.width,
+          height: rect.height
+        };
+
+        setOverlayPosition(position);
+        setIsVisible(true);
         endMark();
-        return;
-      }
-
-      const rect = element.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-
-      const position: OverlayPosition = {
-        top: rect.top + scrollTop,
-        left: rect.left + scrollLeft,
-        width: rect.width,
-        height: rect.height
-      };
-
-      setOverlayPosition(position);
-      setIsVisible(true);
-      endMark();
-    }, 16, { leading: true, trailing: true }); // ~60fps
+      },
+      16,
+      { leading: true, trailing: true }
+    ); // ~60fps
   }, [hoveredComponent, isActive]);
 
   // Throttled scroll handler for better performance
@@ -110,8 +121,10 @@ export const ComponentOverlay: React.FC = React.memo(() => {
 
   // Memoized component info to avoid recalculation
   const componentInfo = useMemo(() => {
-    if (!hoveredComponent) return null;
-    
+    if (!hoveredComponent) {
+      return null;
+    }
+
     return {
       name: hoveredComponent.name || 'Unknown Component',
       path: hoveredComponent.path?.join(' → ') || ''
@@ -122,7 +135,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
   if (!isActive) {
     return null;
   }
-  
+
   // If no component hovered yet, still return null
   if (!hoveredComponent || !overlayPosition) {
     return null;
@@ -132,32 +145,35 @@ export const ComponentOverlay: React.FC = React.memo(() => {
   const tooltipHeight = 40; // Approximate tooltip height
   const tooltipMargin = 8; // Space between tooltip and component
   const minSpaceRequired = tooltipHeight + tooltipMargin;
-  
+
   // Get viewport dimensions
   const viewportHeight = window.innerHeight;
   const componentTop = overlayPosition.top - window.pageYOffset;
   const componentBottom = componentTop + overlayPosition.height;
-  
+
   // Calculate visible bounds of the component
   const visibleTop = Math.max(0, componentTop);
   const visibleBottom = Math.min(viewportHeight, componentBottom);
   const visibleHeight = visibleBottom - visibleTop;
-  const visibleCenter = visibleTop + (visibleHeight / 2);
-  
+  const visibleCenter = visibleTop + visibleHeight / 2;
+
   // Determine available space
   const spaceAbove = componentTop;
   const spaceBelow = viewportHeight - componentBottom;
-  
+
   let tooltipTop: number;
-  
+
   // If not enough space above AND below, center the tooltip in the VISIBLE area
   if (spaceAbove < minSpaceRequired && spaceBelow < minSpaceRequired) {
-    tooltipTop = visibleCenter - (tooltipHeight / 2);
-  } 
+    tooltipTop = visibleCenter - tooltipHeight / 2;
+  }
   // Place above if there's enough space, or if there's more space above than below
-  else if (spaceAbove >= minSpaceRequired || (spaceAbove > spaceBelow && spaceAbove > tooltipHeight)) {
+  else if (
+    spaceAbove >= minSpaceRequired ||
+    (spaceAbove > spaceBelow && spaceAbove > tooltipHeight)
+  ) {
     tooltipTop = componentTop - tooltipHeight - tooltipMargin;
-  } 
+  }
   // Otherwise place below
   else {
     tooltipTop = componentBottom + tooltipMargin;
@@ -183,9 +199,9 @@ export const ComponentOverlay: React.FC = React.memo(() => {
           transition: 'all 0.1s ease'
         }}
       />
-      
+
       {/* Component info tooltip */}
-      <div 
+      <div
         data-feedback-overlay="label"
         style={{
           position: 'fixed',
@@ -211,7 +227,16 @@ export const ComponentOverlay: React.FC = React.memo(() => {
           {componentInfo?.name}
         </div>
         {componentInfo?.path && (
-          <div style={{ opacity: 0.8, fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={componentInfo.path}>
+          <div
+            style={{
+              opacity: 0.8,
+              fontSize: '11px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+            title={componentInfo.path}
+          >
             {componentInfo.path}
           </div>
         )}

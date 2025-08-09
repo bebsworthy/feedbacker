@@ -5,9 +5,9 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../../types';
+import logger from '../../utils/logger';
 
 export class HeuristicStrategy extends DetectionStrategy {
-  
   /**
    * Detect component using DOM heuristics
    */
@@ -15,11 +15,10 @@ export class HeuristicStrategy extends DetectionStrategy {
     try {
       // Build a hybrid-style path even without fiber data
       const path = this.buildHeuristicHybridPath(element);
-      
+
       // Extract component name from the path or guess it
-      const componentName = this.extractComponentFromPath(path) || 
-                           this.guessComponentName(element) || 
-                           'Component';
+      const componentName =
+        this.extractComponentFromPath(path) || this.guessComponentName(element) || 'Component';
 
       return {
         name: this.sanitizeComponentName(componentName),
@@ -28,9 +27,8 @@ export class HeuristicStrategy extends DetectionStrategy {
         props: undefined, // No props available in heuristic mode
         fiber: undefined
       };
-
     } catch (error) {
-      console.warn('[Feedbacker] Heuristic detection failed:', error);
+      logger.warn('Heuristic detection failed:', error);
       return null;
     }
   }
@@ -39,23 +37,22 @@ export class HeuristicStrategy extends DetectionStrategy {
    * Build a hybrid-style path using heuristics (no fiber data)
    */
   private buildHeuristicHybridPath(element: HTMLElement): string[] {
-    const path: string[] = [];
     const domPath: string[] = [];
     const componentPath: string[] = [];
-    
+
     let currentElement: HTMLElement | null = element;
     let foundComponent = false;
     let depth = 0;
     const maxDepth = 10;
-    
+
     // Step 1: Build path from element upwards, trying to identify components
     while (currentElement && depth < maxDepth) {
       const tagName = currentElement.tagName.toLowerCase();
       const className = currentElement.className;
-      
+
       // Try to identify if this might be a React component
       const possibleComponentName = this.guessComponentName(currentElement);
-      
+
       if (possibleComponentName && !foundComponent) {
         // Found a likely component - switch to component path
         foundComponent = true;
@@ -64,7 +61,10 @@ export class HeuristicStrategy extends DetectionStrategy {
         // Still in DOM elements
         if (domPath.length === 0 && className) {
           // For the selected element, include className
-          const classes = className.split(' ').filter(c => c.trim()).join('.');
+          const classes = className
+            .split(' ')
+            .filter((c) => c.trim())
+            .join('.');
           domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
         } else {
           domPath.unshift(tagName);
@@ -76,18 +76,18 @@ export class HeuristicStrategy extends DetectionStrategy {
           componentPath.unshift(parentComponentName);
         }
       }
-      
+
       currentElement = currentElement.parentElement;
       depth++;
     }
-    
+
     // If we didn't find any components, treat the whole thing as DOM path
     if (componentPath.length === 0 && domPath.length > 0) {
       // Try to infer a component from the context
       const inferredComponent = 'Component';
       componentPath.push(inferredComponent);
     }
-    
+
     // Combine paths
     return [...componentPath, ...domPath];
   }
@@ -98,7 +98,9 @@ export class HeuristicStrategy extends DetectionStrategy {
   private extractComponentFromPath(path: string[]): string | null {
     for (let i = path.length - 1; i >= 0; i--) {
       const segment = path[i];
-      if (!segment) continue;
+      if (!segment) {
+        continue;
+      }
       // Check if it's not an HTML element
       if (!/^[a-z]/.test(segment) && !segment.includes('.')) {
         return segment;
@@ -113,19 +115,27 @@ export class HeuristicStrategy extends DetectionStrategy {
   private guessComponentName(element: HTMLElement): string | null {
     // Strategy 1: Look for data attributes that might indicate component names
     const componentName = this.checkDataAttributes(element);
-    if (componentName) return componentName;
+    if (componentName) {
+      return componentName;
+    }
 
     // Strategy 2: Look for CSS class names that might be component names
     const className = this.guessFromClassName(element);
-    if (className) return className;
+    if (className) {
+      return className;
+    }
 
     // Strategy 3: Look for semantic HTML elements that might represent components
     const semanticName = this.guessFromSemanticHTML(element);
-    if (semanticName) return semanticName;
+    if (semanticName) {
+      return semanticName;
+    }
 
     // Strategy 4: Look at parent elements for context
     const contextualName = this.guessFromContext(element);
-    if (contextualName) return contextualName;
+    if (contextualName) {
+      return contextualName;
+    }
 
     return null;
   }
@@ -159,7 +169,7 @@ export class HeuristicStrategy extends DetectionStrategy {
    */
   private guessFromClassName(element: HTMLElement): string | null {
     const classList = Array.from(element.classList);
-    
+
     for (const className of classList) {
       // Look for component-like class names (PascalCase or component-style)
       if (this.looksLikeComponentClass(className)) {
@@ -179,7 +189,7 @@ export class HeuristicStrategy extends DetectionStrategy {
       /^(bg-|text-|p-|m-|w-|h-|flex|grid|hidden|visible)/i, // Tailwind-like
       /^(btn|card|nav|header|footer|main|content)/i, // Common UI classes
       /^(active|disabled|selected|hover|focus)/i, // State classes
-      /^[a-z]/  // Skip lowercase-first classes (likely utility classes)
+      /^[a-z]/ // Skip lowercase-first classes (likely utility classes)
     ];
 
     for (const pattern of skipPatterns) {
@@ -206,17 +216,17 @@ export class HeuristicStrategy extends DetectionStrategy {
 
     // Map semantic HTML to likely component names
     const semanticMap: Record<string, string> = {
-      'header': 'Header',
-      'nav': 'Navigation',
-      'main': 'MainContent',
-      'aside': 'Sidebar',
-      'footer': 'Footer',
-      'article': 'Article',
-      'section': 'Section',
-      'form': 'Form',
-      'table': 'Table',
-      'dialog': 'Modal',
-      'details': 'Accordion'
+      header: 'Header',
+      nav: 'Navigation',
+      main: 'MainContent',
+      aside: 'Sidebar',
+      footer: 'Footer',
+      article: 'Article',
+      section: 'Section',
+      form: 'Form',
+      table: 'Table',
+      dialog: 'Modal',
+      details: 'Accordion'
     };
 
     if (semanticMap[tagName]) {
@@ -227,15 +237,15 @@ export class HeuristicStrategy extends DetectionStrategy {
     const role = element.getAttribute('role');
     if (role) {
       const roleMap: Record<string, string> = {
-        'button': 'Button',
-        'dialog': 'Modal',
-        'tabpanel': 'TabPanel',
-        'tab': 'Tab',
-        'tablist': 'TabList',
-        'menu': 'Menu',
-        'menuitem': 'MenuItem',
-        'tooltip': 'Tooltip',
-        'alert': 'Alert'
+        button: 'Button',
+        dialog: 'Modal',
+        tabpanel: 'TabPanel',
+        tab: 'Tab',
+        tablist: 'TabList',
+        menu: 'Menu',
+        menuitem: 'MenuItem',
+        tooltip: 'Tooltip',
+        alert: 'Alert'
       };
 
       if (roleMap[role]) {
@@ -257,7 +267,7 @@ export class HeuristicStrategy extends DetectionStrategy {
     while (parent && depth < maxDepth) {
       // Check parent's data attributes or class names
       const parentName = this.checkDataAttributes(parent) || this.guessFromClassName(parent);
-      
+
       if (parentName) {
         // Create a contextual name
         const tagName = element.tagName.toLowerCase();
@@ -271,7 +281,6 @@ export class HeuristicStrategy extends DetectionStrategy {
     return null;
   }
 
-
   /**
    * Format component name consistently
    */
@@ -279,7 +288,7 @@ export class HeuristicStrategy extends DetectionStrategy {
     return name
       .replace(/[-_]/g, ' ')
       .split(' ')
-      .map(word => this.capitalizeFirst(word))
+      .map((word) => this.capitalizeFirst(word))
       .join('');
   }
 

@@ -3,6 +3,8 @@
  * Implements requestIdleCallback with fallbacks and debouncing utilities
  */
 
+import logger from './logger';
+
 // RequestIdleCallback polyfill for browsers that don't support it
 interface IdleDeadline {
   didTimeout: boolean;
@@ -19,17 +21,17 @@ interface IdleRequestOptions {
  * Request idle callback with fallback for unsupported browsers
  */
 export const requestIdleCallback = (
-  callback: IdleCallback, 
+  callback: IdleCallback,
   options?: IdleRequestOptions
 ): number => {
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
     return (window as any).requestIdleCallback(callback, options);
   }
-  
+
   // Fallback implementation using setTimeout
   const timeout = options?.timeout || 0;
   const startTime = Date.now();
-  
+
   return setTimeout(() => {
     const deadline: IdleDeadline = {
       didTimeout: timeout > 0 && Date.now() - startTime >= timeout,
@@ -75,7 +77,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   const invokeFunc = (time: number) => {
     const args = lastArgs!;
     const thisArg = lastThis;
-    
+
     lastArgs = undefined;
     lastThis = undefined;
     lastInvokeTime = time;
@@ -93,18 +95,20 @@ export const debounce = <T extends (...args: any[]) => any>(
     const timeSinceLastCall = time - (lastCallTime || 0);
     const timeSinceLastInvoke = time - lastInvokeTime;
     const timeWaiting = wait - timeSinceLastCall;
-    
+
     return maxWait !== undefined
       ? Math.min(timeWaiting, maxWait - timeSinceLastInvoke)
       : timeWaiting;
   };
 
   const shouldInvoke = (time: number) => {
-    if (lastCallTime === undefined) return true;
-    
+    if (lastCallTime === undefined) {
+      return true;
+    }
+
     const timeSinceLastCall = time - lastCallTime;
     const timeSinceLastInvoke = time - lastInvokeTime;
-    
+
     return (
       timeSinceLastCall >= wait ||
       timeSinceLastCall < 0 ||
@@ -151,6 +155,7 @@ export const debounce = <T extends (...args: any[]) => any>(
     const isInvoking = shouldInvoke(time);
 
     lastArgs = args;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     lastThis = this;
     lastCallTime = time;
 
@@ -212,28 +217,31 @@ export class IdleBatcher {
       return;
     }
 
-    this.idleId = requestIdleCallback((deadline) => {
-      this.isRunning = true;
-      this.idleId = null;
+    this.idleId = requestIdleCallback(
+      (deadline) => {
+        this.isRunning = true;
+        this.idleId = null;
 
-      while (this.queue.length > 0 && deadline.timeRemaining() > 0) {
-        const task = this.queue.shift();
-        if (task) {
-          try {
-            task();
-          } catch (error) {
-            console.error('[Feedbacker] Idle task error:', error);
+        while (this.queue.length > 0 && deadline.timeRemaining() > 0) {
+          const task = this.queue.shift();
+          if (task) {
+            try {
+              task();
+            } catch (error) {
+              logger.error('Idle task error:', error);
+            }
           }
         }
-      }
 
-      this.isRunning = false;
+        this.isRunning = false;
 
-      // If there are more tasks, schedule another idle callback
-      if (this.queue.length > 0) {
-        this.scheduleWork();
-      }
-    }, { timeout: 1000 });
+        // If there are more tasks, schedule another idle callback
+        if (this.queue.length > 0) {
+          this.scheduleWork();
+        }
+      },
+      { timeout: 1000 }
+    );
   }
 
   clear(): void {
@@ -258,18 +266,18 @@ export class PerformanceMonitor {
 
   mark(name: string): () => void {
     const startTime = performance.now();
-    
+
     return () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       if (!this.measurements.has(name)) {
         this.measurements.set(name, []);
       }
-      
+
       const times = this.measurements.get(name)!;
       times.push(duration);
-      
+
       // Keep only the last 100 measurements
       if (times.length > 100) {
         times.shift();

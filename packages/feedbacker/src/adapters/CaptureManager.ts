@@ -3,15 +3,16 @@
  * Manages screenshot capture adapters and provides a unified interface
  */
 
-import { 
-  CaptureAdapter, 
-  CaptureOptions, 
-  CaptureResult, 
+import {
+  CaptureAdapter,
+  CaptureOptions,
+  CaptureResult,
   CaptureLibrary,
-  CaptureAdapterFactory 
+  CaptureAdapterFactory
 } from '../types/capture';
 import { Html2CanvasAdapter } from './Html2CanvasAdapter';
 import { SnapDOMAdapter } from './SnapDOMAdapter';
+import logger from '../utils/logger';
 
 export class CaptureManager {
   private static instance: CaptureManager | null = null;
@@ -41,7 +42,7 @@ export class CaptureManager {
   private registerBuiltInAdapters(): void {
     // Register Html2Canvas adapter factory
     this.factories.set(CaptureLibrary.HTML2CANVAS, () => new Html2CanvasAdapter());
-    
+
     // Register SnapDOM adapter factory
     this.factories.set(CaptureLibrary.SNAPDOM, () => new SnapDOMAdapter());
   }
@@ -49,18 +50,14 @@ export class CaptureManager {
   /**
    * Register a custom capture adapter
    */
-  registerAdapter(
-    name: string, 
-    factory: CaptureAdapterFactory,
-    setAsDefault = false
-  ): void {
+  registerAdapter(name: string, factory: CaptureAdapterFactory, setAsDefault = false): void {
     this.factories.set(name, factory);
-    
+
     if (setAsDefault) {
       this.defaultLibrary = name;
     }
-    
-    console.log(`[CaptureManager] Registered adapter: ${name}`);
+
+    logger.info(`Registered adapter: ${name}`);
   }
 
   /**
@@ -70,9 +67,9 @@ export class CaptureManager {
     if (!this.factories.has(library)) {
       throw new Error(`Capture library '${library}' is not registered`);
     }
-    
+
     this.defaultLibrary = library;
-    console.log(`[CaptureManager] Default library set to: ${library}`);
+    logger.info(`Default library set to: ${library}`);
   }
 
   /**
@@ -80,39 +77,39 @@ export class CaptureManager {
    */
   private async getAdapter(library?: string): Promise<CaptureAdapter> {
     const targetLibrary = library || this.defaultLibrary;
-    
+
     // Check if adapter already exists
     if (this.adapters.has(targetLibrary)) {
       return this.adapters.get(targetLibrary)!;
     }
-    
+
     // Get factory and create adapter
     const factory = this.factories.get(targetLibrary);
     if (!factory) {
       throw new Error(`No factory registered for library: ${targetLibrary}`);
     }
-    
+
     const adapter = factory();
-    
+
     // Check if adapter is supported
     const isSupported = await adapter.isSupported();
     if (!isSupported) {
       throw new Error(`Capture library '${targetLibrary}' is not supported in this environment`);
     }
-    
+
     // Preload if available
     if (adapter.preload) {
       try {
         await adapter.preload();
       } catch (error) {
-        console.warn(`[CaptureManager] Failed to preload ${targetLibrary}:`, error);
+        logger.warn(`Failed to preload ${targetLibrary}:`, error);
       }
     }
-    
+
     // Cache the adapter
     this.adapters.set(targetLibrary, adapter);
     this.currentAdapter = adapter;
-    
+
     return adapter;
   }
 
@@ -124,36 +121,36 @@ export class CaptureManager {
     options: CaptureOptions & { library?: string } = {}
   ): Promise<CaptureResult> {
     const { library, ...captureOptions } = options;
-    
+
     try {
       // Get the appropriate adapter
       const adapter = await this.getAdapter(library);
-      
+
       // Merge with recommended options if available
       let finalOptions = captureOptions;
       if (adapter.getRecommendedOptions) {
         const recommended = adapter.getRecommendedOptions();
         finalOptions = { ...recommended, ...captureOptions };
       }
-      
+
       // Capture screenshot
       const result = await adapter.capture(element, finalOptions);
-      
+
       // Add library info to metadata
       if (result.success && result.metadata) {
         result.metadata.library = adapter.name;
       }
-      
+
       return result;
     } catch (error) {
-      console.error('[CaptureManager] Capture failed:', error);
-      
+      logger.error('Capture failed:', error);
+
       // If primary adapter fails, try fallback
       if (library !== this.defaultLibrary) {
-        console.log('[CaptureManager] Trying fallback with default library');
+        logger.info('Trying fallback with default library');
         return this.captureWithFallback(element, captureOptions);
       }
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown capture error'
@@ -170,13 +167,13 @@ export class CaptureManager {
   ): Promise<CaptureResult> {
     try {
       const adapter = await this.getAdapter();
-      
+
       let finalOptions = options;
       if (adapter.getRecommendedOptions) {
         const recommended = adapter.getRecommendedOptions();
         finalOptions = { ...recommended, ...options };
       }
-      
+
       return await adapter.capture(element, finalOptions);
     } catch (error) {
       return {
@@ -195,7 +192,7 @@ export class CaptureManager {
       if (!factory) {
         return false;
       }
-      
+
       const adapter = factory();
       return await adapter.isSupported();
     } catch {
@@ -217,7 +214,7 @@ export class CaptureManager {
     if (!this.currentAdapter) {
       return null;
     }
-    
+
     return {
       name: this.currentAdapter.name,
       ...(this.currentAdapter.version && { version: this.currentAdapter.version })
@@ -228,16 +225,16 @@ export class CaptureManager {
    * Cleanup all adapters
    */
   cleanup(): void {
-    this.adapters.forEach(adapter => {
+    this.adapters.forEach((adapter) => {
       if (adapter.cleanup) {
         try {
           adapter.cleanup();
         } catch (error) {
-          console.error(`[CaptureManager] Error cleaning up ${adapter.name}:`, error);
+          logger.error(`Error cleaning up ${adapter.name}:`, error);
         }
       }
     });
-    
+
     this.adapters.clear();
     this.currentAdapter = null;
   }

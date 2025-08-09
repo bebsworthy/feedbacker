@@ -8,12 +8,12 @@ export interface Feedback {
   componentName: string;
   componentPath: string[];
   comment: string;
-  screenshot?: string | undefined;  
+  screenshot?: string | undefined;
   url: string;
   timestamp: string;
   browserInfo: BrowserInfo;
   htmlSnippet?: string | undefined;
-  metadata?: Record<string, any> | undefined;
+  metadata?: Record<string, unknown> | undefined;
 }
 
 export interface Draft {
@@ -26,11 +26,11 @@ export interface Draft {
 
 export interface ComponentInfo {
   name: string;
-  path: string[];  
+  path: string[];
   element: HTMLElement;
   htmlSnippet?: string | undefined;
-  props?: Record<string, any> | undefined;
-  fiber?: any | undefined; // ReactFiber type - will be properly typed when React internals are available
+  props?: Record<string, unknown> | undefined;
+  fiber?: unknown | undefined; // ReactFiber type - will be properly typed when React internals are available
 }
 
 export interface BrowserInfo {
@@ -49,8 +49,8 @@ export interface FeedbackProviderProps {
   autoCopy?: boolean;
   autoDownload?: boolean | 'markdown' | 'zip';
   captureLibrary?: 'html2canvas' | 'snapdom' | string;
-  captureAdapter?: any; // CaptureAdapter type when imported
-  children?: any; // React.ReactNode will be properly typed when React is imported
+  captureAdapter?: unknown; // CaptureAdapter type when imported
+  children?: unknown; // React.ReactNode will be properly typed when React is imported
 }
 
 export interface ExportOptions {
@@ -118,7 +118,7 @@ export interface FABState {
 export interface FABAction {
   id: string;
   label: string;
-  icon: any; // ReactNode when React is imported
+  icon: unknown; // ReactNode when React is imported
   onClick: () => void;
 }
 

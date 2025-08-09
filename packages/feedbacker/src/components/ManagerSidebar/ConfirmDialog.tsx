@@ -1,6 +1,6 @@
 /**
  * ConfirmDialog - Confirmation dialog component
- * 
+ *
  * Features:
  * - Modal dialog with backdrop
  * - Confirm/Cancel actions
@@ -45,7 +45,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   // Handle keyboard events
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -71,17 +73,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="feedbacker-root">
       {/* Backdrop */}
-      <div 
+      <div
         className="feedbacker-modal-backdrop visible"
         style={{ zIndex: 99999 }}
         onClick={onCancel}
       />
-      
+
       {/* Dialog */}
       <div
         ref={dialogRef}
@@ -96,16 +100,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           left: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 100000,
-          
+
           background: 'white',
           border: '1px solid #e5e7eb',
           borderRadius: '12px',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          
+
           width: '90vw',
           maxWidth: '400px',
           padding: '24px',
-          
+
           display: 'flex',
           flexDirection: 'column',
           gap: '16px'
@@ -114,17 +118,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         {/* Header with Icon */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
           {isDanger && (
-            <div style={{
-              color: '#ef4444',
-              flexShrink: 0,
-              marginTop: '2px'
-            }}>
+            <div
+              style={{
+                color: '#ef4444',
+                flexShrink: 0,
+                marginTop: '2px'
+              }}
+            >
               <ExclamationTriangleIcon size={24} />
             </div>
           )}
-          
+
           <div style={{ flex: 1 }}>
-            <h3 
+            <h3
               id="confirm-title"
               style={{
                 margin: 0,
@@ -135,8 +141,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             >
               {title}
             </h3>
-            
-            <p 
+
+            <p
               id="confirm-message"
               style={{
                 margin: '8px 0 0 0',
@@ -151,11 +157,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          gap: '8px' 
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px'
+          }}
+        >
           <button
             ref={cancelButtonRef}
             className="feedbacker-btn feedbacker-btn-secondary"
@@ -164,12 +172,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           >
             {cancelText}
           </button>
-          
+
           <button
             className={`feedbacker-btn ${
-              isDanger 
-                ? 'feedbacker-btn-danger' 
-                : 'feedbacker-btn-primary'
+              isDanger ? 'feedbacker-btn-danger' : 'feedbacker-btn-primary'
             }`}
             onClick={onConfirm}
             type="button"

@@ -1,6 +1,6 @@
 /**
  * FeedbackList - Component to display list of feedback items
- * 
+ *
  * Features:
  * - Thumbnail preview for each feedback
  * - Expandable details view
@@ -11,13 +11,13 @@
 import React, { useState } from 'react';
 import { Feedback } from '../../types';
 import { formatDistanceToNow } from '../../utils/dateUtils';
-import { 
-  PencilIcon, 
-  TrashIcon, 
-  PhotoIcon, 
+import {
+  PencilIcon,
+  TrashIcon,
+  PhotoIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ComputerDesktopIcon 
+  ComputerDesktopIcon
 } from '../../icons';
 
 interface FeedbackListProps {
@@ -53,7 +53,9 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
   };
 
   const truncateText = (text: string, maxLength: number = 100) => {
-    if (text.length <= maxLength) return text;
+    if (text.length <= maxLength) {
+      return text;
+    }
     return text.slice(0, maxLength) + '...';
   };
 
@@ -84,14 +86,10 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
               {formatDistanceToNow(new Date(feedback.timestamp))}
             </span>
           </div>
-          
-          <div className="feedback-path">
-            {feedback.componentPath.join(' > ')}
-          </div>
-          
-          <div className="feedback-comment-preview">
-            {truncateText(feedback.comment)}
-          </div>
+
+          <div className="feedback-path">{feedback.componentPath.join(' > ')}</div>
+
+          <div className="feedback-comment-preview">{truncateText(feedback.comment)}</div>
         </div>
 
         {/* Expand/Collapse Icon */}
@@ -131,7 +129,8 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
               <div className="metadata-item">
                 <span className="metadata-label">Browser:</span>
                 <span className="metadata-value">
-                  {feedback.browserInfo.platform} - {feedback.browserInfo.viewport.width}x{feedback.browserInfo.viewport.height}
+                  {feedback.browserInfo.platform} - {feedback.browserInfo.viewport.width}x
+                  {feedback.browserInfo.viewport.height}
                 </span>
               </div>
               <div className="metadata-item">
@@ -168,17 +167,13 @@ const FeedbackItem: React.FC<FeedbackItemProps> = ({ feedback, onEdit, onDelete 
   );
 };
 
-export const FeedbackList: React.FC<FeedbackListProps> = ({
-  feedbacks,
-  onEdit,
-  onDelete
-}) => {
+export const FeedbackList: React.FC<FeedbackListProps> = ({ feedbacks, onEdit, onDelete }) => {
   if (feedbacks.length === 0) {
     return (
       <div className="feedback-list-empty">
         <PhotoIcon size={48} />
         <h3>No feedback yet</h3>
-        <p>Click "New feedback" to get started!</p>
+        <p>Click &quot;New feedback&quot; to get started!</p>
       </div>
     );
   }
@@ -186,12 +181,7 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
   return (
     <div className="feedback-list">
       {feedbacks.map((feedback) => (
-        <FeedbackItem
-          key={feedback.id}
-          feedback={feedback}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        <FeedbackItem key={feedback.id} feedback={feedback} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </div>
   );

@@ -11,7 +11,7 @@ const ComponentDetectionContext = createContext<UseComponentDetectionResult | nu
 
 export const ComponentDetectionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const detection = useComponentDetectionHook();
-  
+
   return (
     <ComponentDetectionContext.Provider value={detection}>
       {children}

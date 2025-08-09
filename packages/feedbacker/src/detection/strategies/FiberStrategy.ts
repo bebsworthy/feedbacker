@@ -5,28 +5,29 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../../types';
+import logger from '../../utils/logger';
 
 export class FiberStrategy extends DetectionStrategy {
-  
   /**
    * Detect component by directly inspecting React fiber
    */
   protected detect(element: HTMLElement): ComponentInfo | null {
     try {
       const fiber = this.getReactFiber(element);
-      
+
       if (!fiber) {
         return null;
       }
 
       // Use hybrid path instead of component-only path
       const path = this.buildHybridPath(element, fiber);
-      
+
       // Extract the component name from the path or fiber
-      const componentName = this.extractComponentNameFromPath(path) || 
-                           this.getComponentNameFromFiber(fiber) ||
-                           'Component';
-      
+      const componentName =
+        this.extractComponentNameFromPath(path) ||
+        this.getComponentNameFromFiber(fiber) ||
+        'Component';
+
       const props = this.extractProps(fiber);
 
       return {
@@ -36,9 +37,8 @@ export class FiberStrategy extends DetectionStrategy {
         props,
         fiber
       };
-
     } catch (error) {
-      console.warn('[Feedbacker] Fiber detection failed:', error);
+      logger.warn('Fiber detection failed:', error);
       return null;
     }
   }
@@ -50,7 +50,9 @@ export class FiberStrategy extends DetectionStrategy {
     // Find the last React component in the path (before HTML elements)
     for (let i = path.length - 1; i >= 0; i--) {
       const segment = path[i];
-      if (!segment) continue;
+      if (!segment) {
+        continue;
+      }
       // Check if it's an HTML element (lowercase or contains .)
       if (!/^[a-z]/.test(segment) && !segment.includes('.')) {
         return segment;
@@ -62,8 +64,10 @@ export class FiberStrategy extends DetectionStrategy {
   /**
    * Extract component name from React fiber
    */
-  private getComponentNameFromFiber(fiber: any): string | null {
-    if (!fiber) return null;
+  private getComponentNameFromFiber(fiber: unknown): string | null {
+    if (!fiber) {
+      return null;
+    }
 
     try {
       // First try to get the name from the immediate fiber
@@ -73,7 +77,8 @@ export class FiberStrategy extends DetectionStrategy {
       }
 
       // Walk up the fiber tree to find a named component
-      let current = fiber.return; // Start from parent
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let current = (fiber as any).return; // Start from parent
       let attempts = 0;
       const maxAttempts = 20; // Prevent infinite loops
 
@@ -82,12 +87,12 @@ export class FiberStrategy extends DetectionStrategy {
         if (name && this.isValidComponentName(name)) {
           return name;
         }
-        current = current.return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        current = (current as any).return;
         attempts++;
       }
-
     } catch (error) {
-      console.warn('[Feedbacker] Error walking fiber tree:', error);
+      logger.warn('Error walking fiber tree:', error);
     }
 
     return null;
@@ -99,23 +104,36 @@ export class FiberStrategy extends DetectionStrategy {
   private isValidComponentName(name: string): boolean {
     // Filter out common wrapper/provider components
     const wrappers = [
-      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
-      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
-      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+      'FeedbackProvider',
+      'FeedbackErrorBoundary',
+      'FeedbackProviderInternal',
+      'FeedbackContextProvider',
+      'ComponentDetectionProvider',
+      'ErrorBoundary',
+      'Provider',
+      'Consumer',
+      'Context',
+      'Fragment',
+      'Suspense',
+      'StrictMode'
     ];
-    
-    return !wrappers.includes(name) && 
-           !name.includes('Provider') && 
-           !name.includes('Context') &&
-           name !== 'Anonymous' &&
-           name !== 'Component';
+
+    return (
+      !wrappers.includes(name) &&
+      !name.includes('Provider') &&
+      !name.includes('Context') &&
+      name !== 'Anonymous' &&
+      name !== 'Component'
+    );
   }
 
   /**
    * Extract name from a single fiber node
    */
-  private extractNameFromFiber(fiber: any): string | null {
-    if (!fiber) return null;
+  private extractNameFromFiber(fiber: unknown): string | null {
+    if (!fiber) {
+      return null;
+    }
 
     try {
       // Function components
@@ -128,8 +146,7 @@ export class FiberStrategy extends DetectionStrategy {
 
       // Class components
       if (fiber.stateNode && fiber.stateNode.constructor) {
-        const name = fiber.stateNode.constructor.displayName || 
-                    fiber.stateNode.constructor.name;
+        const name = fiber.stateNode.constructor.displayName || fiber.stateNode.constructor.name;
         if (name && name !== 'Object') {
           return name;
         }
@@ -147,9 +164,8 @@ export class FiberStrategy extends DetectionStrategy {
           return name;
         }
       }
-
     } catch (error) {
-      console.warn('[Feedbacker] Error extracting fiber name:', error);
+      logger.warn('Error extracting fiber name:', error);
     }
 
     return null;
@@ -158,8 +174,11 @@ export class FiberStrategy extends DetectionStrategy {
   /**
    * Handle special React component types (forwardRef, memo, etc.)
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handleSpecialReactTypes(fiber: any): string | null {
-    if (!fiber.type?.$$typeof) return null;
+    if (!fiber.type?.$$typeof) {
+      return null;
+    }
 
     try {
       const symbolString = fiber.type.$$typeof.toString();
@@ -206,9 +225,8 @@ export class FiberStrategy extends DetectionStrategy {
       if (symbolString.includes('react.consumer')) {
         return 'ContextConsumer';
       }
-
     } catch (error) {
-      console.warn('[Feedbacker] Error handling special React types:', error);
+      logger.warn('Error handling special React types:', error);
     }
 
     return null;

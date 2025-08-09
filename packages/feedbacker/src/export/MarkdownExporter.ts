@@ -1,6 +1,6 @@
 /**
  * MarkdownExporter - Generates markdown files from feedback data
- * 
+ *
  * Features:
  * - Text-only markdown export without images
  * - Formatted output with component information
@@ -9,7 +9,6 @@
  */
 
 import { Feedback } from '../types';
-import { formatDate } from '../utils/dateUtils';
 
 export class MarkdownExporter {
   /**
@@ -38,14 +37,14 @@ export class MarkdownExporter {
     const markdown = this.exportAsMarkdown(feedbacks);
     const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Clean up the URL object
     URL.revokeObjectURL(url);
   }
@@ -56,8 +55,8 @@ export class MarkdownExporter {
   private static generateHeader(feedbacks: Feedback[]): string {
     const timestamp = new Date().toISOString();
     const totalFeedback = feedbacks.length;
-    const componentsCount = new Set(feedbacks.map(f => f.componentName)).size;
-    
+    const componentsCount = new Set(feedbacks.map((f) => f.componentName)).size;
+
     return [
       '# Feedback Report',
       `Generated on ${timestamp}`,
@@ -68,14 +67,13 @@ export class MarkdownExporter {
     ].join('\n');
   }
 
-
   /**
    * Generate all feedback items
    */
   private static generateFeedbackItems(feedbacks: Feedback[]): string {
-    return feedbacks.map((feedback, index) => 
-      this.generateFeedbackItem(feedback, index + 1)
-    ).join('\n\n---\n\n');
+    return feedbacks
+      .map((feedback, index) => this.generateFeedbackItem(feedback, index + 1))
+      .join('\n\n---\n\n');
   }
 
   /**
@@ -83,20 +81,20 @@ export class MarkdownExporter {
    */
   private static generateFeedbackItem(feedback: Feedback, index: number): string {
     const timestamp = feedback.timestamp; // Already in ISO format
-    
+
     let item = `## ${index}. ${feedback.componentName}\n\n`;
-    
+
     // Feedback Comment
     item += '### Feedback\n';
     item += this.formatComment(feedback.comment);
-    
+
     // Component Information
     item += '\n\n### Component Information\n';
     item += `- **Component:** ${feedback.componentName}\n`;
     item += `- **Path:** ${feedback.componentPath.join(' > ')}\n`;
     item += `- **URL:** ${feedback.url}\n`;
     item += `- **Timestamp:** ${timestamp}\n`;
-    
+
     // Browser Information
     item += '\n### Browser Information\n';
     if (feedback.browserInfo.platform) {
@@ -104,7 +102,7 @@ export class MarkdownExporter {
     }
     item += `- **Viewport:** ${feedback.browserInfo.viewport.width} x ${feedback.browserInfo.viewport.height}\n`;
     item += `- **User Agent:** ${feedback.browserInfo.userAgent}\n`;
-    
+
     // HTML Snippet (if available)
     if (feedback.htmlSnippet) {
       item += '\n### HTML Snippet\n';
@@ -112,7 +110,7 @@ export class MarkdownExporter {
       item += feedback.htmlSnippet;
       item += '\n```\n';
     }
-    
+
     // Metadata (if available)
     if (feedback.metadata && Object.keys(feedback.metadata).length > 0) {
       item += '\n### Additional Metadata\n';
@@ -120,10 +118,9 @@ export class MarkdownExporter {
       item += JSON.stringify(feedback.metadata, null, 2);
       item += '\n```\n';
     }
-    
+
     return item;
   }
-
 
   /**
    * Format comment text for markdown
@@ -136,11 +133,11 @@ export class MarkdownExporter {
       .replace(/_/g, '\\_')
       .replace(/~/g, '\\~')
       .replace(/`/g, '\\`');
-    
+
     // Convert newlines to proper markdown line breaks
     return escaped
       .split('\n')
-      .map(line => line.trim())
+      .map((line) => line.trim())
       .join('\n\n');
   }
 
@@ -153,10 +150,10 @@ export class MarkdownExporter {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-    
+
     // Add short ID to ensure uniqueness
     const shortId = id.slice(-8);
-    
+
     return `${base}-${shortId}`;
   }
 

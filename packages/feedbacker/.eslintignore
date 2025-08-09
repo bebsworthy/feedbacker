@@ -1,0 +1,18 @@
+# Build outputs
+dist/
+build/
+coverage/
+
+# Dependencies  
+node_modules/
+
+# Config files
+rollup.config.js
+jest.config.js
+
+# Generated files
+*.d.ts
+*.css.d.ts
+
+# Package files
+*.tgz

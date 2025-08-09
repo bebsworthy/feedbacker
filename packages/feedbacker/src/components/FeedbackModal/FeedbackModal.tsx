@@ -1,7 +1,7 @@
 /**
  * FeedbackModal Component
  * Main modal for collecting feedback with minimize/restore functionality
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.6, 9.5
  */
 
@@ -38,7 +38,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [showDraftWarning, setShowDraftWarning] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initialCommentRef = useRef<string>(initialComment);
 
@@ -47,7 +47,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -141,18 +141,21 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     onMinimize();
   }, [onMinimize]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    // Submit on Ctrl/Cmd + Enter
-    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-      event.preventDefault();
-      handleSubmit();
-    }
-    // Cancel on Escape
-    else if (event.key === 'Escape') {
-      event.preventDefault();
-      handleCancel();
-    }
-  }, [handleSubmit, handleCancel]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      // Submit on Ctrl/Cmd + Enter
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        handleSubmit();
+      }
+      // Cancel on Escape
+      else if (event.key === 'Escape') {
+        event.preventDefault();
+        handleCancel();
+      }
+    },
+    [handleSubmit, handleCancel]
+  );
 
   // Don't render if not open
   if (!isOpen) {
@@ -176,47 +179,52 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const componentName = componentInfo?.name || 'Unknown Component';
   const componentPath = componentInfo?.path?.join(' → ') || '';
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   if (isMinimized) {
-    return (
-      <MinimizedState
-        componentName={componentName}
-        onRestore={onRestore}
-      />
-    );
+    return <MinimizedState componentName={componentName} onRestore={onRestore} />;
   }
 
   return (
     <>
       {/* Modal backdrop */}
-      <div 
+      <div
         className="feedbacker-modal-backdrop"
         onClick={handleCancel}
+        role="presentation"
+        aria-hidden="true"
       />
-      
+
       {/* Modal */}
-      <div 
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+      <div
         className={`feedbacker-modal ${isMobile ? 'feedbacker-modal-mobile' : ''}`}
-        onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         role="dialog"
-        aria-labelledby="feedback-modal-title"
+        aria-modal="true"
+        aria-labelledby="feedbacker-modal-title"
         aria-describedby="feedback-modal-description"
+        tabIndex={-1}
       >
         {/* Header */}
         <div className="feedbacker-modal-header">
           <div>
-            <h2 id="feedback-modal-title" className="feedbacker-modal-title">
+            <h2 id="feedbacker-modal-title" className="feedbacker-modal-title">
               Feedback for {componentName}
             </h2>
             {componentPath && (
-              <div className="feedbacker-component-path" title={componentPath} style={{ fontSize: '12px', color: '#6b7280' }}>
+              <div
+                className="feedbacker-component-path"
+                title={componentPath}
+                style={{ fontSize: '12px', color: '#6b7280' }}
+              >
                 {componentPath}
               </div>
             )}
           </div>
-          
+
           <div className="feedbacker-modal-header-actions" style={{ display: 'flex', gap: '8px' }}>
             {/* Minimize button */}
             <button
@@ -227,15 +235,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               aria-label="Minimize feedback modal"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path 
-                  d="M4 8h8" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round"
-                />
+                <path d="M4 8h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
-            
+
             {/* Close button */}
             <button
               type="button"
@@ -244,11 +247,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               aria-label="Close feedback modal"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path 
-                  d="M18 6L6 18M6 6l12 12" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <path
+                  d="M18 6L6 18M6 6l12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
@@ -261,14 +264,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           {/* Screenshot preview */}
           {screenshot && (
             <div style={{ marginBottom: '16px' }}>
-              <img 
-                src={screenshot} 
+              <img
+                src={screenshot}
                 alt="Component screenshot"
                 className="feedbacker-screenshot-preview"
               />
             </div>
           )}
-          
+
           {/* Comment textarea */}
           <div className="feedbacker-form-group">
             <label htmlFor="feedback-comment" className="feedbacker-label">
@@ -284,7 +287,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               rows={6}
               aria-describedby="feedback-modal-description"
             />
-            <div id="feedback-modal-description" style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+            <div
+              id="feedback-modal-description"
+              style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}
+            >
               {isDirty && (
                 <span style={{ color: '#10b981' }}>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -320,10 +326,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       {/* Draft protection warning */}
       {showDraftWarning && (
         <div className="feedbacker-modal-backdrop visible" onClick={handleDiscardDraft}>
-          <div className="feedbacker-modal" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ marginBottom: '16px' }}>
-              You have unsaved changes
-            </h3>
+          <div
+            className="feedbacker-modal"
+            style={{ maxWidth: '400px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: '16px' }}>You have unsaved changes</h3>
             <p style={{ marginBottom: '24px', color: '#6b7280' }}>
               Would you like to keep your draft or discard the changes?
             </p>

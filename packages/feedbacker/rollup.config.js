@@ -3,22 +3,17 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import terser from '@rollup/plugin-terser';
+import replace from '@rollup/plugin-replace';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const external = [
-  'react',
-  'react-dom',
-  'react/jsx-runtime',
-  'html2canvas',
-  '@zumer/snapdom'
-];
+const external = ['react', 'react-dom', 'react/jsx-runtime', 'html2canvas', '@zumer/snapdom'];
 
 const globals = {
-  'react': 'React',
+  react: 'React',
   'react-dom': 'ReactDOM',
   'react/jsx-runtime': 'React',
-  'html2canvas': 'html2canvas',
+  html2canvas: 'html2canvas',
   '@zumer/snapdom': 'SnapDOM'
 };
 
@@ -33,6 +28,10 @@ export default [
       sourcemap: true
     },
     plugins: [
+      replace({
+        preventAssignment: true,
+        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+      }),
       resolve({
         browser: true
       }),
@@ -53,15 +52,20 @@ export default [
         sourceMap: true,
         use: ['sass']
       }),
-      isProduction && terser({
-        compress: {
-          drop_console: true,
-          drop_debugger: true
-        }
-      })
+      isProduction &&
+        terser({
+          compress: {
+            drop_console: false, // Keep console for our custom logger
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.debug'], // Only drop direct console calls
+            global_defs: {
+              'process.env.NODE_ENV': JSON.stringify('production')
+            }
+          }
+        })
     ].filter(Boolean)
   },
-  
+
   // CommonJS build
   {
     input: 'src/index.ts',
@@ -73,6 +77,10 @@ export default [
       exports: 'named'
     },
     plugins: [
+      replace({
+        preventAssignment: true,
+        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+      }),
       resolve({
         browser: true
       }),
@@ -91,15 +99,20 @@ export default [
         minimize: isProduction,
         inject: true // Inject CSS into JS
       }),
-      isProduction && terser({
-        compress: {
-          drop_console: true,
-          drop_debugger: true
-        }
-      })
+      isProduction &&
+        terser({
+          compress: {
+            drop_console: false, // Keep console for our custom logger
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.debug'], // Only drop direct console calls
+            global_defs: {
+              'process.env.NODE_ENV': JSON.stringify('production')
+            }
+          }
+        })
     ].filter(Boolean)
   },
-  
+
   // UMD build for browser usage
   {
     input: 'src/index.ts',
@@ -112,6 +125,10 @@ export default [
       sourcemap: true
     },
     plugins: [
+      replace({
+        preventAssignment: true,
+        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+      }),
       resolve({
         browser: true
       }),
@@ -130,12 +147,17 @@ export default [
         minimize: isProduction,
         inject: true
       }),
-      isProduction && terser({
-        compress: {
-          drop_console: true,
-          drop_debugger: true
-        }
-      })
+      isProduction &&
+        terser({
+          compress: {
+            drop_console: false, // Keep console for our custom logger
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.debug'], // Only drop direct console calls
+            global_defs: {
+              'process.env.NODE_ENV': JSON.stringify('production')
+            }
+          }
+        })
     ].filter(Boolean)
   }
 ];

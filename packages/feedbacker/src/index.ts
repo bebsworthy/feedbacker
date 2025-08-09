@@ -29,15 +29,15 @@ export { useComponentDetection } from './hooks/useComponentDetection';
 
 // Component detection system
 export { DetectionChain } from './detection/DetectionStrategy';
-export { 
-  DevToolsStrategy, 
-  FiberStrategy, 
-  HeuristicStrategy, 
-  FallbackStrategy 
+export {
+  DevToolsStrategy,
+  FiberStrategy,
+  HeuristicStrategy,
+  FallbackStrategy
 } from './detection/strategies';
 
 // Utility functions
-export { 
+export {
   captureElementScreenshot,
   captureScreenshotWithFallback,
   isScreenshotSupported,
@@ -51,20 +51,12 @@ export {
   getCurrentCaptureAdapterInfo,
   cleanupCaptureResources
 } from './utils/screenshot-adapter';
-export { 
-  loadHtml2Canvas,
-  lazyLoad,
-  isLibraryLoaded,
-  clearLoadCache
-} from './utils/lazyLoad';
+export { loadHtml2Canvas, lazyLoad, isLibraryLoaded, clearLoadCache } from './utils/lazyLoad';
 export { formatDistanceToNow, formatDate } from './utils/dateUtils';
+export { logger, LogLevel } from './utils/logger';
 
 // Export functionality
-export { 
-  MarkdownExporter, 
-  ZipExporter, 
-  ExportManager 
-} from './export';
+export { MarkdownExporter, ZipExporter, ExportManager } from './export';
 
 // Capture adapters
 export { Html2CanvasAdapter } from './adapters/Html2CanvasAdapter';

@@ -44,7 +44,9 @@ export function sanitizeComponentInfo(componentInfo: ComponentInfo): ComponentIn
     name: sanitizeString(componentInfo.name),
     path: sanitizeArray(componentInfo.path, sanitizeString),
     element: componentInfo.element, // DOM elements are not sanitized
-    htmlSnippet: componentInfo.htmlSnippet ? sanitizeString(componentInfo.htmlSnippet, 5000) : undefined,
+    htmlSnippet: componentInfo.htmlSnippet
+      ? sanitizeString(componentInfo.htmlSnippet, 5000)
+      : undefined,
     props: componentInfo.props ? sanitizeProps(componentInfo.props) : undefined,
     fiber: componentInfo.fiber // React fiber is not sanitized
   };
@@ -60,7 +62,7 @@ export function sanitizeBrowserInfo(browserInfo: BrowserInfo): BrowserInfo {
       width: sanitizeNumber(browserInfo.viewport.width, 1, 10000),
       height: sanitizeNumber(browserInfo.viewport.height, 1, 10000)
     },
-    platform: sanitizeString(browserInfo.platform)
+    platform: sanitizeString(browserInfo.platform || '')
   };
 }
 
@@ -72,11 +74,15 @@ export function sanitizeString(value: string, maxLength: number = 1000): string 
     return String(value || '').substring(0, maxLength);
   }
 
-  return value
-    .trim()
-    .substring(0, maxLength)
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
-    .replace(/\u0000/g, ''); // Remove null characters
+  return (
+    value
+      .trim()
+      .substring(0, maxLength)
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+      // eslint-disable-next-line no-control-regex
+      .replace(/\u0000/g, '')
+  ); // Remove null characters
 }
 
 /**
@@ -115,6 +121,7 @@ export function sanitizeComment(comment: string): string {
     // Remove meta elements
     .replace(/<\s*meta\b[^>]*>/gi, '')
     // Clean up control characters except newlines and tabs
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   return sanitized;
@@ -130,7 +137,7 @@ export function sanitizeUrl(url: string): string {
 
   try {
     const parsed = new URL(url);
-    
+
     // Only allow http and https protocols
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return window.location.href;
@@ -170,7 +177,7 @@ export function sanitizeTimestamp(timestamp: string): string {
     }
 
     // Ensure timestamp is not too old (more than 10 years)
-    const minAllowed = new Date(now.getTime() - (10 * 365 * 24 * 60 * 60 * 1000));
+    const minAllowed = new Date(now.getTime() - 10 * 365 * 24 * 60 * 60 * 1000);
     if (date < minAllowed) {
       return now.toISOString();
     }
@@ -209,7 +216,11 @@ export function sanitizeDataUrl(dataUrl: string): string {
 /**
  * Sanitize a number with bounds
  */
-export function sanitizeNumber(value: number, min: number = 0, max: number = Number.MAX_SAFE_INTEGER): number {
+export function sanitizeNumber(
+  value: number,
+  min: number = 0,
+  max: number = Number.MAX_SAFE_INTEGER
+): number {
   if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
     return min;
   }
@@ -228,7 +239,7 @@ export function sanitizeArray<T>(array: T[], sanitizer: (item: T) => T): T[] {
   return array
     .slice(0, 100) // Limit array size
     .map(sanitizer)
-    .filter(item => item !== null && item !== undefined);
+    .filter((item) => item !== null && item !== undefined);
 }
 
 /**
@@ -244,7 +255,9 @@ export function sanitizeProps(props: Record<string, any>): Record<string, any> {
   let propCount = 0;
 
   for (const [key, value] of Object.entries(props)) {
-    if (propCount >= maxProps) break;
+    if (propCount >= maxProps) {
+      break;
+    }
 
     const sanitizedKey = sanitizeString(key, 100);
     if (sanitizedKey) {
@@ -269,7 +282,9 @@ export function sanitizeMetadata(metadata: Record<string, any>): Record<string, 
   let entryCount = 0;
 
   for (const [key, value] of Object.entries(metadata)) {
-    if (entryCount >= maxEntries) break;
+    if (entryCount >= maxEntries) {
+      break;
+    }
 
     const sanitizedKey = sanitizeString(key, 50);
     if (sanitizedKey) {
@@ -318,7 +333,9 @@ function sanitizeShallowObject(obj: Record<string, any>): Record<string, any> {
   let entryCount = 0;
 
   for (const [key, value] of Object.entries(obj)) {
-    if (entryCount >= 10) break; // Limit number of properties
+    if (entryCount >= 10) {
+      break;
+    } // Limit number of properties
 
     const sanitizedKey = sanitizeString(key, 50);
     if (sanitizedKey) {
@@ -366,7 +383,8 @@ export function escapeHtml(text: string): string {
     '/': '&#x2F;'
   };
 
-  return text.replace(/[&<>"'\/]/g, match => htmlEscapes[match] || match);
+  // eslint-disable-next-line no-useless-escape
+  return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
 }
 
 /**

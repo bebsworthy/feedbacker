@@ -5,6 +5,7 @@
  */
 
 import { CaptureAdapter, CaptureOptions, CaptureResult } from '../types/capture';
+import logger from '../utils/logger';
 
 export class SnapDOMAdapter implements CaptureAdapter {
   name = 'snapdom';
@@ -42,17 +43,17 @@ export class SnapDOMAdapter implements CaptureAdapter {
         this.snapdom = snapdom;
         (window as any).snapdom = snapdom;
         this.scriptLoaded = true;
-        console.log('[SnapDOMAdapter] Loaded from npm package');
+        logger.log('Loaded from npm package');
         return;
       } catch (npmError) {
-        console.log('[SnapDOMAdapter] npm package not found, trying CDN fallback:', npmError);
+        logger.log('npm package not found, trying CDN fallback:', npmError);
       }
 
       // Fall back to loading from CDN
       await this.loadSnapDOMScript();
       this.scriptLoaded = true;
     } catch (error) {
-      console.error('[SnapDOMAdapter] Failed to preload:', error);
+      logger.error('Failed to preload:', error);
       throw error;
     }
   }
@@ -79,7 +80,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
       // Take snapshot using the snapdom function or its toCanvas method
       const startTime = Date.now();
       let canvas: HTMLCanvasElement;
-      
+
       try {
         // snapdom.toCanvas returns a canvas directly
         if (typeof snapdom.toCanvas === 'function') {
@@ -92,10 +93,10 @@ export class SnapDOMAdapter implements CaptureAdapter {
           throw new Error('SnapDOM API not recognized');
         }
       } catch (snapError) {
-        console.error('[SnapDOMAdapter] Snapshot creation failed:', snapError);
+        logger.error('Snapshot creation failed:', snapError);
         throw snapError;
       }
-      
+
       if (!canvas) {
         return {
           success: false,
@@ -105,7 +106,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
 
       // Convert canvas to data URL
       const dataUrl = canvas.toDataURL('image/png', options.quality || 0.8);
-      
+
       // Apply size constraints if specified
       let finalDataUrl = dataUrl;
       if (options.maxWidth || options.maxHeight) {
@@ -117,7 +118,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
       }
 
       const captureTime = Date.now() - startTime;
-      
+
       return {
         success: true,
         dataUrl: finalDataUrl,
@@ -129,13 +130,14 @@ export class SnapDOMAdapter implements CaptureAdapter {
         }
       };
     } catch (error) {
-      console.error('[SnapDOMAdapter] Capture error:', error);
-      
+      logger.error('Capture error:', error);
+
       // Check if it's a CORS issue
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const isCorsError = errorMessage.toLowerCase().includes('cors') || 
-                         errorMessage.toLowerCase().includes('cross-origin');
-      
+      const isCorsError =
+        errorMessage.toLowerCase().includes('cors') ||
+        errorMessage.toLowerCase().includes('cross-origin');
+
       return {
         success: false,
         error: errorMessage,
@@ -153,9 +155,9 @@ export class SnapDOMAdapter implements CaptureAdapter {
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
-    
+
     const isHighDPI = window.devicePixelRatio > 1;
-    
+
     return {
       quality: isMobile ? 0.8 : 0.9, // SnapDOM handles quality better
       scale: isHighDPI ? Math.min(window.devicePixelRatio, 2) : 1,
@@ -182,7 +184,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
       // Using jsdelivr CDN for SnapDOM
       script.src = 'https://cdn.jsdelivr.net/npm/@zumerlab/snapdom@latest/dist/snapdom.min.js';
       script.async = true;
-      
+
       script.onload = () => {
         // Check for both possible global names
         const snapdomGlobal = (window as any).snapdom || (window as any).SnapDOM;
@@ -193,11 +195,11 @@ export class SnapDOMAdapter implements CaptureAdapter {
           reject(new Error('SnapDOM not available after loading script'));
         }
       };
-      
+
       script.onerror = () => {
         reject(new Error('Failed to load SnapDOM from CDN'));
       };
-      
+
       // Check if script already exists
       const existingScript = document.querySelector('script[src*="snapdom"]');
       if (!existingScript) {
@@ -218,7 +220,8 @@ export class SnapDOMAdapter implements CaptureAdapter {
               clearInterval(checkInterval);
               this.snapdom = snapdomCheck;
               resolve();
-            } else if (attempts > 50) { // 5 seconds timeout
+            } else if (attempts > 50) {
+              // 5 seconds timeout
               clearInterval(checkInterval);
               reject(new Error('SnapDOM script present but library not available'));
             }
@@ -236,17 +239,17 @@ export class SnapDOMAdapter implements CaptureAdapter {
       // Basic options
       quality: options.quality || 0.8,
       scale: options.scale || Math.min(window.devicePixelRatio || 1, 2),
-      
+
       // SnapDOM specific options
       preserveDrawingBuffer: true,
       removeHiddenElements: true,
       flattenShadowDOM: true,
       captureBeyondViewport: true,
-      
+
       // Performance options
       useWorker: true, // Use web worker if available
       cacheStyleSheets: true,
-      
+
       // CORS handling
       useCORS: options.useCORS !== undefined ? options.useCORS : true,
       allowTaint: options.allowTaint !== undefined ? options.allowTaint : false
@@ -271,9 +274,12 @@ export class SnapDOMAdapter implements CaptureAdapter {
   /**
    * Convert SnapDOM snapshot to canvas
    */
-  private async snapshotToCanvas(snapshot: any, options: CaptureOptions): Promise<HTMLCanvasElement> {
+  private async snapshotToCanvas(
+    snapshot: any,
+    options: CaptureOptions
+  ): Promise<HTMLCanvasElement> {
     const SnapDOM = this.snapdom || (window as any).SnapDOM;
-    
+
     if (SnapDOM.toCanvas) {
       // If SnapDOM provides a toCanvas method
       return await SnapDOM.toCanvas(snapshot, {
@@ -281,11 +287,11 @@ export class SnapDOMAdapter implements CaptureAdapter {
         scale: options.scale || 1
       });
     }
-    
+
     // Fallback: Create canvas manually
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     if (!ctx) {
       throw new Error('Could not get canvas context');
     }
@@ -297,7 +303,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
       ctx.drawImage(snapshot, 0, 0);
       return canvas;
     }
-    
+
     if (snapshot instanceof HTMLImageElement) {
       canvas.width = snapshot.width;
       canvas.height = snapshot.height;
@@ -309,7 +315,7 @@ export class SnapDOMAdapter implements CaptureAdapter {
     if (snapshot instanceof Blob) {
       const url = URL.createObjectURL(snapshot);
       const img = new Image();
-      
+
       return new Promise((resolve, reject) => {
         img.onload = () => {
           canvas.width = img.width;
@@ -318,12 +324,12 @@ export class SnapDOMAdapter implements CaptureAdapter {
           URL.revokeObjectURL(url);
           resolve(canvas);
         };
-        
+
         img.onerror = () => {
           URL.revokeObjectURL(url);
           reject(new Error('Failed to load snapshot blob'));
         };
-        
+
         img.src = url;
       });
     }
@@ -338,11 +344,11 @@ export class SnapDOMAdapter implements CaptureAdapter {
     let currentElement: HTMLElement | null = element.parentElement;
     let depth = 0;
     const maxDepth = 20;
-    
+
     while (currentElement && depth < maxDepth) {
       const computedStyle = window.getComputedStyle(currentElement);
       const bgColor = computedStyle.backgroundColor;
-      
+
       if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
         const rgbaMatch = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
         if (rgbaMatch) {
@@ -354,27 +360,30 @@ export class SnapDOMAdapter implements CaptureAdapter {
           return bgColor;
         }
       }
-      
+
       if (currentElement === document.body || currentElement === document.documentElement) {
         const bodyBg = computedStyle.backgroundColor;
         if (bodyBg && bodyBg !== 'transparent' && bodyBg !== 'rgba(0, 0, 0, 0)') {
           return bodyBg;
         }
-        
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDarkMode = computedStyle.colorScheme === 'dark' || 
-                          prefersDark || 
-                          document.documentElement.classList.contains('dark') ||
-                          document.documentElement.getAttribute('data-theme') === 'dark';
-        
+
+        const prefersDark =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDarkMode =
+          computedStyle.colorScheme === 'dark' ||
+          prefersDark ||
+          document.documentElement.classList.contains('dark') ||
+          document.documentElement.getAttribute('data-theme') === 'dark';
+
         return isDarkMode ? '#1a1a1a' : '#ffffff';
       }
-      
+
       currentElement = currentElement.parentElement;
       depth++;
     }
-    
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const prefersDark =
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? '#1a1a1a' : '#ffffff';
   }
 
@@ -387,40 +396,40 @@ export class SnapDOMAdapter implements CaptureAdapter {
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         if (!ctx) {
           reject(new Error('Could not get canvas context'));
           return;
         }
-        
+
         let { width, height } = img;
-        
+
         if (constraints.maxWidth && width > constraints.maxWidth) {
           height = (height * constraints.maxWidth) / width;
           width = constraints.maxWidth;
         }
-        
+
         if (constraints.maxHeight && height > constraints.maxHeight) {
           width = (width * constraints.maxHeight) / height;
           height = constraints.maxHeight;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         resolve(canvas.toDataURL('image/png', constraints.quality || 0.8));
       };
-      
+
       img.onerror = () => {
         reject(new Error('Failed to load image for resizing'));
       };
-      
+
       img.src = dataUrl;
     });
   }

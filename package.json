@@ -11,7 +11,8 @@
     "build": "npm run build --workspace=feedbacker-react",
     "build:demo": "npm run build --workspace=@feedbacker/demo",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

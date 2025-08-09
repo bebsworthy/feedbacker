@@ -1,0 +1,18 @@
+# Build outputs
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Package files
+*.tgz
+package-lock.json
+
+# Generated files
+*.d.ts
+*.css.d.ts
+
+# Documentation
+*.md

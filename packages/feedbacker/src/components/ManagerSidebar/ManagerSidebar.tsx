@@ -1,6 +1,6 @@
 /**
  * ManagerSidebar - Feedback management sidebar component
- * 
+ *
  * Features:
  * - Slide animation from right
  * - Feedback list with thumbnails
@@ -51,11 +51,13 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
 
   // Handle outside clicks to close sidebar
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      
+
       // Check if click is on the backdrop (not the sidebar itself)
       if (backdropRef.current?.contains(target) && !sidebarRef.current?.contains(target)) {
         onClose();
@@ -75,7 +77,9 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
 
   // Handle escape key to close
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -135,17 +139,19 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
     onExport(format);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="feedbacker-root">
       {/* Backdrop */}
-      <div 
+      <div
         ref={backdropRef}
         className="feedbacker-modal-backdrop visible"
         style={{ zIndex: 99999 }}
       />
-      
+
       {/* Sidebar */}
       <div
         ref={sidebarRef}
@@ -161,11 +167,14 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
             <h2 id="sidebar-title" className="feedbacker-modal-title">
               Feedback Manager
             </h2>
-            <p className="form-help" style={{ fontSize: '14px', color: 'var(--fb-text-secondary)', marginTop: '4px' }}>
+            <p
+              className="form-help"
+              style={{ fontSize: '14px', color: 'var(--fb-text-secondary)', marginTop: '4px' }}
+            >
               {feedbacks.length} feedback item{feedbacks.length !== 1 ? 's' : ''}
             </p>
           </div>
-          
+
           <div className="modal-header-actions" style={{ display: 'flex', gap: '8px' }}>
             {feedbacks.length > 0 && (
               <>
@@ -178,7 +187,7 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
                 >
                   <ArrowDownTrayIcon />
                 </button>
-                
+
                 {/* Clear all button */}
                 <button
                   className="feedbacker-btn feedbacker-btn-danger"
@@ -190,13 +199,9 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
                 </button>
               </>
             )}
-            
+
             {/* Close button */}
-            <button
-              className="feedbacker-btn-icon"
-              onClick={onClose}
-              aria-label="Close sidebar"
-            >
+            <button className="feedbacker-btn-icon" onClick={onClose} aria-label="Close sidebar">
               <XMarkIcon />
             </button>
           </div>
@@ -205,14 +210,21 @@ export const ManagerSidebar: React.FC<ManagerSidebarProps> = ({
         {/* Body */}
         <div className="feedbacker-modal-body">
           {feedbacks.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              color: 'var(--feedbacker-text-secondary)',
-              padding: 'var(--feedbacker-space-8) var(--feedbacker-space-4)'
-            }}>
+            <div
+              style={{
+                textAlign: 'center',
+                color: 'var(--feedbacker-text-secondary)',
+                padding: 'var(--feedbacker-space-8) var(--feedbacker-space-4)'
+              }}
+            >
               <p>No feedback items yet.</p>
-              <p style={{ fontSize: 'var(--feedbacker-font-size-sm)', marginTop: 'var(--feedbacker-space-2)' }}>
-                Click "New feedback" to get started!
+              <p
+                style={{
+                  fontSize: 'var(--feedbacker-font-size-sm)',
+                  marginTop: 'var(--feedbacker-space-2)'
+                }}
+              >
+                Click &quot;New feedback&quot; to get started!
               </p>
             </div>
           ) : (

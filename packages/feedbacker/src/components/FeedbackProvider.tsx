@@ -7,6 +7,7 @@
 import React, { Component, ErrorInfo, ReactNode, useEffect, useState } from 'react';
 import { FeedbackProviderProps } from '../types';
 import { FeedbackProviderInternal } from './FeedbackProviderInternal';
+import logger from '../utils/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -16,22 +17,19 @@ interface ErrorBoundaryState {
 /**
  * Error Boundary to prevent feedback system crashes from affecting host app
  */
-class FeedbackErrorBoundary extends Component<
-  { children: ReactNode },
-  ErrorBoundaryState
-> {
+class FeedbackErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    console.error('[Feedbacker] Error caught by boundary:', error);
+    logger.error('Error caught by boundary:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[Feedbacker] Error details:', error, errorInfo);
+    logger.error('Error details:', error, errorInfo);
   }
 
   render() {
@@ -55,11 +53,11 @@ const useReactVersionCheck = (): boolean => {
       // Check React version
       const reactVersion = React.version;
       const majorVersion = parseInt(reactVersion.split('.')[0], 10);
-      
+
       if (majorVersion < 18) {
-        console.warn(
-          `[Feedbacker] React version ${reactVersion} detected. ` +
-          'React 18 or higher is required. Feedback system will be disabled.'
+        logger.warn(
+          `React version ${reactVersion} detected. ` +
+            'React 18 or higher is required. Feedback system will be disabled.'
         );
         setIsCompatible(false);
         return;
@@ -67,14 +65,14 @@ const useReactVersionCheck = (): boolean => {
 
       // Check for required React features
       if (!React.createContext || !React.useContext || !React.useState || !React.useEffect) {
-        console.warn('[Feedbacker] Required React hooks not available. Feedback system will be disabled.');
+        logger.warn('Required React hooks not available. Feedback system will be disabled.');
         setIsCompatible(false);
         return;
       }
 
       setIsCompatible(true);
     } catch (error) {
-      console.error('[Feedbacker] Error checking React compatibility:', error);
+      logger.error('Error checking React compatibility:', error);
       setIsCompatible(false);
     }
   }, []);
@@ -82,13 +80,12 @@ const useReactVersionCheck = (): boolean => {
   return isCompatible;
 };
 
-
 /**
  * Main FeedbackProvider component with error boundary
  */
 export const FeedbackProvider: React.FC<FeedbackProviderProps> = (props) => {
   const isReactCompatible = useReactVersionCheck();
-  
+
   return (
     <FeedbackErrorBoundary>
       <FeedbackProviderInternal {...props} isReactCompatible={isReactCompatible} />

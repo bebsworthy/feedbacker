@@ -14,15 +14,13 @@ export type { ExportOptions, ExportManager as IExportManager } from '../types';
 import { Feedback, ExportOptions } from '../types';
 import { MarkdownExporter } from './MarkdownExporter';
 import { ZipExporter } from './ZipExporter';
+import logger from '../utils/logger';
 
 export class ExportManager {
   /**
    * Export feedback in the specified format
    */
-  public static async exportFeedback(
-    feedbacks: Feedback[], 
-    options: ExportOptions
-  ): Promise<void> {
+  public static async exportFeedback(feedbacks: Feedback[], options: ExportOptions): Promise<void> {
     if (feedbacks.length === 0) {
       throw new Error('No feedback items to export');
     }
@@ -38,7 +36,7 @@ export class ExportManager {
         throw new Error(`Unsupported export format: ${options.format}`);
       }
     } catch (error) {
-      console.error('[Feedbacker] Export failed:', error);
+      logger.error('Export failed:', error);
       throw error;
     }
   }
@@ -72,15 +70,15 @@ export class ExportManager {
    */
   public static estimateExportSize(feedbacks: Feedback[], format: 'markdown' | 'zip'): string {
     const totalFeedbacks = feedbacks.length;
-    const feedbacksWithImages = feedbacks.filter(f => f.screenshot).length;
-    
+    const feedbacksWithImages = feedbacks.filter((f) => f.screenshot).length;
+
     if (format === 'markdown') {
       // Rough estimate: ~500 bytes per feedback item
       const estimatedBytes = totalFeedbacks * 500;
       return this.formatBytes(estimatedBytes);
     } else {
       // Rough estimate: ~50KB per screenshot + 1KB per feedback
-      const estimatedBytes = (feedbacksWithImages * 50 * 1024) + (totalFeedbacks * 1024);
+      const estimatedBytes = feedbacksWithImages * 50 * 1024 + totalFeedbacks * 1024;
       return this.formatBytes(estimatedBytes);
     }
   }
@@ -89,12 +87,14 @@ export class ExportManager {
    * Format bytes into human-readable string
    */
   private static formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    
+    if (bytes === 0) {
+      return '0 Bytes';
+    }
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }

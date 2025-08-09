@@ -5,8 +5,9 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { ComponentInfo } from '../types';
+import logger from '../utils/logger';
 
-type EventType = 
+type EventType =
   | 'component:selected'
   | 'modal:open'
   | 'modal:close'
@@ -27,12 +28,6 @@ type EventType =
   | 'export:open'
   | 'clearall:confirm';
 
-interface FeedbackEvent {
-  type: EventType;
-  payload?: any;
-  timestamp: number;
-}
-
 type EventListener<T = any> = (payload: T) => void;
 
 export interface UseFeedbackEventResult {
@@ -46,20 +41,14 @@ class FeedbackEventEmitter {
   private onceListeners: Map<EventType, Set<EventListener>> = new Map();
 
   emit(type: EventType, payload?: any): void {
-    const event: FeedbackEvent = {
-      type,
-      payload,
-      timestamp: Date.now()
-    };
-
     // Regular listeners
     const typeListeners = this.listeners.get(type);
     if (typeListeners) {
-      typeListeners.forEach(listener => {
+      typeListeners.forEach((listener) => {
         try {
           listener(payload);
         } catch (error) {
-          console.error(`[Feedbacker] Event listener error for ${type}:`, error);
+          logger.error(`Event listener error for ${type}:`, error);
         }
       });
     }
@@ -67,14 +56,14 @@ class FeedbackEventEmitter {
     // Once listeners
     const onceTypeListeners = this.onceListeners.get(type);
     if (onceTypeListeners) {
-      onceTypeListeners.forEach(listener => {
+      onceTypeListeners.forEach((listener) => {
         try {
           listener(payload);
         } catch (error) {
-          console.error(`[Feedbacker] Once event listener error for ${type}:`, error);
+          logger.error(`Once event listener error for ${type}:`, error);
         }
       });
-      
+
       // Clear once listeners after execution
       this.onceListeners.delete(type);
     }
@@ -84,7 +73,7 @@ class FeedbackEventEmitter {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
-    
+
     const typeListeners = this.listeners.get(type)!;
     typeListeners.add(listener);
 
@@ -101,7 +90,7 @@ class FeedbackEventEmitter {
     if (!this.onceListeners.has(type)) {
       this.onceListeners.set(type, new Set());
     }
-    
+
     const onceTypeListeners = this.onceListeners.get(type)!;
     onceTypeListeners.add(listener);
 
@@ -145,7 +134,7 @@ export const useFeedbackEvent = (): UseFeedbackEventResult => {
   // Cleanup all listeners when component unmounts
   useEffect(() => {
     return () => {
-      cleanupFunctions.current.forEach(cleanup => cleanup());
+      cleanupFunctions.current.forEach((cleanup) => cleanup());
       cleanupFunctions.current = [];
     };
   }, []);
@@ -161,13 +150,19 @@ export const useFeedbackEvent = (): UseFeedbackEventResult => {
 export const useFeedbackEventHelpers = () => {
   const { emit, on, once } = useFeedbackEvent();
 
-  const selectComponent = useCallback((componentInfo: ComponentInfo) => {
-    emit('component:selected', componentInfo);
-  }, [emit]);
+  const selectComponent = useCallback(
+    (componentInfo: ComponentInfo) => {
+      emit('component:selected', componentInfo);
+    },
+    [emit]
+  );
 
-  const openModal = useCallback((componentInfo: ComponentInfo) => {
-    emit('modal:open', componentInfo);
-  }, [emit]);
+  const openModal = useCallback(
+    (componentInfo: ComponentInfo) => {
+      emit('modal:open', componentInfo);
+    },
+    [emit]
+  );
 
   const closeModal = useCallback(() => {
     emit('modal:close');
@@ -189,35 +184,50 @@ export const useFeedbackEventHelpers = () => {
     emit('sidebar:close');
   }, [emit]);
 
-  const captureScreenshot = useCallback((element?: HTMLElement) => {
-    emit('screenshot:capture', element);
-  }, [emit]);
+  const captureScreenshot = useCallback(
+    (element?: HTMLElement) => {
+      emit('screenshot:capture', element);
+    },
+    [emit]
+  );
 
-  const screenshotComplete = useCallback((screenshot: string) => {
-    emit('screenshot:complete', screenshot);
-  }, [emit]);
+  const screenshotComplete = useCallback(
+    (screenshot: string) => {
+      emit('screenshot:complete', screenshot);
+    },
+    [emit]
+  );
 
-  const saveDraft = useCallback((draft: { componentInfo: ComponentInfo; comment: string; screenshot?: string }) => {
-    emit('draft:save', draft);
-  }, [emit]);
+  const saveDraft = useCallback(
+    (draft: { componentInfo: ComponentInfo; comment: string; screenshot?: string }) => {
+      emit('draft:save', draft);
+    },
+    [emit]
+  );
 
   const clearDraft = useCallback(() => {
     emit('draft:clear');
   }, [emit]);
 
-  const submitFeedback = useCallback((feedback: any) => {
-    emit('feedback:submit', feedback);
-  }, [emit]);
+  const submitFeedback = useCallback(
+    (feedback: any) => {
+      emit('feedback:submit', feedback);
+    },
+    [emit]
+  );
 
-  const exportFeedback = useCallback((options: any) => {
-    emit('feedback:export', options);
-  }, [emit]);
+  const exportFeedback = useCallback(
+    (options: any) => {
+      emit('feedback:export', options);
+    },
+    [emit]
+  );
 
   return {
     // Event listeners
     on,
     once,
-    
+
     // Event emitters
     selectComponent,
     openModal,

@@ -58,7 +58,7 @@ export function validateFeedback(feedback: Partial<Feedback>): ValidationResult 
     if (!Array.isArray(feedback.componentPath)) {
       errors.push('Component path must be an array');
     } else {
-      const invalidPaths = feedback.componentPath.filter(path => typeof path !== 'string');
+      const invalidPaths = feedback.componentPath.filter((path) => typeof path !== 'string');
       if (invalidPaths.length > 0) {
         errors.push('All component path items must be strings');
       }
@@ -79,12 +79,16 @@ export function validateFeedback(feedback: Partial<Feedback>): ValidationResult 
   if (feedback.browserInfo !== undefined) {
     const browserValidation = validateBrowserInfo(feedback.browserInfo);
     if (!browserValidation.valid) {
-      errors.push(...browserValidation.errors.map(err => `Browser info: ${err}`));
+      errors.push(...browserValidation.errors.map((err) => `Browser info: ${err}`));
     }
   }
 
   if (feedback.metadata !== undefined) {
-    if (typeof feedback.metadata !== 'object' || feedback.metadata === null || Array.isArray(feedback.metadata)) {
+    if (
+      typeof feedback.metadata !== 'object' ||
+      feedback.metadata === null ||
+      Array.isArray(feedback.metadata)
+    ) {
       errors.push('Metadata must be an object');
     }
   }
@@ -106,7 +110,7 @@ export function validateDraft(draft: Partial<Draft>): ValidationResult {
   } else {
     const componentValidation = validateComponentInfo(draft.componentInfo);
     if (!componentValidation.valid) {
-      errors.push(...componentValidation.errors.map(err => `Component info: ${err}`));
+      errors.push(...componentValidation.errors.map((err) => `Component info: ${err}`));
     }
   }
 
@@ -161,7 +165,7 @@ export function validateComponentInfo(componentInfo: Partial<ComponentInfo>): Va
   if (!componentInfo.path || !Array.isArray(componentInfo.path)) {
     errors.push('Component path is required and must be an array');
   } else {
-    const invalidPaths = componentInfo.path.filter(path => typeof path !== 'string');
+    const invalidPaths = componentInfo.path.filter((path) => typeof path !== 'string');
     if (invalidPaths.length > 0) {
       errors.push('All component path items must be strings');
     }
@@ -177,7 +181,11 @@ export function validateComponentInfo(componentInfo: Partial<ComponentInfo>): Va
   }
 
   if (componentInfo.props !== undefined) {
-    if (typeof componentInfo.props !== 'object' || componentInfo.props === null || Array.isArray(componentInfo.props)) {
+    if (
+      typeof componentInfo.props !== 'object' ||
+      componentInfo.props === null ||
+      Array.isArray(componentInfo.props)
+    ) {
       errors.push('Component props must be an object');
     }
   }
@@ -353,7 +361,9 @@ export function validateFeedbackId(id: string): ValidationResult {
   // Check for valid ID format (alphanumeric, hyphens, underscores)
   const idPattern = /^[a-zA-Z0-9_-]+$/;
   if (!idPattern.test(id)) {
-    errors.push('ID contains invalid characters (only alphanumeric, hyphens, and underscores allowed)');
+    errors.push(
+      'ID contains invalid characters (only alphanumeric, hyphens, and underscores allowed)'
+    );
   }
 
   return {

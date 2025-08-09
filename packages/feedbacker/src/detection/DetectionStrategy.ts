@@ -4,6 +4,7 @@
  */
 
 import { ComponentInfo } from '../types';
+import logger from '../utils/logger';
 
 /**
  * Abstract base class for component detection strategies
@@ -51,9 +52,18 @@ export abstract class DetectionStrategy {
 
     // Common wrapper components to filter out
     const wrappers = new Set([
-      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
-      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
-      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode',
+      'FeedbackProvider',
+      'FeedbackErrorBoundary',
+      'FeedbackProviderInternal',
+      'FeedbackContextProvider',
+      'ComponentDetectionProvider',
+      'ErrorBoundary',
+      'Provider',
+      'Consumer',
+      'Context',
+      'Fragment',
+      'Suspense',
+      'StrictMode',
       'App' // Keep App but filter if it's just a wrapper
     ]);
 
@@ -88,29 +98,30 @@ export abstract class DetectionStrategy {
    * Helper method to build hybrid path (Components > HTML elements)
    * Shows React components followed by DOM path to the selected element
    */
-  protected buildHybridPath(element: HTMLElement, fiber: any): string[] {
-    const path: string[] = [];
-    
+  protected buildHybridPath(element: HTMLElement, _fiber: any): string[] {
     // Step 1: Build DOM path from selected element up to nearest React component
     const domPath: string[] = [];
     let currentElement: HTMLElement | null = element;
     let parentComponentFiber: any = null;
-    
+
     // Find the nearest parent React component
     while (currentElement && !parentComponentFiber) {
       // Add current element to DOM path
       const tagName = currentElement.tagName.toLowerCase();
       const className = currentElement.className;
-      
+
       // Format the element (include className for the first/selected element)
       if (domPath.length === 0 && className) {
         // For the selected element, include className
-        const classes = className.split(' ').filter(c => c.trim()).join('.');
+        const classes = className
+          .split(' ')
+          .filter((c) => c.trim())
+          .join('.');
         domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
       } else {
         domPath.unshift(tagName);
       }
-      
+
       // Check if this element has a React fiber with a component
       const elementFiber = this.getReactFiber(currentElement);
       if (elementFiber) {
@@ -127,22 +138,31 @@ export abstract class DetectionStrategy {
           fiberCurrent = fiberCurrent.return;
         }
       }
-      
+
       currentElement = currentElement.parentElement;
     }
-    
+
     // Step 2: Build React component path from the parent component upwards
     const componentPath: string[] = [];
     let current = parentComponentFiber;
     const maxDepth = 10;
     let depth = 0;
-    
+
     const wrappers = new Set([
-      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
-      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
-      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+      'FeedbackProvider',
+      'FeedbackErrorBoundary',
+      'FeedbackProviderInternal',
+      'FeedbackContextProvider',
+      'ComponentDetectionProvider',
+      'ErrorBoundary',
+      'Provider',
+      'Consumer',
+      'Context',
+      'Fragment',
+      'Suspense',
+      'StrictMode'
     ]);
-    
+
     while (current && depth < maxDepth) {
       if (current.type && typeof current.type === 'function') {
         const componentName = current.type.displayName || current.type.name;
@@ -153,7 +173,7 @@ export abstract class DetectionStrategy {
       }
       current = current.return;
     }
-    
+
     // Step 3: Combine paths (Components > DOM elements)
     return [...componentPath, ...domPath];
   }
@@ -163,16 +183,27 @@ export abstract class DetectionStrategy {
    */
   private isValidReactComponent(name: string): boolean {
     const wrappers = [
-      'FeedbackProvider', 'FeedbackErrorBoundary', 'FeedbackProviderInternal',
-      'FeedbackContextProvider', 'ComponentDetectionProvider', 'ErrorBoundary',
-      'Provider', 'Consumer', 'Context', 'Fragment', 'Suspense', 'StrictMode'
+      'FeedbackProvider',
+      'FeedbackErrorBoundary',
+      'FeedbackProviderInternal',
+      'FeedbackContextProvider',
+      'ComponentDetectionProvider',
+      'ErrorBoundary',
+      'Provider',
+      'Consumer',
+      'Context',
+      'Fragment',
+      'Suspense',
+      'StrictMode'
     ];
-    
-    return !wrappers.includes(name) && 
-           !name.includes('Provider') && 
-           !name.includes('Context') &&
-           name !== 'Anonymous' &&
-           name !== 'Component';
+
+    return (
+      !wrappers.includes(name) &&
+      !name.includes('Provider') &&
+      !name.includes('Context') &&
+      name !== 'Anonymous' &&
+      name !== 'Component'
+    );
   }
 
   /**
@@ -188,7 +219,7 @@ export abstract class DetectionStrategy {
         return props;
       }
     } catch (error) {
-      console.warn('[Feedbacker] Error extracting props:', error);
+      logger.warn('Error extracting props:', error);
     }
     return undefined;
   }
@@ -198,9 +229,8 @@ export abstract class DetectionStrategy {
    */
   protected getReactFiber(element: HTMLElement): any {
     // React attaches fiber to DOM elements with keys like __reactFiber$ or __reactInternalInstance$
-    const fiberKeys = Object.keys(element).filter(key => 
-      key.startsWith('__reactFiber') || 
-      key.startsWith('__reactInternalInstance')
+    const fiberKeys = Object.keys(element).filter(
+      (key) => key.startsWith('__reactFiber') || key.startsWith('__reactInternalInstance')
     );
 
     if (fiberKeys.length > 0) {
@@ -215,9 +245,7 @@ export abstract class DetectionStrategy {
    */
   protected sanitizeComponentName(name: string): string {
     // Remove any potentially unsafe characters and limit length
-    return name
-      .replace(/[^a-zA-Z0-9_$]/g, '')
-      .substring(0, 100);
+    return name.replace(/[^a-zA-Z0-9_$]/g, '').substring(0, 100);
   }
 }
 
@@ -238,10 +266,7 @@ export class DetectionChain {
     fallbackStrategy: DetectionStrategy
   ): DetectionStrategy {
     // Set up the chain: DevTools -> Fiber -> Heuristic -> Fallback
-    devToolsStrategy
-      .setNext(fiberStrategy)
-      .setNext(heuristicStrategy)
-      .setNext(fallbackStrategy);
+    devToolsStrategy.setNext(fiberStrategy).setNext(heuristicStrategy).setNext(fallbackStrategy);
 
     this.firstStrategy = devToolsStrategy;
     return this.firstStrategy;
@@ -258,7 +283,7 @@ export class DetectionChain {
     try {
       return this.firstStrategy.handle(element);
     } catch (error) {
-      console.error('[Feedbacker] Component detection error:', error);
+      logger.error('Component detection error:', error);
       return null;
     }
   }

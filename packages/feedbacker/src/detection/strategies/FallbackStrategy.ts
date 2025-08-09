@@ -5,9 +5,9 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../../types';
+import logger from '../../utils/logger';
 
 export class FallbackStrategy extends DetectionStrategy {
-  
   /**
    * Always detect with fallback information - never returns null
    */
@@ -15,7 +15,7 @@ export class FallbackStrategy extends DetectionStrategy {
     try {
       // Create a hybrid-style fallback path
       const path = this.createHybridFallbackPath(element);
-      
+
       // Create a descriptive fallback name based on the element
       const fallbackName = this.createFallbackName(element);
 
@@ -29,17 +29,16 @@ export class FallbackStrategy extends DetectionStrategy {
         props: elementInfo,
         fiber: undefined
       };
-
     } catch (error) {
-      console.warn('[Feedbacker] Fallback detection failed:', error);
-      
+      logger.warn('Fallback detection failed:', error);
+
       // Even if there's an error, return basic fallback
       const tagName = element.tagName.toLowerCase();
       const className = element.className;
-      const fallbackPath = className ? 
-        ['Unknown', `${tagName}.${className.split(' ').join('.')}`] : 
-        ['Unknown', tagName];
-      
+      const fallbackPath = className
+        ? ['Unknown', `${tagName}.${className.split(' ').join('.')}`]
+        : ['Unknown', tagName];
+
       return {
         name: 'Unknown Component',
         path: fallbackPath,
@@ -64,10 +63,11 @@ export class FallbackStrategy extends DetectionStrategy {
     }
 
     // Look for meaningful class names
-    const meaningfulClass = classList.find(cls => 
-      cls.length > 2 && 
-      !cls.match(/^(w-|h-|p-|m-|bg-|text-|flex|grid|hidden|absolute|relative)/) &&
-      cls.match(/^[a-zA-Z][a-zA-Z0-9_-]*$/)
+    const meaningfulClass = classList.find(
+      (cls) =>
+        cls.length > 2 &&
+        !cls.match(/^(w-|h-|p-|m-|bg-|text-|flex|grid|hidden|absolute|relative)/) &&
+        cls.match(/^[a-zA-Z][a-zA-Z0-9_-]*$/)
     );
 
     if (meaningfulClass) {
@@ -90,20 +90,20 @@ export class FallbackStrategy extends DetectionStrategy {
   private createHybridFallbackPath(element: HTMLElement): string[] {
     const domPath: string[] = [];
     const componentPath: string[] = ['Unknown']; // Default component name
-    
+
     let current: HTMLElement | null = element;
     let depth = 0;
     const maxDepth = 5;
-    
+
     // Build DOM path from selected element upwards
     while (current && current !== document.body && depth < maxDepth) {
       const tagName = current.tagName.toLowerCase();
       const id = current.id;
       const classList = Array.from(current.classList);
-      
+
       // For the first element (selected), include all classes
       if (depth === 0 && classList.length > 0) {
-        const classes = classList.filter(c => c.trim()).join('.');
+        const classes = classList.filter((c) => c.trim()).join('.');
         domPath.unshift(`${tagName}.${classes}`);
       } else if (depth === 0 && id) {
         domPath.unshift(`${tagName}#${id}`);
@@ -111,7 +111,7 @@ export class FallbackStrategy extends DetectionStrategy {
         // For parent elements, just show tag name
         domPath.unshift(tagName);
       }
-      
+
       // Try to detect if we've reached a component boundary
       // Look for semantic indicators that might suggest a component
       if (this.looksLikeComponent(current) && componentPath.length === 1) {
@@ -121,11 +121,11 @@ export class FallbackStrategy extends DetectionStrategy {
           componentPath[0] = componentName;
         }
       }
-      
+
       current = current.parentElement;
       depth++;
     }
-    
+
     // Combine paths (component > DOM elements)
     return [...componentPath, ...domPath];
   }
@@ -135,25 +135,28 @@ export class FallbackStrategy extends DetectionStrategy {
    */
   private looksLikeComponent(element: HTMLElement): boolean {
     // Check for data attributes that might indicate a component
-    if (element.hasAttribute('data-component') || 
-        element.hasAttribute('data-testid') ||
-        element.hasAttribute('data-react-component')) {
+    if (
+      element.hasAttribute('data-component') ||
+      element.hasAttribute('data-testid') ||
+      element.hasAttribute('data-react-component')
+    ) {
       return true;
     }
-    
+
     // Check for semantic HTML that might be component roots
     const semanticTags = ['article', 'section', 'aside', 'header', 'footer', 'main', 'nav'];
     if (semanticTags.includes(element.tagName.toLowerCase())) {
       return true;
     }
-    
+
     // Check for class patterns that suggest components
     const classList = Array.from(element.classList);
-    return classList.some(cls => 
-      /^[A-Z]/.test(cls) || // PascalCase
-      cls.includes('component') ||
-      cls.includes('widget') ||
-      cls.includes('module')
+    return classList.some(
+      (cls) =>
+        /^[A-Z]/.test(cls) || // PascalCase
+        cls.includes('component') ||
+        cls.includes('widget') ||
+        cls.includes('module')
     );
   }
 
@@ -163,32 +166,38 @@ export class FallbackStrategy extends DetectionStrategy {
   private inferComponentName(element: HTMLElement): string | null {
     // Check data attributes
     const dataComponent = element.getAttribute('data-component');
-    if (dataComponent) return dataComponent;
-    
+    if (dataComponent) {
+      return dataComponent;
+    }
+
     const dataTestId = element.getAttribute('data-testid');
-    if (dataTestId) return this.formatComponentName(dataTestId);
-    
+    if (dataTestId) {
+      return this.formatComponentName(dataTestId);
+    }
+
     // Check for PascalCase classes
     const classList = Array.from(element.classList);
-    const pascalClass = classList.find(cls => /^[A-Z][a-zA-Z0-9]*$/.test(cls));
-    if (pascalClass) return pascalClass;
-    
+    const pascalClass = classList.find((cls) => /^[A-Z][a-zA-Z0-9]*$/.test(cls));
+    if (pascalClass) {
+      return pascalClass;
+    }
+
     // Use semantic HTML element names
     const tagName = element.tagName.toLowerCase();
     const semanticNames: Record<string, string> = {
-      'header': 'Header',
-      'nav': 'Navigation',
-      'main': 'Main',
-      'aside': 'Sidebar',
-      'footer': 'Footer',
-      'article': 'Article',
-      'section': 'Section'
+      header: 'Header',
+      nav: 'Navigation',
+      main: 'Main',
+      aside: 'Sidebar',
+      footer: 'Footer',
+      article: 'Article',
+      section: 'Section'
     };
-    
+
     if (semanticNames[tagName]) {
       return semanticNames[tagName];
     }
-    
+
     return null;
   }
 
@@ -198,7 +207,7 @@ export class FallbackStrategy extends DetectionStrategy {
   private formatComponentName(str: string): string {
     return str
       .split(/[-_\s]+/)
-      .map(word => this.capitalizeFirst(word))
+      .map((word) => this.capitalizeFirst(word))
       .join('');
   }
 

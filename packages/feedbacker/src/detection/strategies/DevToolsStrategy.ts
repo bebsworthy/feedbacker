@@ -5,6 +5,7 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../../types';
+import logger from '../../utils/logger';
 
 export class DevToolsStrategy extends DetectionStrategy {
   private reactDevTools: any = null;
@@ -24,7 +25,7 @@ export class DevToolsStrategy extends DetectionStrategy {
         this.reactDevTools = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
       }
     } catch (error) {
-      console.warn('[Feedbacker] DevTools not available:', error);
+      logger.warn('DevTools not available:', error);
     }
   }
 
@@ -39,13 +40,13 @@ export class DevToolsStrategy extends DetectionStrategy {
     try {
       // Try to get the React fiber through DevTools
       const fiber = this.getDevToolsFiber(element);
-      
+
       if (!fiber) {
         return null;
       }
 
       const componentName = this.getComponentNameFromFiber(fiber);
-      
+
       if (!componentName) {
         return null;
       }
@@ -60,9 +61,8 @@ export class DevToolsStrategy extends DetectionStrategy {
         props,
         fiber
       };
-
     } catch (error) {
-      console.warn('[Feedbacker] DevTools detection failed:', error);
+      logger.warn('DevTools detection failed:', error);
       return null;
     }
   }
@@ -86,13 +86,14 @@ export class DevToolsStrategy extends DetectionStrategy {
         for (const renderer of this.reactDevTools.renderers.values()) {
           if (renderer.findFiberByHostInstance) {
             const fiber = renderer.findFiberByHostInstance(element);
-            if (fiber) return fiber;
+            if (fiber) {
+              return fiber;
+            }
           }
         }
       }
-
     } catch (error) {
-      console.warn('[Feedbacker] DevTools fiber lookup failed:', error);
+      logger.warn('DevTools fiber lookup failed:', error);
     }
 
     return null;
@@ -102,7 +103,9 @@ export class DevToolsStrategy extends DetectionStrategy {
    * Extract component name from React fiber
    */
   private getComponentNameFromFiber(fiber: any): string | null {
-    if (!fiber) return null;
+    if (!fiber) {
+      return null;
+    }
 
     try {
       // Check for function components
@@ -112,29 +115,22 @@ export class DevToolsStrategy extends DetectionStrategy {
 
       // Check for class components
       if (fiber.stateNode && fiber.stateNode.constructor) {
-        return fiber.stateNode.constructor.displayName || 
-               fiber.stateNode.constructor.name || 
-               null;
+        return fiber.stateNode.constructor.displayName || fiber.stateNode.constructor.name || null;
       }
 
       // Check for forwardRef components
       if (fiber.type && fiber.type.$$typeof) {
         const typeString = fiber.type.$$typeof.toString();
         if (typeString.includes('react.forward_ref') && fiber.type.render) {
-          return fiber.type.render.displayName || 
-                 fiber.type.render.name || 
-                 'ForwardRef';
+          return fiber.type.render.displayName || fiber.type.render.name || 'ForwardRef';
         }
-        
+
         if (typeString.includes('react.memo') && fiber.type.type) {
-          return fiber.type.type.displayName || 
-                 fiber.type.type.name || 
-                 'Memo';
+          return fiber.type.type.displayName || fiber.type.type.name || 'Memo';
         }
       }
-
     } catch (error) {
-      console.warn('[Feedbacker] Error extracting component name:', error);
+      logger.warn('Error extracting component name:', error);
     }
 
     return null;

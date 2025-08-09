@@ -1,6 +1,6 @@
 /**
  * ZipExporter - Creates ZIP archives with feedback data and images
- * 
+ *
  * Features:
  * - Full ZIP export with feedback.md, feedback.json, and images/ folder
  * - Image extraction to separate files
@@ -10,6 +10,7 @@
 
 import JSZip from 'jszip';
 import { Feedback } from '../types';
+import logger from '../utils/logger';
 
 export class ZipExporter {
   /**
@@ -56,18 +57,18 @@ export class ZipExporter {
     try {
       const zipBlob = await this.exportAsZip(feedbacks);
       const url = URL.createObjectURL(zipBlob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = filename || this.generateZipFilename(feedbacks);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the URL object
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('[Feedbacker] ZIP export failed:', error);
+      logger.error('ZIP export failed:', error);
       throw new Error('Failed to generate ZIP export');
     }
   }
@@ -97,9 +98,9 @@ export class ZipExporter {
   private static generateHeaderWithImages(feedbacks: Feedback[]): string {
     const timestamp = new Date().toISOString();
     const totalFeedback = feedbacks.length;
-    const componentsCount = new Set(feedbacks.map(f => f.componentName)).size;
-    const imagesCount = feedbacks.filter(f => f.screenshot).length;
-    
+    const componentsCount = new Set(feedbacks.map((f) => f.componentName)).size;
+    const imagesCount = feedbacks.filter((f) => f.screenshot).length;
+
     return [
       '# Feedback Report',
       `Generated on ${timestamp}`,
@@ -111,14 +112,13 @@ export class ZipExporter {
     ].join('\n');
   }
 
-
   /**
    * Generate feedback items with image references
    */
   private static generateFeedbackItemsWithImages(feedbacks: Feedback[]): string {
-    return feedbacks.map((feedback, index) => 
-      this.generateFeedbackItemWithImages(feedback, index + 1)
-    ).join('\n\n---\n\n');
+    return feedbacks
+      .map((feedback, index) => this.generateFeedbackItemWithImages(feedback, index + 1))
+      .join('\n\n---\n\n');
   }
 
   /**
@@ -126,26 +126,26 @@ export class ZipExporter {
    */
   private static generateFeedbackItemWithImages(feedback: Feedback, index: number): string {
     const timestamp = feedback.timestamp; // Already in ISO format
-    
+
     let item = `## ${index}. ${feedback.componentName}\n\n`;
-    
+
     // Screenshot FIRST (if available)
     if (feedback.screenshot) {
       const imageName = this.generateImageName(feedback);
       item += `![Screenshot of ${feedback.componentName}](images/${imageName})\n\n`;
     }
-    
+
     // Feedback Comment
     item += '### Feedback\n';
     item += this.formatComment(feedback.comment);
-    
+
     // Component Information
     item += '\n\n### Component Information\n';
     item += `- **Component:** ${feedback.componentName}\n`;
     item += `- **Path:** ${feedback.componentPath.join(' > ')}\n`;
     item += `- **URL:** ${feedback.url}\n`;
     item += `- **Timestamp:** ${timestamp}\n`;
-    
+
     // Browser Information
     item += '\n### Browser Information\n';
     if (feedback.browserInfo.platform) {
@@ -153,7 +153,7 @@ export class ZipExporter {
     }
     item += `- **Viewport:** ${feedback.browserInfo.viewport.width} x ${feedback.browserInfo.viewport.height}\n`;
     item += `- **User Agent:** ${feedback.browserInfo.userAgent}\n`;
-    
+
     // HTML Snippet (if available)
     if (feedback.htmlSnippet) {
       item += '\n### HTML Snippet\n';
@@ -161,7 +161,7 @@ export class ZipExporter {
       item += feedback.htmlSnippet;
       item += '\n```\n';
     }
-    
+
     // Metadata (if available)
     if (feedback.metadata && Object.keys(feedback.metadata).length > 0) {
       item += '\n### Additional Metadata\n';
@@ -169,7 +169,7 @@ export class ZipExporter {
       item += JSON.stringify(feedback.metadata, null, 2);
       item += '\n```\n';
     }
-    
+
     return item;
   }
 
@@ -184,22 +184,22 @@ export class ZipExporter {
         version: '1.0.0',
         format: 'Full ZIP Export',
         totalItems: feedbacks.length,
-        itemsWithScreenshots: feedbacks.filter(f => f.screenshot).length
+        itemsWithScreenshots: feedbacks.filter((f) => f.screenshot).length
       },
-      feedbacks: feedbacks.map(feedback => {
+      feedbacks: feedbacks.map((feedback) => {
         const result: any = {
           ...feedback,
-          screenshot: undefined  // Remove embedded screenshot
+          screenshot: undefined // Remove embedded screenshot
         };
-        
+
         // Add exportedImagePath if screenshot exists
         if (feedback.screenshot) {
           result.exportedImagePath = `images/${this.generateImageName(feedback)}`;
         }
-        
+
         // Remove the screenshot property entirely
         delete result.screenshot;
-        
+
         return result;
       })
     };
@@ -210,11 +210,11 @@ export class ZipExporter {
    */
   private static async addImagesToZip(feedbacks: Feedback[], imagesFolder: JSZip): Promise<void> {
     const imagePromises = feedbacks
-      .filter(feedback => feedback.screenshot)
+      .filter((feedback) => feedback.screenshot)
       .map(async (feedback) => {
         const imageName = this.generateImageName(feedback);
         const imageData = this.extractImageData(feedback.screenshot!);
-        
+
         if (imageData) {
           imagesFolder.file(imageName, imageData, { base64: true });
         }
@@ -232,7 +232,7 @@ export class ZipExporter {
       const matches = dataUrl.match(/^data:image\/[^;]+;base64,(.+)$/);
       return matches ? matches[1] : null;
     } catch (error) {
-      console.error('[Feedbacker] Failed to extract image data:', error);
+      logger.error('Failed to extract image data:', error);
       return null;
     }
   }
@@ -246,14 +246,14 @@ export class ZipExporter {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
       .substring(0, 20);
-    
+
     const timestamp = new Date(feedback.timestamp)
       .toISOString()
       .replace(/[:.]/g, '')
       .substring(0, 15); // YYYYMMDDTHHMMSS
-    
+
     const shortId = feedback.id.slice(-6);
-    
+
     // Determine image extension from data URL
     let extension = 'png'; // default
     if (feedback.screenshot?.includes('data:image/jpeg')) {
@@ -261,7 +261,7 @@ export class ZipExporter {
     } else if (feedback.screenshot?.includes('data:image/webp')) {
       extension = 'webp';
     }
-    
+
     return `${componentName}_${timestamp}_${shortId}.${extension}`;
   }
 
@@ -276,10 +276,10 @@ export class ZipExporter {
       .replace(/_/g, '\\_')
       .replace(/~/g, '\\~')
       .replace(/`/g, '\\`');
-    
+
     return escaped
       .split('\n')
-      .map(line => line.trim())
+      .map((line) => line.trim())
       .join('\n\n');
   }
 
@@ -291,11 +291,10 @@ export class ZipExporter {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-    
+
     const shortId = id.slice(-8);
     return `${base}-${shortId}`;
   }
-
 
   /**
    * Generate ZIP filename

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useFeedbackEvent } from '../hooks/useFeedbackEvent';
 import { useComponentDetection } from '../hooks/useComponentDetection';
 import { useFeedbackContext } from '../context/FeedbackContext';
+import logger from '../utils/logger';
 
 interface EventBridgeProps {
   onOpenModal: () => void;
@@ -21,25 +22,25 @@ export const EventBridge: React.FC<EventBridgeProps> = ({ onOpenModal, onOpenMan
   useEffect(() => {
     // Handle selection start event from FAB
     const unsubscribeSelectionStart = on('selection:start', () => {
-      console.log('[EventBridge] Selection start received');
+      logger.log('Selection start received');
       activate();
     });
 
     // Handle selection cancel
     const unsubscribeSelectionCancel = on('selection:cancel', () => {
-      console.log('[EventBridge] Selection cancel received');
+      logger.log('Selection cancel received');
       deactivate();
     });
 
     // Handle manager open
     const unsubscribeManagerOpen = on('manager:open', () => {
-      console.log('[EventBridge] Manager open received');
+      logger.log('Manager open received');
       onOpenManager();
     });
 
     // Handle draft restore
     const unsubscribeDraftRestore = on('draft:restore', () => {
-      console.log('[EventBridge] Draft restore received');
+      logger.log('Draft restore received');
       if (draft) {
         onOpenModal();
       }
@@ -56,7 +57,7 @@ export const EventBridge: React.FC<EventBridgeProps> = ({ onOpenModal, onOpenMan
   // When a component is selected, open the modal
   useEffect(() => {
     if (selectedComponent) {
-      console.log('[EventBridge] Component selected:', selectedComponent);
+      logger.log('Component selected:', selectedComponent);
       emit('modal:open', { componentInfo: selectedComponent });
       onOpenModal();
       deactivate();

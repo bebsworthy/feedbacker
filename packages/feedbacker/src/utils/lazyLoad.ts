@@ -1,9 +1,11 @@
 /**
  * Lazy Loading Utility
  * Handles dynamic importing of external libraries
- * 
+ *
  * Requirements: 8.4, 10.5
  */
+
+import logger from './logger';
 
 interface LazyLoadCache {
   [key: string]: Promise<any>;
@@ -18,7 +20,7 @@ const loadCache: LazyLoadCache = {};
  */
 export async function loadHtml2Canvas(): Promise<any> {
   const cacheKey = 'html2canvas';
-  
+
   // Return cached promise if already loading/loaded
   if (loadCache[cacheKey]) {
     return loadCache[cacheKey];
@@ -31,7 +33,7 @@ export async function loadHtml2Canvas(): Promise<any> {
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
       script.async = true;
-      
+
       return new Promise((resolve, reject) => {
         script.onload = () => {
           // Check if html2canvas is available
@@ -41,11 +43,11 @@ export async function loadHtml2Canvas(): Promise<any> {
             reject(new Error('html2canvas not available after loading'));
           }
         };
-        
+
         script.onerror = () => {
           reject(new Error('Failed to load html2canvas from CDN'));
         };
-        
+
         // Only append if not already present
         const existingScript = document.querySelector('script[src*="html2canvas"]');
         if (!existingScript) {
@@ -60,7 +62,7 @@ export async function loadHtml2Canvas(): Promise<any> {
         }
       });
     } catch (error) {
-      console.error('[Feedbacker] Error loading html2canvas:', error);
+      logger.error('Error loading html2canvas:', error);
       throw error;
     }
   })();
@@ -84,18 +86,18 @@ export async function lazyLoad<T>(
     try {
       return await moduleFactory();
     } catch (error) {
-      console.error(`[Feedbacker] Error loading ${cacheKey}:`, error);
-      
+      logger.error(`Error loading ${cacheKey}:`, error);
+
       // Try fallback if provided
       if (fallback) {
         try {
           return await fallback();
         } catch (fallbackError) {
-          console.error(`[Feedbacker] Fallback for ${cacheKey} also failed:`, fallbackError);
+          logger.error(`Fallback for ${cacheKey} also failed:`, fallbackError);
           throw fallbackError;
         }
       }
-      
+
       throw error;
     }
   })();
@@ -114,7 +116,7 @@ export function isLibraryLoaded(cacheKey: string): boolean {
  * Clear the load cache (useful for testing)
  */
 export function clearLoadCache(): void {
-  Object.keys(loadCache).forEach(key => {
+  Object.keys(loadCache).forEach((key) => {
     delete loadCache[key];
   });
 }

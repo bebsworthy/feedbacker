@@ -4,6 +4,7 @@
 
 import { FeedbackStore } from './StorageManager';
 import { Feedback, Draft, BrowserInfo } from '../types';
+import logger from '../utils/logger';
 
 export interface MigrationResult {
   success: boolean;
@@ -19,13 +20,16 @@ type MigrationFunction = (data: any) => FeedbackStore | null;
 const migrations: Record<string, MigrationFunction> = {
   '0.1.0': migrateFrom_0_1_0,
   '0.2.0': migrateFrom_0_2_0,
-  'legacy': migrateLegacyData
+  legacy: migrateLegacyData
 };
 
 /**
  * Main migration function that handles data migration between versions
  */
-export async function migrateData(oldData: any, targetVersion: string): Promise<FeedbackStore | null> {
+export async function migrateData(
+  oldData: any,
+  targetVersion: string
+): Promise<FeedbackStore | null> {
   try {
     if (!oldData) {
       return null;
@@ -33,12 +37,12 @@ export async function migrateData(oldData: any, targetVersion: string): Promise<
 
     // If no version is present, try legacy migration
     if (!oldData.version) {
-      console.log('[Feedbacker] No version found, attempting legacy migration');
+      logger.info('No version found, attempting legacy migration');
       return migrations.legacy(oldData);
     }
 
     const sourceVersion = oldData.version;
-    
+
     // If versions match, no migration needed (but validate structure)
     if (sourceVersion === targetVersion) {
       return validateAndNormalize(oldData);
@@ -49,11 +53,11 @@ export async function migrateData(oldData: any, targetVersion: string): Promise<
     const migrationFn = migrations[migrationKey];
 
     if (!migrationFn) {
-      console.warn(`[Feedbacker] No migration available for version ${sourceVersion}`);
+      logger.warn(`No migration available for version ${sourceVersion}`);
       return null;
     }
 
-    console.log(`[Feedbacker] Migrating data from ${sourceVersion} to ${targetVersion}`);
+    logger.info(`Migrating data from ${sourceVersion} to ${targetVersion}`);
     const migratedData = migrationFn(oldData);
 
     if (migratedData) {
@@ -64,7 +68,7 @@ export async function migrateData(oldData: any, targetVersion: string): Promise<
 
     return null;
   } catch (error) {
-    console.error('[Feedbacker] Migration error:', error);
+    logger.error('Migration error:', error);
     return null;
   }
 }
@@ -73,8 +77,12 @@ export async function migrateData(oldData: any, targetVersion: string): Promise<
  * Get migration key based on source version
  */
 function getMigrationKey(version: string): string {
-  if (version.startsWith('0.1.')) return '0.1.0';
-  if (version.startsWith('0.2.')) return '0.2.0';
+  if (version.startsWith('0.1.')) {
+    return '0.1.0';
+  }
+  if (version.startsWith('0.2.')) {
+    return '0.2.0';
+  }
   return 'legacy';
 }
 
@@ -99,12 +107,13 @@ function validateAndNormalize(data: any): FeedbackStore | null {
 
     // Validate and normalize draft
     if (data.draft && typeof data.draft === 'object') {
-      store.draft = normalizeDraft(data.draft);
+      const draft = normalizeDraft(data.draft);
+      store.draft = draft || undefined;
     }
 
     return store;
   } catch (error) {
-    console.error('[Feedbacker] Data normalization error:', error);
+    logger.error('Data normalization error:', error);
     return null;
   }
 }
@@ -137,7 +146,7 @@ function normalizeFeedback(feedback: any): Feedback | null {
 
     return normalized;
   } catch (error) {
-    console.warn('[Feedbacker] Failed to normalize feedback:', error);
+    logger.warn('Failed to normalize feedback:', error);
     return null;
   }
 }
@@ -169,7 +178,7 @@ function normalizeDraft(draft: any): Draft | null {
       updatedAt: String(draft.updatedAt || new Date().toISOString())
     };
   } catch (error) {
-    console.warn('[Feedbacker] Failed to normalize draft:', error);
+    logger.warn('Failed to normalize draft:', error);
     return null;
   }
 }
@@ -209,26 +218,28 @@ function migrateFrom_0_1_0(data: any): FeedbackStore | null {
   try {
     return {
       version: '1.0.0',
-      feedbacks: Array.isArray(data.items) 
-        ? data.items.map((item: any) => ({
-            id: item.id || generateId(),
-            componentName: item.component || 'Unknown',
-            componentPath: [],
-            comment: item.text || item.comment || '',
-            screenshot: item.image,
-            url: item.url || window.location.href,
-            timestamp: item.date || item.timestamp || new Date().toISOString(),
-            browserInfo: {
-              userAgent: navigator.userAgent,
-              viewport: { width: window.innerWidth, height: window.innerHeight },
-              platform: navigator.platform
-            }
-          })).filter((f: any) => f.comment) 
+      feedbacks: Array.isArray(data.items)
+        ? data.items
+            .map((item: any) => ({
+              id: item.id || generateId(),
+              componentName: item.component || 'Unknown',
+              componentPath: [],
+              comment: item.text || item.comment || '',
+              screenshot: item.image,
+              url: item.url || window.location.href,
+              timestamp: item.date || item.timestamp || new Date().toISOString(),
+              browserInfo: {
+                userAgent: navigator.userAgent,
+                viewport: { width: window.innerWidth, height: window.innerHeight },
+                platform: navigator.platform
+              }
+            }))
+            .filter((f: any) => f.comment)
         : [],
       settings: data.config || {}
     };
   } catch (error) {
-    console.error('[Feedbacker] 0.1.0 migration failed:', error);
+    logger.error('0.1.0 migration failed:', error);
     return null;
   }
 }
@@ -241,7 +252,7 @@ function migrateFrom_0_2_0(data: any): FeedbackStore | null {
   try {
     return {
       version: '1.0.0',
-      feedbacks: Array.isArray(data.feedbacks) 
+      feedbacks: Array.isArray(data.feedbacks)
         ? data.feedbacks.map((feedback: any) => ({
             ...feedback,
             id: feedback.id || generateId(),
@@ -253,21 +264,23 @@ function migrateFrom_0_2_0(data: any): FeedbackStore | null {
             }
           }))
         : [],
-      draft: data.currentDraft ? {
-        componentInfo: data.currentDraft.component || {
-          name: 'Unknown',
-          path: [],
-          element: null
-        },
-        comment: data.currentDraft.comment || '',
-        screenshot: data.currentDraft.screenshot,
-        createdAt: data.currentDraft.created || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      } : undefined,
+      draft: data.currentDraft
+        ? {
+            componentInfo: data.currentDraft.component || {
+              name: 'Unknown',
+              path: [],
+              element: null
+            },
+            comment: data.currentDraft.comment || '',
+            screenshot: data.currentDraft.screenshot,
+            createdAt: data.currentDraft.created || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        : undefined,
       settings: data.settings || {}
     };
   } catch (error) {
-    console.error('[Feedbacker] 0.2.0 migration failed:', error);
+    logger.error('0.2.0 migration failed:', error);
     return null;
   }
 }
@@ -282,20 +295,22 @@ function migrateLegacyData(data: any): FeedbackStore | null {
     if (Array.isArray(data)) {
       return {
         version: '1.0.0',
-        feedbacks: data.map((item: any) => ({
-          id: item.id || generateId(),
-          componentName: item.componentName || item.component || 'Unknown',
-          componentPath: item.path || [],
-          comment: item.comment || item.text || '',
-          screenshot: item.screenshot || item.image,
-          url: item.url || window.location.href,
-          timestamp: item.timestamp || item.date || new Date().toISOString(),
-          browserInfo: {
-            userAgent: navigator.userAgent,
-            viewport: { width: window.innerWidth, height: window.innerHeight },
-            platform: navigator.platform
-          }
-        })).filter((f: any) => f.comment),
+        feedbacks: data
+          .map((item: any) => ({
+            id: item.id || generateId(),
+            componentName: item.componentName || item.component || 'Unknown',
+            componentPath: item.path || [],
+            comment: item.comment || item.text || '',
+            screenshot: item.screenshot || item.image,
+            url: item.url || window.location.href,
+            timestamp: item.timestamp || item.date || new Date().toISOString(),
+            browserInfo: {
+              userAgent: navigator.userAgent,
+              viewport: { width: window.innerWidth, height: window.innerHeight },
+              platform: navigator.platform
+            }
+          }))
+          .filter((f: any) => f.comment),
         settings: {}
       };
     }
@@ -305,7 +320,7 @@ function migrateLegacyData(data: any): FeedbackStore | null {
       const feedbacks = data.feedbacks || data.items || data.list || [];
       return {
         version: '1.0.0',
-        feedbacks: Array.isArray(feedbacks) 
+        feedbacks: Array.isArray(feedbacks)
           ? feedbacks.map(normalizeFeedback).filter((f): f is Feedback => f !== null)
           : [],
         settings: data.settings || data.config || {}
@@ -314,7 +329,7 @@ function migrateLegacyData(data: any): FeedbackStore | null {
 
     return null;
   } catch (error) {
-    console.error('[Feedbacker] Legacy migration failed:', error);
+    logger.error('Legacy migration failed:', error);
     return null;
   }
 }
@@ -330,11 +345,15 @@ function generateId(): string {
  * Check if migration is needed
  */
 export function needsMigration(data: any, currentVersion: string): boolean {
-  if (!data) return false;
-  
+  if (!data) {
+    return false;
+  }
+
   // No version means legacy data
-  if (!data.version) return true;
-  
+  if (!data.version) {
+    return true;
+  }
+
   // Different version means migration needed
   return data.version !== currentVersion;
 }

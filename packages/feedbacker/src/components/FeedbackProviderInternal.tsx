@@ -31,21 +31,24 @@ export const FeedbackProviderInternal: React.FC<FeedbackProviderInternalProps> =
   }
 
   return (
-    <FeedbackContextProvider 
+    <FeedbackContextProvider
       onFeedbackSubmit={onFeedbackSubmit}
       autoCopy={autoCopy}
       autoDownload={autoDownload}
       captureLibrary={captureLibrary}
-      captureAdapter={captureAdapter}>
-      <div 
+      captureAdapter={captureAdapter}
+    >
+      <div
         className="feedbacker-root"
-        style={{
-          '--fb-primary': primaryColor,
-          '--fb-position': position
-        } as React.CSSProperties & { [key: string]: string }}
+        style={
+          {
+            '--fb-primary': primaryColor,
+            '--fb-position': position
+          } as React.CSSProperties & { [key: string]: string }
+        }
       >
         {children}
-        
+
         {/* All feedback UI components */}
         <FeedbackProviderContent
           position={position}

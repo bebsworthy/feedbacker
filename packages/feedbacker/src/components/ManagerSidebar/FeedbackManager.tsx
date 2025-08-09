@@ -5,11 +5,12 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Feedback } from '../../types';
-import { XMarkIcon, ArrowDownTrayIcon, TrashIcon, PencilIcon } from '../../icons';
+import { XMarkIcon, ArrowDownTrayIcon, TrashIcon } from '../../icons';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExportDialog } from './ExportDialog';
 import { FeedbackCard } from './FeedbackCard';
 import { useFeedbackContext } from '../../context/FeedbackContext';
+import logger from '../../utils/logger';
 import '../../styles/feedbacker.css';
 
 interface FeedbackManagerProps {
@@ -43,14 +44,14 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   const [localAutoDownloadFormat, setLocalAutoDownloadFormat] = useState<'markdown' | 'zip'>(
     autoDownload === 'zip' ? 'zip' : 'markdown'
   );
-  
+
   // Update local format when autoDownload changes
   useEffect(() => {
     if (autoDownload && autoDownload !== true && autoDownload !== false) {
       setLocalAutoDownloadFormat(autoDownload);
     }
   }, [autoDownload]);
-  
+
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -65,15 +66,15 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   // Group feedbacks by day
   const groupedFeedbacks = useMemo(() => {
     const groups: { [key: string]: DayGroup } = {};
-    
-    feedbacks.forEach(feedback => {
+
+    feedbacks.forEach((feedback) => {
       const date = new Date(feedback.timestamp);
       const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       if (!groups[dateKey]) {
         groups[dateKey] = {
           date: dateKey,
-          displayDate: date.toLocaleDateString('en-US', { 
+          displayDate: date.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -82,27 +83,30 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
           feedbacks: []
         };
       }
-      
+
       groups[dateKey].feedbacks.push(feedback);
     });
-    
+
     // Sort by date (newest first)
-    return Object.values(groups).sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
+    return Object.values(groups).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [feedbacks]);
 
-  const handleDeleteDay = useCallback((dayGroup: DayGroup) => {
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Delete Day Feedback',
-      message: `Are you sure you want to delete all ${dayGroup.feedbacks.length} feedback items from ${dayGroup.displayDate}?`,
-      onConfirm: () => {
-        dayGroup.feedbacks.forEach(f => onDeleteFeedback(f.id));
-        setConfirmDialog(null);
-      }
-    });
-  }, [onDeleteFeedback]);
+  const handleDeleteDay = useCallback(
+    (dayGroup: DayGroup) => {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Delete Day Feedback',
+        message: `Are you sure you want to delete all ${dayGroup.feedbacks.length} feedback items from ${dayGroup.displayDate}?`,
+        onConfirm: () => {
+          dayGroup.feedbacks.forEach((f) => onDeleteFeedback(f.id));
+          setConfirmDialog(null);
+        }
+      });
+    },
+    [onDeleteFeedback]
+  );
 
   const handleExportDay = useCallback((dayGroup: DayGroup) => {
     setExportDialog({
@@ -114,17 +118,17 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   const handleCopyFeedback = useCallback((feedback: Feedback) => {
     // Generate markdown format for single feedback
     let markdown = `## ${feedback.componentName}\n\n`;
-    
+
     // Feedback Comment
     markdown += `### Feedback\n${feedback.comment}\n\n`;
-    
+
     // Component Information
     markdown += `### Component Information\n`;
     markdown += `- **Component:** ${feedback.componentName}\n`;
     markdown += `- **Path:** ${feedback.componentPath.join(' > ')}\n`;
     markdown += `- **URL:** ${feedback.url}\n`;
     markdown += `- **Timestamp:** ${feedback.timestamp}\n\n`;
-    
+
     // Browser Information
     markdown += `### Browser Information\n`;
     if (feedback.browserInfo.platform) {
@@ -132,7 +136,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
     }
     markdown += `- **Viewport:** ${feedback.browserInfo.viewport.width} x ${feedback.browserInfo.viewport.height}\n`;
     markdown += `- **User Agent:** ${feedback.browserInfo.userAgent}\n`;
-    
+
     // HTML Snippet (if available)
     if (feedback.htmlSnippet) {
       markdown += `\n### HTML Snippet\n`;
@@ -140,7 +144,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
       markdown += feedback.htmlSnippet;
       markdown += '\n```\n';
     }
-    
+
     // Metadata (if available)
     if (feedback.metadata && Object.keys(feedback.metadata).length > 0) {
       markdown += `\n### Additional Metadata\n`;
@@ -148,20 +152,25 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
       markdown += JSON.stringify(feedback.metadata, null, 2);
       markdown += '\n```\n';
     }
-    
-    navigator.clipboard.writeText(markdown).then(() => {
-      console.log('[Feedbacker] Feedback copied to clipboard as markdown');
-    }).catch(err => {
-      console.error('[Feedbacker] Failed to copy feedback:', err);
-    });
+
+    navigator.clipboard
+      .writeText(markdown)
+      .then(() => {
+        logger.info('Feedback copied to clipboard as markdown');
+      })
+      .catch((err) => {
+        logger.error('Failed to copy feedback:', err);
+      });
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="feedbacker-root">
       {/* Full screen overlay */}
-      <div 
+      <div
         className="feedbacker-manager-overlay"
         style={{
           position: 'fixed',
@@ -175,7 +184,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
         }}
       >
         {/* Header */}
-        <div 
+        <div
           className="feedbacker-manager-header"
           style={{
             position: 'sticky',
@@ -284,25 +293,38 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
 
         {/* Settings Section */}
         {showSettings && (
-          <div style={{
-            backgroundColor: '#f3f4f6',
-            borderBottom: '1px solid #e5e7eb',
-            padding: '20px 24px'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+          <div
+            style={{
+              backgroundColor: '#f3f4f6',
+              borderBottom: '1px solid #e5e7eb',
+              padding: '20px 24px'
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 16px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#374151'
+              }}
+            >
               Auto Actions
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Auto-copy toggle */}
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 16px',
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                cursor: 'pointer'
-              }}>
+              <label
+                htmlFor="auto-copy-checkbox"
+                aria-label="Auto-copy to clipboard"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>
                     📋 Auto-copy to clipboard
@@ -312,6 +334,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
                   </div>
                 </div>
                 <input
+                  id="auto-copy-checkbox"
                   type="checkbox"
                   checked={autoCopy}
                   onChange={(e) => setAutoCopy(e.target.checked)}
@@ -322,17 +345,21 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
                   }}
                 />
               </label>
-              
+
               {/* Auto-download toggle */}
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 16px',
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                cursor: 'pointer'
-              }}>
+              <label
+                htmlFor="auto-download-checkbox"
+                aria-label="Auto-download feedback"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>
                     💾 Auto-download feedback
@@ -342,9 +369,12 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
                   </div>
                 </div>
                 <input
+                  id="auto-download-checkbox"
                   type="checkbox"
                   checked={!!autoDownload}
-                  onChange={(e) => setAutoDownload(e.target.checked ? localAutoDownloadFormat : false)}
+                  onChange={(e) =>
+                    setAutoDownload(e.target.checked ? localAutoDownloadFormat : false)
+                  }
                   style={{
                     width: '20px',
                     height: '20px',
@@ -352,39 +382,62 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
                   }}
                 />
               </label>
-              
+
               {/* Download format selector */}
               {autoDownload && (
-                <div style={{
-                  marginLeft: '32px',
-                  padding: '12px 16px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+                <div
+                  style={{
+                    marginLeft: '32px',
+                    padding: '12px 16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}
+                  >
                     Download format:
                   </div>
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
                       <input
                         type="radio"
                         name="downloadFormat"
                         value="markdown"
                         checked={localAutoDownloadFormat === 'markdown'}
-                        onChange={(e) => {
+                        onChange={(_e) => {
                           setLocalAutoDownloadFormat('markdown');
                           setAutoDownload('markdown');
                         }}
                       />
                       <span style={{ fontSize: '13px', color: '#4b5563' }}>Markdown</span>
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
                       <input
                         type="radio"
                         name="downloadFormat"
                         value="zip"
                         checked={localAutoDownloadFormat === 'zip'}
-                        onChange={(e) => {
+                        onChange={(_e) => {
                           setLocalAutoDownloadFormat('zip');
                           setAutoDownload('zip');
                         }}
@@ -397,35 +450,43 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
             </div>
           </div>
         )}
-        
+
         {/* Content */}
         <div style={{ padding: '24px' }}>
           {groupedFeedbacks.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center',
-              padding: '60px 20px',
-              color: '#6b7280'
-            }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                color: '#6b7280'
+              }}
+            >
               <p style={{ fontSize: '16px', margin: '0 0 8px 0' }}>No feedback yet</p>
-              <p style={{ fontSize: '14px', margin: 0 }}>Click the feedback button to start collecting feedback</p>
+              <p style={{ fontSize: '14px', margin: 0 }}>
+                Click the feedback button to start collecting feedback
+              </p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-              {groupedFeedbacks.map(dayGroup => (
+              {groupedFeedbacks.map((dayGroup) => (
                 <div key={dayGroup.date}>
                   {/* Day header */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '16px'
-                  }}>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#374151'
-                    }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#374151'
+                      }}
+                    >
                       {dayGroup.displayDate}
                     </h3>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -469,21 +530,25 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Divider */}
-                  <div style={{
-                    height: '1px',
-                    backgroundColor: '#e5e7eb',
-                    marginBottom: '16px'
-                  }} />
-                  
+                  <div
+                    style={{
+                      height: '1px',
+                      backgroundColor: '#e5e7eb',
+                      marginBottom: '16px'
+                    }}
+                  />
+
                   {/* Cards grid */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    gap: '16px'
-                  }}>
-                    {dayGroup.feedbacks.map(feedback => (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                      gap: '16px'
+                    }}
+                  >
+                    {dayGroup.feedbacks.map((feedback) => (
                       <FeedbackCard
                         key={feedback.id}
                         feedback={feedback}
