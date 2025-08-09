@@ -157,17 +157,18 @@ jobs:
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') || contains(github.ref, '-rc') }}
 
   deploy-demo:
-    # Deploy on main branch pushes or version tags
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-    needs: test
+    # Only deploy on version tags (releases)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish-npm  # Deploy after successful NPM publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # Removed environment protection to allow tag deployments
+    # environment:
+    #   name: github-pages
+    #   url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - uses: actions/checkout@v4
