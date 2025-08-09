@@ -89,6 +89,16 @@
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }
+    },
+    {
+      "files": ["e2e/**/*.ts", "e2e/**/*.spec.ts", "playwright.config.ts"],
+      "parserOptions": {
+        "project": "./tsconfig.e2e.json"
+      },
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+      }
     }
   ]
 }

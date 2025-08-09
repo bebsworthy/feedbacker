@@ -18,6 +18,7 @@ import { FormExample } from './components/FormExample';
 import { TableExample } from './components/TableExample';
 import { ListExample } from './components/ListExample';
 import { PlaygroundV2 } from './PlaygroundV2/PlaygroundV2';
+import { TestPage } from './TestPage';
 
 interface LandingPageProps {
   captureLibrary: 'html2canvas' | 'snapdom';
@@ -605,6 +606,9 @@ function App() {
 export const App: React.FC = () => {
   const [captureLibrary, setCaptureLibrary] = useState<'html2canvas' | 'snapdom'>('snapdom');
   
+  // Simple routing based on pathname
+  const isTestPage = window.location.pathname === '/test';
+  
   return (
     <FeedbackProvider
       // Position of the feedback button on the screen
@@ -673,7 +677,11 @@ export const App: React.FC = () => {
         }, 3000);
       }}
     >
-      <LandingPage captureLibrary={captureLibrary} setCaptureLibrary={setCaptureLibrary} />
+      {isTestPage ? (
+        <TestPage />
+      ) : (
+        <LandingPage captureLibrary={captureLibrary} setCaptureLibrary={setCaptureLibrary} />
+      )}
     </FeedbackProvider>
   );
 };

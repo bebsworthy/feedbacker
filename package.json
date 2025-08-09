@@ -12,6 +12,11 @@
     "build:demo": "npm run build --workspace=@feedbacker/demo",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspace=feedbacker-react",
+    "test:e2e:ui": "npm run test:e2e:ui --workspace=feedbacker-react",
+    "test:e2e:debug": "npm run test:e2e:debug --workspace=feedbacker-react",
+    "test:e2e:simple": "npm run test:e2e:simple --workspace=feedbacker-react",
+    "test:e2e:simple:headless": "npm run test:e2e:simple:headless --workspace=feedbacker-react",
     "prepare": "husky"
   },
   "devDependencies": {
