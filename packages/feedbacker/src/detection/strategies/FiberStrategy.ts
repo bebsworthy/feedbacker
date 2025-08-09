@@ -64,7 +64,8 @@ export class FiberStrategy extends DetectionStrategy {
   /**
    * Extract component name from React fiber
    */
-  private getComponentNameFromFiber(fiber: unknown): string | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getComponentNameFromFiber(fiber: any): string | null {
     if (!fiber) {
       return null;
     }
@@ -130,7 +131,8 @@ export class FiberStrategy extends DetectionStrategy {
   /**
    * Extract name from a single fiber node
    */
-  private extractNameFromFiber(fiber: unknown): string | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private extractNameFromFiber(fiber: any): string | null {
     if (!fiber) {
       return null;
     }

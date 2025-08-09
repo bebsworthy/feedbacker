@@ -47,7 +47,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
 
   // Update local format when autoDownload changes
   useEffect(() => {
-    if (autoDownload && autoDownload !== true && autoDownload !== false) {
+    if (autoDownload && typeof autoDownload === 'string') {
       setLocalAutoDownloadFormat(autoDownload);
     }
   }, [autoDownload]);
@@ -581,8 +581,8 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
           isOpen={confirmDialog.isOpen}
           title={confirmDialog.title}
           message={confirmDialog.message}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
+          confirmText="Delete"
+          cancelText="Cancel"
           isDanger={true}
           onConfirm={confirmDialog.onConfirm}
           onCancel={() => setConfirmDialog(null)}
@@ -593,6 +593,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
       {exportDialog && (
         <ExportDialog
           isOpen={exportDialog.isOpen}
+          feedbackCount={exportDialog.feedbacks.length}
           onExport={(format) => {
             onExport(format, exportDialog.feedbacks);
             setExportDialog(null);

@@ -22,7 +22,7 @@ export async function loadHtml2Canvas(): Promise<any> {
   const cacheKey = 'html2canvas';
 
   // Return cached promise if already loading/loaded
-  if (loadCache[cacheKey]) {
+  if (cacheKey in loadCache) {
     return loadCache[cacheKey];
   }
 
@@ -78,7 +78,7 @@ export async function lazyLoad<T>(
   cacheKey: string,
   fallback?: () => Promise<T>
 ): Promise<T> {
-  if (loadCache[cacheKey]) {
+  if (cacheKey in loadCache) {
     return loadCache[cacheKey];
   }
 
@@ -109,7 +109,7 @@ export async function lazyLoad<T>(
  * Check if a library is already loaded
  */
 export function isLibraryLoaded(cacheKey: string): boolean {
-  return loadCache[cacheKey] !== undefined;
+  return cacheKey in loadCache;
 }
 
 /**

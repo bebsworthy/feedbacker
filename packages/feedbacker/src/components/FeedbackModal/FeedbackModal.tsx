@@ -83,7 +83,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         const draft: Draft = {
           componentInfo,
           comment: comment.trim(),
-          screenshot,
+          screenshot: screenshot || undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -184,7 +184,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   }
 
   if (isMinimized) {
-    return <MinimizedState componentName={componentName} onRestore={onRestore} />;
+    return (
+      <MinimizedState
+        componentInfo={componentInfo}
+        hasScreenshot={!!screenshot}
+        isDirty={isDirty}
+        onRestore={onRestore}
+        onDiscard={onCancel}
+      />
+    );
   }
 
   return (

@@ -335,6 +335,7 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
       {/* Export dialog */}
       <ExportDialog
         isOpen={isExportDialogOpen}
+        feedbackCount={feedbacks.length}
         onExport={async (format) => {
           await handleManagerExport(format);
           setIsExportDialogOpen(false);
@@ -347,8 +348,8 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
         isOpen={isConfirmClearOpen}
         title="Clear All Feedback"
         message="Are you sure you want to delete all feedback? This action cannot be undone."
-        confirmLabel="Clear All"
-        cancelLabel="Cancel"
+        confirmText="Clear All"
+        cancelText="Cancel"
         isDanger={true}
         onConfirm={() => {
           clearAllFeedbacks();

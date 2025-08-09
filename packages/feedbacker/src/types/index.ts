@@ -3,6 +3,8 @@
  * Core interfaces and types for the feedback system
  */
 
+import type { ReactNode } from 'react';
+
 export interface Feedback {
   id: string;
   componentName: string;
@@ -50,7 +52,7 @@ export interface FeedbackProviderProps {
   autoDownload?: boolean | 'markdown' | 'zip';
   captureLibrary?: 'html2canvas' | 'snapdom' | string;
   captureAdapter?: unknown; // CaptureAdapter type when imported
-  children?: unknown; // React.ReactNode will be properly typed when React is imported
+  children?: ReactNode;
 }
 
 export interface ExportOptions {

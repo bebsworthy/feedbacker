@@ -102,7 +102,7 @@ function validateAndNormalize(data: any): FeedbackStore | null {
     if (Array.isArray(data.feedbacks)) {
       store.feedbacks = data.feedbacks
         .map(normalizeFeedback)
-        .filter((f): f is Feedback => f !== null);
+        .filter((f: Feedback | null): f is Feedback => f !== null);
     }
 
     // Validate and normalize draft
@@ -321,7 +321,9 @@ function migrateLegacyData(data: any): FeedbackStore | null {
       return {
         version: '1.0.0',
         feedbacks: Array.isArray(feedbacks)
-          ? feedbacks.map(normalizeFeedback).filter((f): f is Feedback => f !== null)
+          ? feedbacks
+              .map(normalizeFeedback)
+              .filter((f: Feedback | null): f is Feedback => f !== null)
           : [],
         settings: data.settings || data.config || {}
       };

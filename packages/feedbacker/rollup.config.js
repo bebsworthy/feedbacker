@@ -88,6 +88,7 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false, // Already created in ESM build
+        declarationMap: false,
         rootDir: './src'
       }),
       postcss({
@@ -136,6 +137,7 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
+        declarationMap: false,
         rootDir: './src'
       }),
       postcss({
