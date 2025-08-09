@@ -267,8 +267,13 @@ export async function checkCopyButton(page: Page, feedbackText: string) {
   const copyButton = feedbackCard.locator('button').filter({ hasText: /Copy/i });
 
   if ((await copyButton.count()) > 0) {
-    // Grant clipboard permissions
-    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    // Grant clipboard permissions (not supported in WebKit)
+    try {
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    } catch (e) {
+      // WebKit doesn't support clipboard permissions, continue anyway
+      console.log('⚠ Browser does not support clipboard permissions');
+    }
 
     await copyButton.first().click();
     console.log('✓ Clicked copy button');
