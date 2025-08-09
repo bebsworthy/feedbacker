@@ -88,5 +88,5 @@ export { CaptureLibrary } from './types/capture';
 // CSS is automatically injected when the component is loaded
 // No manual import required - true zero-config!
 
-// Version info
-export const version = '1.0.0';
+// Version will be replaced at build time by rollup
+export const version = '__VERSION__';

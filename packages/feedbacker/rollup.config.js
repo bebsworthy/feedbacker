@@ -4,6 +4,9 @@ import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
+import { readFileSync } from 'fs';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -30,7 +33,10 @@ export default [
     plugins: [
       replace({
         preventAssignment: true,
-        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+        values: {
+          'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+          __VERSION__: JSON.stringify(pkg.version)
+        }
       }),
       resolve({
         browser: true
@@ -77,7 +83,10 @@ export default [
     plugins: [
       replace({
         preventAssignment: true,
-        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+        values: {
+          'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+          __VERSION__: JSON.stringify(pkg.version)
+        }
       }),
       resolve({
         browser: true
@@ -123,7 +132,10 @@ export default [
     plugins: [
       replace({
         preventAssignment: true,
-        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development')
+        values: {
+          'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+          __VERSION__: JSON.stringify(pkg.version)
+        }
       }),
       resolve({
         browser: true
