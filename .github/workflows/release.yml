@@ -59,6 +59,8 @@ jobs:
       - name: Publish to npm
         run: |
           cd packages/feedbacker
+          # Publish with provenance for supply chain security
+          # This creates a cryptographic link between the package and its source code
           npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
