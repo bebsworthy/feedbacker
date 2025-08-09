@@ -112,12 +112,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/feedbacker/core.git"
+    "url": "https://github.com/bebsworthy/feedbacker.git"
   },
   "bugs": {
-    "url": "https://github.com/feedbacker/core/issues"
+    "url": "https://github.com/bebsworthy/feedbacker/issues"
   },
-  "homepage": "https://github.com/feedbacker/core#readme",
+  "homepage": "https://github.com/bebsworthy/feedbacker#readme",
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
