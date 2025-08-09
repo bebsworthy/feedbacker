@@ -1,9 +1,12 @@
-name: Release
+name: CI & Release
 
 on:
   push:
+    branches: [main]
     tags:
-      - 'v*' # Triggers on version tags like v0.1.0, v1.0.0, etc.
+      - 'v*'
+  pull_request:
+    branches: [main]
 
 jobs:
   test:
@@ -26,14 +29,35 @@ jobs:
       
       - name: Build library
         run: npm run build
+        working-directory: packages/feedbacker
       
       - name: Run type check
         run: npm run typecheck --workspace=feedbacker-react || true
       
-      - name: Run tests
+      - name: Run unit tests
         run: npm test --if-present
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: packages/feedbacker
+      
+      - name: Run E2E tests
+        run: npm run test:e2e
+        working-directory: packages/feedbacker
+      
+      - name: Build demo
+        run: npm run build:demo
+      
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.node-version }}
+          path: packages/feedbacker/playwright-report/
+          retention-days: 30
 
   publish-npm:
+    # Only run on version tags
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -55,17 +79,17 @@ jobs:
       
       - name: Build library
         run: npm run build
+        working-directory: packages/feedbacker
       
       - name: Publish to npm
-        run: |
-          cd packages/feedbacker
-          # Publish with provenance for supply chain security
-          # This creates a cryptographic link between the package and its source code
-          npm publish --access public --provenance
+        run: npm publish --access public --provenance
+        working-directory: packages/feedbacker
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   create-github-release:
+    # Only run on version tags
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: publish-npm
     runs-on: ubuntu-latest
     permissions:
@@ -133,12 +157,17 @@ jobs:
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') || contains(github.ref, '-rc') }}
 
   deploy-demo:
-    needs: publish-npm
+    # Deploy on main branch pushes or version tags
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pages: write
       id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +181,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build demo
+      - name: Build library and demo
         run: |
           npm run build
           npm run build:demo
