@@ -1,0 +1,122 @@
+# Feedbacker React - LLM Setup Instructions
+
+This file contains concise instructions for LLMs to install and configure the Feedbacker React library.
+
+## Library Purpose
+Feedbacker is a React component-level feedback collection library with automatic screenshots. Users can click any React component to provide targeted feedback with captured context.
+
+## Installation
+
+```bash
+npm install feedbacker-react @zumer/snapdom
+```
+
+## Basic Setup
+
+1. Wrap your app with FeedbackProvider:
+
+```jsx
+import { FeedbackProvider } from 'feedbacker-react';
+
+function App() {
+  return (
+    <FeedbackProvider
+      position="bottom-right"
+      primaryColor="#3b82f6"
+      captureLibrary="snapdom"
+      onFeedbackSubmit={(feedback) => {
+        console.log('Feedback received:', feedback);
+        // Send to your backend API
+      }}
+    >
+      <YourApp />
+    </FeedbackProvider>
+  );
+}
+```
+
+## Key Configuration Options
+
+- `position`: "top-left" | "top-right" | "bottom-left" | "bottom-right"
+- `primaryColor`: Any CSS color value
+- `captureLibrary`: "snapdom" (recommended) or "html2canvas"
+- `enabled`: boolean (default: true)
+- `autoCopy`: boolean - Copy feedback to clipboard
+- `autoDownload`: false | true | "markdown" | "zip"
+- `onFeedbackSubmit`: Callback function for handling feedback
+
+## Feedback Data Structure
+
+```typescript
+{
+  id: string;
+  componentName: string;
+  componentPath: string[];
+  comment: string;
+  screenshot?: string;  // Base64 data URL
+  url: string;
+  timestamp: string;
+  browserInfo: {
+    userAgent: string;
+    viewportWidth: number;
+    viewportHeight: number;
+  };
+}
+```
+
+## Framework Integration Examples
+
+### Next.js App Router
+```jsx
+// app/layout.tsx
+import { FeedbackProvider } from 'feedbacker-react';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <FeedbackProvider captureLibrary="snapdom">
+          {children}
+        </FeedbackProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### Vite/Create React App
+```jsx
+// main.jsx or index.js
+import { FeedbackProvider } from 'feedbacker-react';
+import ReactDOM from 'react-dom/client';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <FeedbackProvider captureLibrary="snapdom">
+    <App />
+  </FeedbackProvider>
+);
+```
+
+## Programmatic Usage
+
+```jsx
+import { useFeedback, useFeedbackEvent } from 'feedbacker-react';
+
+function MyComponent() {
+  const { feedbacks, exportFeedback } = useFeedback();
+  const { emit } = useFeedbackEvent();
+  
+  // Start feedback selection
+  const startFeedback = () => emit('selection:start', {});
+  
+  // Export feedback
+  const handleExport = () => exportFeedback({ format: 'zip' });
+}
+```
+
+## Notes
+- @zumer/snapdom is recommended for 2x faster screenshots
+- Feedback is stored in localStorage with 5MB limit
+- Zero performance impact when inactive
+- React 18+ required
+- Works on Chrome 60+, Firefox 60+, Safari 12+, Edge 79+

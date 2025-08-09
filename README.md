@@ -38,6 +38,22 @@ Users can now:
 - Select any React component by hovering and clicking
 - Submit feedback with automatic screenshots
 
+### Coding Agent
+
+For LLM-powered development assistants, you can automate the setup:
+
+```markdown
+Please read the setup instructions from https://raw.githubusercontent.com/bebsworthy/feedbacker/main/llm.txt 
+and install feedbacker-react with @zumer/snapdom in my React application. Configure it with 
+automatic screenshot capture and set up the feedback handler to log to console.
+```
+
+The LLM should:
+1. Install `feedbacker-react` and `@zumer/snapdom`
+2. Wrap your app with `FeedbackProvider`
+3. Configure SnapDOM for optimized screenshots
+4. Set up feedback handling
+
 ## Configuration
 
 ### Basic Options
