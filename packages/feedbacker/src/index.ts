@@ -85,8 +85,8 @@ export type {
 } from './types/capture';
 export { CaptureLibrary } from './types/capture';
 
-// CSS is automatically included in the build
-// For manual import: import 'feedbacker-react/styles'
+// CSS is automatically injected when the component is loaded
+// No manual import required - true zero-config!
 
 // Version info
 export const version = '1.0.0';

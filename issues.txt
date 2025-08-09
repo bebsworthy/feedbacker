@@ -1,0 +1,17 @@
+1) Bash(cd mockup/v3 && npm install feedbacker-react)
+  ⎿  Error: npm error code ERESOLVE
+     npm error ERESOLVE unable to resolve dependency tree
+     npm error
+     npm error While resolving: aegis-claims-mockup-v3@2.1.0
+     npm error Found: react@19.1.1
+     npm error node_modules/react
+     npm error   react@"^19.1.0" from the root project
+     npm error
+     npm error Could not resolve dependency:
+     npm error peer react@"^18.0.0" from feedbacker-react@0.2.1
+     … +11 lines (ctrl+r to see all)
+
+	
+2) Requires an undocumented CSS import.
+ The issue was that the Feedbacker CSS wasn't being imported. I've added import 'feedbacker-react/styles'; to
+   your App.tsx. This imports the required CSS for the modal and other Feedbacker UI components to display properly.

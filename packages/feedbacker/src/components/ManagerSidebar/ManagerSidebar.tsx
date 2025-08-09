@@ -15,7 +15,6 @@ import { FeedbackList } from './FeedbackList';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ExportDialog } from './ExportDialog';
 import { TrashIcon, XMarkIcon, ArrowDownTrayIcon } from '../../icons';
-import '../../styles/feedbacker.css';
 
 interface ManagerSidebarProps {
   isOpen: boolean;

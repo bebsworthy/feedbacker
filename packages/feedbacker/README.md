@@ -31,7 +31,7 @@ npm install feedbacker-react
 ```tsx
 import React from 'react';
 import { FeedbackProvider } from 'feedbacker-react';
-import 'feedbacker-react/styles'; // Import styles
+// CSS is automatically injected - no manual import needed!
 
 function App() {
   return (

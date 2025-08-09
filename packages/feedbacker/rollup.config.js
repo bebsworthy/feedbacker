@@ -43,11 +43,9 @@ export default [
         rootDir: './src'
       }),
       postcss({
-        modules: {
-          scopeBehaviour: 'local',
-          generateScopedName: 'feedbacker-[local]-[hash:base64:5]'
-        },
-        extract: 'feedbacker.css',
+        modules: false, // Disable CSS modules since we're using plain CSS
+        extract: false, // Don't extract to separate file
+        inject: true, // Inject styles into <head>
         minimize: isProduction,
         sourceMap: true,
         use: ['sass']
@@ -92,13 +90,10 @@ export default [
         rootDir: './src'
       }),
       postcss({
-        modules: {
-          scopeBehaviour: 'local',
-          generateScopedName: 'feedbacker-[local]-[hash:base64:5]'
-        },
-        extract: false, // Don't extract in CJS build
-        minimize: isProduction,
-        inject: true // Inject CSS into JS
+        modules: false, // Disable CSS modules since we're using plain CSS
+        extract: false, // Don't extract to separate file
+        inject: true, // Inject styles into <head>
+        minimize: isProduction
       }),
       isProduction &&
         terser({

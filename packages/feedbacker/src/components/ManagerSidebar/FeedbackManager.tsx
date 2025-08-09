@@ -11,7 +11,6 @@ import { ExportDialog } from './ExportDialog';
 import { FeedbackCard } from './FeedbackCard';
 import { useFeedbackContext } from '../../context/FeedbackContext';
 import logger from '../../utils/logger';
-import '../../styles/feedbacker.css';
 
 interface FeedbackManagerProps {
   isOpen: boolean;
