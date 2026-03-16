@@ -411,3 +411,5 @@ MIT
 - [GitHub](https://github.com/feedbacker/core)
 - [NPM](https://www.npmjs.com/package/feedbacker-react)
 - [Demo](https://feedbacker.dev)
+
+The End
