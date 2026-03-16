@@ -406,6 +406,8 @@ const FeedbackWrapper = ({ children }) => {
 
 MIT
 
+thx
+
 ## Links
 
 - [GitHub](https://github.com/feedbacker/core)
