@@ -27,14 +27,15 @@ export { useFeedbackStorage } from './hooks/useFeedbackStorage';
 export { useFeedbackEvent, useFeedbackEventHelpers } from './hooks/useFeedbackEvent';
 export { useComponentDetection } from './hooks/useComponentDetection';
 
-// Component detection system
-export { DetectionChain } from './detection/DetectionStrategy';
+// Component detection system (re-exported from @feedbacker/detection)
 export {
+  DetectionChain,
   DevToolsStrategy,
   FiberStrategy,
   HeuristicStrategy,
-  FallbackStrategy
-} from './detection/strategies';
+  FallbackStrategy,
+  createDetector
+} from '@feedbacker/detection';
 
 // Utility functions
 export {

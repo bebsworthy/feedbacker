@@ -3,8 +3,8 @@
  * Base class and chain management for component detection strategies
  */
 
-import { ComponentInfo } from '../types';
-import logger from '../utils/logger';
+import { ComponentInfo } from './types';
+import logger from './utils/logger';
 
 /**
  * Abstract base class for component detection strategies

@@ -4,6 +4,9 @@
  */
 
 import type { ReactNode } from 'react';
+import type { ComponentInfo } from '@feedbacker/detection';
+
+export type { ComponentInfo };
 
 export interface Feedback {
   id: string;
@@ -24,15 +27,6 @@ export interface Draft {
   screenshot?: string | undefined;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ComponentInfo {
-  name: string;
-  path: string[];
-  element: HTMLElement;
-  htmlSnippet?: string | undefined;
-  props?: Record<string, unknown> | undefined;
-  fiber?: unknown | undefined; // ReactFiber type - will be properly typed when React internals are available
 }
 
 export interface BrowserInfo {
@@ -103,12 +97,8 @@ export interface ValidationResult {
   errors: string[];
 }
 
-// Component detection interfaces
-export interface DetectionStrategy {
-  detect(element: HTMLElement): ComponentInfo | null;
-  setNext?(strategy: DetectionStrategy): DetectionStrategy;
-  handle?(element: HTMLElement): ComponentInfo | null;
-}
+// Component detection interfaces (re-exported from @feedbacker/detection)
+export type { DetectionStrategy as DetectionStrategyInterface } from '@feedbacker/detection';
 
 // FAB interfaces
 export interface FABState {

@@ -4,8 +4,8 @@
  */
 
 import { DetectionStrategy } from '../DetectionStrategy';
-import { ComponentInfo } from '../../types';
-import logger from '../../utils/logger';
+import { ComponentInfo } from '../types';
+import logger from '../utils/logger';
 
 export class FiberStrategy extends DetectionStrategy {
   /**

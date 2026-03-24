@@ -107,6 +107,7 @@
     }
   },
   "dependencies": {
+    "@feedbacker/detection": "*",
     "jszip": "^3.10.1"
   },
   "repository": {

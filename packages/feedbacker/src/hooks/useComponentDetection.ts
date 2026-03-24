@@ -12,16 +12,14 @@ import {
   DevToolsStrategy,
   FiberStrategy,
   HeuristicStrategy,
-  FallbackStrategy
-} from '../detection';
-import {
+  FallbackStrategy,
   requestIdleCallback,
   cancelIdleCallback,
   debounce,
   throttle,
-  performanceMonitor
-} from '../utils/performance';
-import logger from '../utils/logger';
+  performanceMonitor,
+  logger
+} from '@feedbacker/detection';
 
 export function useComponentDetection(): UseComponentDetectionResult {
   const [isActive, setIsActive] = useState<boolean>(false);
