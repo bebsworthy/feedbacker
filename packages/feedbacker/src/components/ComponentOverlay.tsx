@@ -24,6 +24,16 @@ export const ComponentOverlay: React.FC = React.memo(() => {
   const [, setIsVisible] = useState<boolean>(false);
   const animationFrameRef = useRef<number>();
 
+  // Use refs so debounced/throttled functions read latest values without recreation
+  const hoveredComponentRef = useRef(hoveredComponent);
+  const isActiveRef = useRef(isActive);
+  useEffect(() => {
+    hoveredComponentRef.current = hoveredComponent;
+  }, [hoveredComponent]);
+  useEffect(() => {
+    isActiveRef.current = isActive;
+  }, [isActive]);
+
   logger.log(
     'Render - isActive:',
     isActive,
@@ -33,11 +43,14 @@ export const ComponentOverlay: React.FC = React.memo(() => {
     overlayPosition
   );
 
-  // Memoized debounced position update function
+  // Stable debounced position update — reads from refs, never recreated
   const debouncedUpdatePosition = useMemo(() => {
     return debounce(
       () => {
-        if (!hoveredComponent || !isActive) {
+        const currentHovered = hoveredComponentRef.current;
+        const currentActive = isActiveRef.current;
+
+        if (!currentHovered || !currentActive) {
           setOverlayPosition(null);
           setIsVisible(false);
           return;
@@ -45,7 +58,7 @@ export const ComponentOverlay: React.FC = React.memo(() => {
 
         const endMark = performanceMonitor.mark('overlay-position-update');
 
-        const element = hoveredComponent.element;
+        const element = currentHovered.element;
         if (!element || !document.body.contains(element)) {
           setOverlayPosition(null);
           setIsVisible(false);
@@ -71,9 +84,9 @@ export const ComponentOverlay: React.FC = React.memo(() => {
       16,
       { leading: true, trailing: true }
     ); // ~60fps
-  }, [hoveredComponent, isActive]);
+  }, []);
 
-  // Throttled scroll handler for better performance
+  // Stable throttled scroll handler — never recreated
   const throttledScrollHandler = useMemo(() => {
     return throttle(() => {
       if (animationFrameRef.current) {

@@ -67,7 +67,11 @@ export abstract class DetectionStrategy {
       'App' // Keep App but filter if it's just a wrapper
     ]);
 
-    while (current && depth < maxDepth) {
+    let iterations = 0;
+    const maxIterations = 100;
+
+    while (current && depth < maxDepth && iterations < maxIterations) {
+      iterations++;
       if (current.type && typeof current.type === 'function') {
         const componentName = current.type.displayName || current.type.name;
         if (componentName && !wrappers.has(componentName)) {
@@ -105,7 +109,12 @@ export abstract class DetectionStrategy {
     let parentComponentFiber: any = null;
 
     // Find the nearest parent React component
-    while (currentElement && !parentComponentFiber) {
+    const maxDomDepth = 30;
+    let domIterations = 0;
+
+    while (currentElement && !parentComponentFiber && domIterations < maxDomDepth) {
+      domIterations++;
+
       // Add current element to DOM path
       const tagName = currentElement.tagName.toLowerCase();
       const className = currentElement.className;
@@ -127,7 +136,11 @@ export abstract class DetectionStrategy {
       if (elementFiber) {
         // Walk up the fiber tree to find the nearest React component
         let fiberCurrent = elementFiber;
-        while (fiberCurrent) {
+        let fiberIterations = 0;
+        const maxFiberDepth = 30;
+
+        while (fiberCurrent && fiberIterations < maxFiberDepth) {
+          fiberIterations++;
           if (fiberCurrent.type && typeof fiberCurrent.type === 'function') {
             const componentName = fiberCurrent.type.displayName || fiberCurrent.type.name;
             if (componentName && this.isValidReactComponent(componentName)) {
@@ -163,7 +176,11 @@ export abstract class DetectionStrategy {
       'StrictMode'
     ]);
 
-    while (current && depth < maxDepth) {
+    let compIterations = 0;
+    const maxCompIterations = 100;
+
+    while (current && depth < maxDepth && compIterations < maxCompIterations) {
+      compIterations++;
       if (current.type && typeof current.type === 'function') {
         const componentName = current.type.displayName || current.type.name;
         if (componentName && !wrappers.has(componentName)) {

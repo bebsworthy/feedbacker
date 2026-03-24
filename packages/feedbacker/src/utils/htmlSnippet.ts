@@ -10,6 +10,18 @@ import logger from './logger';
  */
 export function captureHtmlSnippet(element: HTMLElement, linesCount: number = 3): string {
   try {
+    // Guard against deep-cloning very large subtrees which blocks the main thread
+    const MAX_CLONE_NODES = 500;
+    const descendantCount = element.querySelectorAll('*').length;
+    if (descendantCount > MAX_CLONE_NODES) {
+      const tag = element.tagName.toLowerCase();
+      const attrs = Array.from(element.attributes)
+        .slice(0, 5)
+        .map((a) => `${a.name}="${a.value}"`)
+        .join(' ');
+      return `<${tag} ${attrs}><!-- ${descendantCount} child elements truncated --></${tag}>`;
+    }
+
     // Clone the element to avoid modifying the original
     const clone = element.cloneNode(true) as HTMLElement;
 

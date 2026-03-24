@@ -51,9 +51,14 @@ export async function captureScreenshotWithAdapters(
       return result;
     }
 
-    // Try fallback if primary failed
-    logger.warn('Primary capture failed, trying fallback');
-    return await captureManager.capture(element, captureOptions);
+    // Only retry with default adapter if a specific library/adapter was requested
+    if (library || adapter) {
+      logger.warn('Primary capture failed, trying default adapter fallback');
+      return await captureManager.capture(element, captureOptions);
+    }
+
+    // No point retrying with the same default adapter
+    return result;
   } catch (error) {
     logger.error('Capture failed:', error);
 

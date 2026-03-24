@@ -318,20 +318,6 @@ export function useComponentDetection(): UseComponentDetectionResult {
     }
   }, [isActive, detectComponentOptimized]);
 
-  // Setup global mouse position tracking
-  useEffect(() => {
-    // Track mouse position globally (even when not active)
-    const globalMouseTracker = (event: MouseEvent) => {
-      lastMousePosition.current = { x: event.clientX, y: event.clientY };
-    };
-
-    document.addEventListener('mousemove', globalMouseTracker);
-
-    return () => {
-      document.removeEventListener('mousemove', globalMouseTracker);
-    };
-  }, []);
-
   // Setup and cleanup event listeners when active state changes
   useEffect(() => {
     if (isActive) {
@@ -367,20 +353,29 @@ export function useComponentDetection(): UseComponentDetectionResult {
     handleTouchEnd
   ]);
 
-  // Cleanup on unmount
+  // Refs for unmount cleanup
+  const deactivateRef = useRef(deactivate);
+  useEffect(() => {
+    deactivateRef.current = deactivate;
+  }, [deactivate]);
+
+  // Cleanup on unmount only
   useEffect(() => {
     return () => {
-      if (isActive) {
-        deactivate();
+      if (isActiveRef.current) {
+        deactivateRef.current();
       }
     };
-  }, [isActive, deactivate]);
+  }, []);
 
-  return {
-    isActive,
-    activate,
-    deactivate,
-    selectedComponent,
-    hoveredComponent
-  };
+  return useMemo(
+    () => ({
+      isActive,
+      activate,
+      deactivate,
+      selectedComponent,
+      hoveredComponent
+    }),
+    [isActive, activate, deactivate, selectedComponent, hoveredComponent]
+  );
 }

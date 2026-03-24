@@ -190,15 +190,15 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
   const saveDraft = useCallback(
     (componentInfo: ComponentInfo, comment: string, screenshot?: string) => {
       const now = new Date().toISOString();
-      setDraft({
+      setDraft((prev) => ({
         componentInfo,
         comment,
         screenshot,
-        createdAt: draft?.createdAt || now,
+        createdAt: prev?.createdAt || now,
         updatedAt: now
-      });
+      }));
     },
-    [draft]
+    []
   );
 
   const clearDraft = useCallback(() => {

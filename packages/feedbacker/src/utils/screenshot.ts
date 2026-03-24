@@ -65,6 +65,12 @@ function findGradientTextElements(container: HTMLElement): HTMLElement[] {
 
   // Check all descendants
   const allElements = container.querySelectorAll('*');
+
+  // Skip gradient detection on very large DOMs — it's cosmetic
+  if (allElements.length > 1000) {
+    return elements;
+  }
+
   allElements.forEach((el) => {
     if (el instanceof HTMLElement && hasGradientText(el)) {
       elements.push(el);

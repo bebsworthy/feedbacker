@@ -133,8 +133,17 @@ export class CaptureManager {
         finalOptions = { ...recommended, ...captureOptions };
       }
 
-      // Capture screenshot
-      const result = await adapter.capture(element, finalOptions);
+      // Capture screenshot with timeout to prevent indefinite hangs
+      const captureTimeout = finalOptions.timeout || 10000;
+      const result = await Promise.race([
+        adapter.capture(element, finalOptions),
+        new Promise<CaptureResult>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Screenshot capture timed out after ${captureTimeout}ms`)),
+            captureTimeout
+          )
+        )
+      ]);
 
       // Add library info to metadata
       if (result.success && result.metadata) {

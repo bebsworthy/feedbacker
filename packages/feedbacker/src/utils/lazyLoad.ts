@@ -26,8 +26,8 @@ export async function loadHtml2Canvas(): Promise<any> {
     return loadCache[cacheKey];
   }
 
-  // Create promise and cache it
-  loadCache[cacheKey] = (async () => {
+  // Create promise and cache it (clear cache on failure to allow retries)
+  const promise = (async () => {
     try {
       // Try to import from CDN as fallback
       const script = document.createElement('script');
@@ -62,10 +62,16 @@ export async function loadHtml2Canvas(): Promise<any> {
         }
       });
     } catch (error) {
+      delete loadCache[cacheKey];
       logger.error('Error loading html2canvas:', error);
       throw error;
     }
   })();
+
+  loadCache[cacheKey] = promise.catch((error) => {
+    delete loadCache[cacheKey];
+    throw error;
+  });
 
   return loadCache[cacheKey];
 }
@@ -82,7 +88,7 @@ export async function lazyLoad<T>(
     return loadCache[cacheKey];
   }
 
-  loadCache[cacheKey] = (async () => {
+  const promise = (async () => {
     try {
       return await moduleFactory();
     } catch (error) {
@@ -101,6 +107,11 @@ export async function lazyLoad<T>(
       throw error;
     }
   })();
+
+  loadCache[cacheKey] = promise.catch((error) => {
+    delete loadCache[cacheKey];
+    throw error;
+  });
 
   return loadCache[cacheKey];
 }

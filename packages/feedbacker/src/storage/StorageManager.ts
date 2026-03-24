@@ -28,6 +28,8 @@ export class LocalStorageManager implements IStorageManager {
   private version: string;
   private inMemoryFallback: FeedbackStore;
   private useMemoryFallback: boolean = false;
+  private cachedStorageSize: number | null = null;
+  private writesSinceLastSizeCalc: number = 0;
 
   constructor(key: string = DEFAULT_STORAGE_KEY) {
     this.key = key;
@@ -179,11 +181,18 @@ export class LocalStorageManager implements IStorageManager {
         used = new Blob([data]).size;
         total = STORAGE_LIMIT; // Use our limit as reference
       } else {
-        // Calculate localStorage usage
-        for (const key in localStorage) {
-          if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
-            used += localStorage[key].length + key.length;
+        // Use cached size if fresh enough (recalculate every 10 writes)
+        if (this.cachedStorageSize !== null && this.writesSinceLastSizeCalc < 10) {
+          used = this.cachedStorageSize;
+        } else {
+          // Calculate localStorage usage
+          for (const key in localStorage) {
+            if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
+              used += localStorage[key].length + key.length;
+            }
           }
+          this.cachedStorageSize = used;
+          this.writesSinceLastSizeCalc = 0;
         }
 
         // Use a reasonable estimate for localStorage limit
@@ -304,11 +313,13 @@ export class LocalStorageManager implements IStorageManager {
       }
 
       localStorage.setItem(this.key, data);
+      this.writesSinceLastSizeCalc++;
     } catch (error) {
       if (
         error instanceof Error &&
         (error.name === 'QuotaExceededError' || error.message.includes('storage'))
       ) {
+        this.cachedStorageSize = null;
         logger.warn('Storage quota exceeded, switching to memory fallback');
         this.useMemoryFallback = true;
         this.inMemoryFallback = { ...store };
