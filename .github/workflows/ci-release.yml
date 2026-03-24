@@ -100,8 +100,6 @@ jobs:
       - name: Publish to npm
         run: npm publish --access public --provenance
         working-directory: packages/feedbacker
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   create-github-release:
     # Only run on version tags (not manual dispatch)
