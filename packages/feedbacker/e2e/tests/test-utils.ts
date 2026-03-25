@@ -214,7 +214,7 @@ export async function checkCopyButton(page: Page, feedbackText: string) {
 export async function checkPrimaryExportButton(page: Page) {
   const manager = page.locator('.feedbacker-manager-overlay');
 
-  // Look for main export button (usually in header)
+  // The "Export All" button is in the header
   const exportButton = manager
     .locator('button')
     .filter({ hasText: /Export/i })
@@ -225,22 +225,19 @@ export async function checkPrimaryExportButton(page: Page) {
   // Click to open export dialog
   await exportButton.click();
 
-  // Verify export dialog opens
-  const exportDialog = page.locator('[role="dialog"]').filter({ hasText: /Export/i });
-  await expect(exportDialog.first()).toBeVisible({ timeout: 3000 });
+  // Verify export dialog opens with format options
+  const exportDialog = page.locator('[role="dialog"]');
+  await expect(exportDialog).toBeVisible({ timeout: 3000 });
 
   // Close dialog
-  const closeButton = exportDialog
-    .first()
-    .locator('button')
-    .filter({ hasText: /Cancel|Close/i });
-  if ((await closeButton.count()) > 0) {
-    await closeButton.first().click();
+  const cancelButton = exportDialog.locator('button').filter({ hasText: /Cancel/i });
+  if ((await cancelButton.count()) > 0) {
+    await cancelButton.first().click();
   }
 }
 
 /**
- * Test JSON export functionality
+ * Test Text Only (.md) export functionality
  */
 export async function testJSONExport(page: Page) {
   const manager = page.locator('.feedbacker-manager-overlay');
@@ -248,38 +245,34 @@ export async function testJSONExport(page: Page) {
   // Set up download promise before triggering download
   const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
 
-  // Open export dialog
+  // Click an Export button to open the dialog
   const exportButton = manager
     .locator('button')
     .filter({ hasText: /Export/i })
     .first();
   await exportButton.click();
 
-  const exportDialog = page.locator('[role="dialog"]').filter({ hasText: /Export/i });
-  await expect(exportDialog.first()).toBeVisible({ timeout: 3000 });
+  // Wait for export dialog
+  const exportDialog = page.locator('[role="dialog"]');
+  await expect(exportDialog).toBeVisible({ timeout: 3000 });
 
-  // Find and click JSON export option
-  const jsonButton = exportDialog.locator('button').filter({ hasText: /JSON/i });
-  await expect(jsonButton).toBeVisible();
-  await jsonButton.click();
+  // Click "Text Only (.md)" option
+  const textOption = exportDialog
+    .locator('button, [role="button"], div[class*="option"]')
+    .filter({ hasText: /Text Only/i });
+  await textOption.first().click();
 
   // Wait for download and verify
   const download = await downloadPromise;
   const filename = download.suggestedFilename();
-  expect(filename).toMatch(/feedback.*\.json$/);
+  expect(filename).toMatch(/feedback.*\.md$/);
 
   const filePath = await download.path();
   expect(filePath).toBeTruthy();
-
-  // Close dialog if still open
-  const closeButton = exportDialog.locator('button').filter({ hasText: /Cancel|Close/i });
-  if ((await closeButton.count()) > 0) {
-    await closeButton.first().click();
-  }
 }
 
 /**
- * Test Zip export functionality
+ * Test Full Export (.zip) functionality
  */
 export async function testZipExport(page: Page) {
   const manager = page.locator('.feedbacker-manager-overlay');
@@ -287,20 +280,22 @@ export async function testZipExport(page: Page) {
   // Set up download promise before triggering download
   const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
 
-  // Open export dialog
+  // Click an Export button to open the dialog
   const exportButton = manager
     .locator('button')
     .filter({ hasText: /Export/i })
     .first();
   await exportButton.click();
 
-  const exportDialog = page.locator('[role="dialog"]').filter({ hasText: /Export/i });
-  await expect(exportDialog.first()).toBeVisible({ timeout: 3000 });
+  // Wait for export dialog
+  const exportDialog = page.locator('[role="dialog"]');
+  await expect(exportDialog).toBeVisible({ timeout: 3000 });
 
-  // Find and click Zip export option
-  const zipButton = exportDialog.locator('button').filter({ hasText: /Zip|ZIP|Archive/i });
-  await expect(zipButton).toBeVisible();
-  await zipButton.click();
+  // Click "Full Export (.zip)" option
+  const zipOption = exportDialog
+    .locator('button, [role="button"], div[class*="option"]')
+    .filter({ hasText: /Full Export/i });
+  await zipOption.first().click();
 
   // Wait for download and verify
   const download = await downloadPromise;
@@ -309,12 +304,6 @@ export async function testZipExport(page: Page) {
 
   const filePath = await download.path();
   expect(filePath).toBeTruthy();
-
-  // Close dialog if still open
-  const closeButton = exportDialog.locator('button').filter({ hasText: /Cancel|Close/i });
-  if ((await closeButton.count()) > 0) {
-    await closeButton.first().click();
-  }
 }
 
 /**
@@ -332,7 +321,13 @@ export async function deleteFeedback(page: Page, feedbackText: string) {
   await expect(deleteButton.first()).toBeVisible();
   await deleteButton.click();
 
-  // Wait for the card to disappear instead of using a fixed timeout
+  // Confirm deletion in the confirmation dialog
+  const confirmDialog = page.locator('[role="dialog"]').filter({ hasText: /Delete Feedback/i });
+  await expect(confirmDialog).toBeVisible({ timeout: 3000 });
+  const confirmDeleteButton = confirmDialog.locator('button').filter({ hasText: /^Delete$/i });
+  await confirmDeleteButton.click();
+
+  // Wait for the card to disappear
   await expect(manager.locator('p').filter({ hasText: feedbackText })).toHaveCount(0, {
     timeout: 5000
   });
