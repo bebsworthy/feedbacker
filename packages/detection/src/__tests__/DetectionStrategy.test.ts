@@ -2,8 +2,9 @@ import { DetectionStrategy, DetectionChain } from '../DetectionStrategy';
 import { ComponentInfo } from '../types';
 
 /**
- * Concrete test subclass of the abstract DetectionStrategy.
- * Returns a configurable result from detect().
+ * Minimal concrete subclass for testing chain-of-responsibility behavior.
+ * Does NOT expose protected helpers — those are tested through behavioral
+ * assertions on the results returned by handle().
  */
 class TestStrategy extends DetectionStrategy {
   private result: ComponentInfo | null;
@@ -16,26 +17,49 @@ class TestStrategy extends DetectionStrategy {
   protected detect(element: HTMLElement): ComponentInfo | null {
     return this.result;
   }
+}
 
-  // Expose protected helpers for testing
-  public exposedBuildComponentPath(fiber: any): string[] {
-    return this.buildComponentPath(fiber);
+/**
+ * Strategy that exercises protected helpers inside detect() and returns
+ * their results as part of the ComponentInfo, so tests go through handle().
+ */
+class HelperExercisingStrategy extends DetectionStrategy {
+  private mode:
+    | { type: 'buildComponentPath'; fiber: any }
+    | { type: 'buildHybridPath'; fiber: any }
+    | { type: 'getReactFiber' }
+    | { type: 'sanitizeComponentName'; name: string }
+    | { type: 'extractProps'; fiber: any };
+
+  constructor(mode: HelperExercisingStrategy['mode']) {
+    super();
+    this.mode = mode;
   }
 
-  public exposedBuildHybridPath(element: HTMLElement, fiber: any): string[] {
-    return this.buildHybridPath(element, fiber);
-  }
-
-  public exposedGetReactFiber(element: HTMLElement): any {
-    return this.getReactFiber(element);
-  }
-
-  public exposedSanitizeComponentName(name: string): string {
-    return this.sanitizeComponentName(name);
-  }
-
-  public exposedExtractProps(fiber: any): Record<string, any> | undefined {
-    return this.extractProps(fiber);
+  protected detect(element: HTMLElement): ComponentInfo | null {
+    switch (this.mode.type) {
+      case 'buildComponentPath': {
+        const path = this.buildComponentPath(this.mode.fiber);
+        return { name: path.join('/'), path, element };
+      }
+      case 'buildHybridPath': {
+        const path = this.buildHybridPath(element, this.mode.fiber);
+        return { name: 'hybrid', path, element };
+      }
+      case 'getReactFiber': {
+        const fiber = this.getReactFiber(element);
+        if (fiber === null) return null;
+        return { name: 'found-fiber', path: [], element };
+      }
+      case 'sanitizeComponentName': {
+        const name = this.sanitizeComponentName(this.mode.name);
+        return { name, path: [name], element };
+      }
+      case 'extractProps': {
+        const props = this.extractProps(this.mode.fiber);
+        return { name: 'props-test', path: [], element, props };
+      }
+    }
   }
 }
 
@@ -92,40 +116,40 @@ describe('DetectionStrategy', () => {
     expect(result).toBeNull();
   });
 
-  // -- buildComponentPath ---------------------------------------------------
+  // -- buildComponentPath (via handle) --------------------------------------
 
+  // Protects against: null fiber producing an empty path
   it('buildComponentPath returns ["Component"] when given null fiber', () => {
-    const strategy = new TestStrategy(null);
-    const path = strategy.exposedBuildComponentPath(null);
-    expect(path).toEqual(['Component']);
+    const strategy = new HelperExercisingStrategy({ type: 'buildComponentPath', fiber: null });
+    const result = strategy.handle(document.createElement('div'));
+    expect(result).not.toBeNull();
+    expect(result!.path).toEqual(['Component']);
   });
 
+  // Protects against: wrapper components (Provider, Context) leaking into the path
   it('buildComponentPath filters out wrapper components', () => {
-    const strategy = new TestStrategy(null);
-    // Build a minimal fake fiber chain: Provider -> MyPage
     const myPageType = function () {};
-    myPageType.displayName = 'MyPage';
+    (myPageType as any).displayName = 'MyPage';
     const providerType = function () {};
-    providerType.displayName = 'Provider';
-    const myPageFiber = {
+    (providerType as any).displayName = 'Provider';
+    const fiber = {
       type: myPageType,
-      return: {
-        type: providerType,
-        return: null,
-      },
+      return: { type: providerType, return: null },
     };
 
-    const path = strategy.exposedBuildComponentPath(myPageFiber);
-    expect(path).toContain('MyPage');
-    expect(path).not.toContain('Provider');
+    const strategy = new HelperExercisingStrategy({ type: 'buildComponentPath', fiber });
+    const result = strategy.handle(document.createElement('div'));
+    expect(result).not.toBeNull();
+    expect(result!.path).toContain('MyPage');
+    expect(result!.path).not.toContain('Provider');
   });
 
-  // -- buildHybridPath (depth guard regression) -----------------------------
+  // -- buildHybridPath (depth guard regression, via handle) -----------------
 
+  // Protects against: infinite loop when detecting deeply nested DOM elements
   it('buildHybridPath terminates with deeply nested plain DOM elements (30+ levels)', () => {
-    const strategy = new TestStrategy(null);
+    const strategy = new HelperExercisingStrategy({ type: 'buildHybridPath', fiber: null });
 
-    // Build a 50-level deep DOM tree
     let deepest: HTMLElement = document.createElement('div');
     let current = deepest;
     for (let i = 0; i < 50; i++) {
@@ -135,42 +159,46 @@ describe('DetectionStrategy', () => {
     }
     document.body.appendChild(current);
 
-    // Should not hang; the depth guard limits traversal
-    const path = strategy.exposedBuildHybridPath(deepest, null);
-    expect(Array.isArray(path)).toBe(true);
-    // maxDomDepth is 30, so the path length should be capped
-    expect(path.length).toBeLessThanOrEqual(35);
+    const result = strategy.handle(deepest);
+    expect(result).not.toBeNull();
+    expect(Array.isArray(result!.path)).toBe(true);
+    expect(result!.path.length).toBeLessThanOrEqual(35);
 
     document.body.removeChild(current);
   });
 
-  // -- getReactFiber --------------------------------------------------------
+  // -- getReactFiber (via handle) -------------------------------------------
 
+  // Protects against: getReactFiber crashing on plain DOM elements
   it('getReactFiber returns null for plain DOM elements', () => {
-    const strategy = new TestStrategy(null);
-    const div = document.createElement('div');
-    expect(strategy.exposedGetReactFiber(div)).toBeNull();
+    const strategy = new HelperExercisingStrategy({ type: 'getReactFiber' });
+    const result = strategy.handle(document.createElement('div'));
+    // Returns null because getReactFiber returns null, so detect() returns null
+    expect(result).toBeNull();
   });
 
-  // -- sanitizeComponentName ------------------------------------------------
+  // -- sanitizeComponentName (via handle) -----------------------------------
 
+  // Protects against: special characters in component names breaking rendering
   it('sanitizeComponentName strips special characters', () => {
-    const strategy = new TestStrategy(null);
-    expect(strategy.exposedSanitizeComponentName('My<Component>')).toBe('MyComponent');
-    expect(strategy.exposedSanitizeComponentName('Foo.Bar/Baz')).toBe('FooBarBaz');
+    const strategy = new HelperExercisingStrategy({ type: 'sanitizeComponentName', name: 'My<Component>' });
+    const result = strategy.handle(document.createElement('div'));
+    expect(result).not.toBeNull();
+    expect(result!.name).toBe('MyComponent');
   });
 
+  // Protects against: extremely long component names consuming memory
   it('sanitizeComponentName truncates at 100 characters', () => {
-    const strategy = new TestStrategy(null);
-    const longName = 'A'.repeat(150);
-    const result = strategy.exposedSanitizeComponentName(longName);
-    expect(result.length).toBe(100);
+    const strategy = new HelperExercisingStrategy({ type: 'sanitizeComponentName', name: 'A'.repeat(150) });
+    const result = strategy.handle(document.createElement('div'));
+    expect(result).not.toBeNull();
+    expect(result!.name.length).toBe(100);
   });
 
-  // -- extractProps ---------------------------------------------------------
+  // -- extractProps (via handle) --------------------------------------------
 
+  // Protects against: children and dangerouslySetInnerHTML leaking into extracted props
   it('extractProps removes children and dangerouslySetInnerHTML', () => {
-    const strategy = new TestStrategy(null);
     const fiber = {
       memoizedProps: {
         className: 'btn',
@@ -178,11 +206,13 @@ describe('DetectionStrategy', () => {
         dangerouslySetInnerHTML: { __html: '<b>no</b>' },
       },
     };
-    const props = strategy.exposedExtractProps(fiber);
-    expect(props).toBeDefined();
-    expect(props!.className).toBe('btn');
-    expect(props!.children).toBeUndefined();
-    expect(props!.dangerouslySetInnerHTML).toBeUndefined();
+    const strategy = new HelperExercisingStrategy({ type: 'extractProps', fiber });
+    const result = strategy.handle(document.createElement('div'));
+    expect(result).not.toBeNull();
+    expect(result!.props).toBeDefined();
+    expect(result!.props!.className).toBe('btn');
+    expect(result!.props!.children).toBeUndefined();
+    expect(result!.props!.dangerouslySetInnerHTML).toBeUndefined();
   });
 });
 

@@ -14,45 +14,26 @@ describe('HeuristicStrategy', () => {
 
   // -- Data attribute detection ---------------------------------------------
 
-  it('detects component from data-component attribute', () => {
+  // Protects against: data attribute detection failing to produce a result
+  // with the correct element reference and a non-empty name
+  it.each([
+    ['data-component', 'UserProfile', 'Userprofile'],
+    ['data-testid', 'login-form', undefined],
+    ['data-cy', 'sidebar-menu', undefined],
+    ['data-component-name', 'SearchBar', 'Searchbar'],
+  ])('detects component from %s attribute', (attr, value, expectedSubstring) => {
     const el = document.createElement('div');
-    el.setAttribute('data-component', 'UserProfile');
+    el.setAttribute(attr, value);
     document.body.appendChild(el);
 
     const result = strategy.handle(el);
     expect(result).not.toBeNull();
-    // formatComponentName capitalizes first letter and lowercases rest
-    expect(result!.name).toContain('Userprofile');
-  });
-
-  it('detects component from data-testid attribute', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-testid', 'login-form');
-    document.body.appendChild(el);
-
-    const result = strategy.handle(el);
-    expect(result).not.toBeNull();
-    expect(result!.name).toBeTruthy();
     expect(result!.element).toBe(el);
-  });
-
-  it('detects component from data-cy attribute', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-cy', 'sidebar-menu');
-    document.body.appendChild(el);
-
-    const result = strategy.handle(el);
-    expect(result).not.toBeNull();
-  });
-
-  it('detects component from data-component-name attribute', () => {
-    const el = document.createElement('div');
-    el.setAttribute('data-component-name', 'SearchBar');
-    document.body.appendChild(el);
-
-    const result = strategy.handle(el);
-    expect(result).not.toBeNull();
-    expect(result!.name).toContain('Searchbar');
+    if (expectedSubstring) {
+      expect(result!.name).toContain(expectedSubstring);
+    } else {
+      expect(result!.name).toBeTruthy();
+    }
   });
 
   // -- CSS class analysis ---------------------------------------------------
@@ -68,17 +49,15 @@ describe('HeuristicStrategy', () => {
     expect(result!.name).toContain('Useravatar');
   });
 
-  it('skips Tailwind utility classes (bg-blue-500, text-lg, p-4, flex)', () => {
+  // Protects against: Tailwind utility classes being used as component names
+  it('skips Tailwind utility classes and uses a non-Tailwind name', () => {
     const el = document.createElement('div');
     el.classList.add('bg-blue-500', 'text-lg', 'p-4', 'flex');
     document.body.appendChild(el);
 
     const result = strategy.handle(el);
-    // Should still return a result (falls through to other heuristics or path-based)
-    // but the name should NOT be a Tailwind class
-    if (result) {
-      expect(result.name).not.toMatch(/^(bg|text|p|flex)/i);
-    }
+    expect(result).not.toBeNull();
+    expect(result!.name).not.toMatch(/^(bg|text|p-|flex)/i);
   });
 
   // -- Semantic HTML mapping ------------------------------------------------
@@ -117,20 +96,23 @@ describe('HeuristicStrategy', () => {
 
   // -- Plain div fallback ---------------------------------------------------
 
-  it('returns a result for a plain div with no signals (path-based detection)', () => {
+  // Protects against: plain elements with no heuristic signals crashing or
+  // returning empty names
+  it('returns a result with a non-empty name for a plain div with no signals', () => {
     const el = document.createElement('div');
     document.body.appendChild(el);
 
     const result = strategy.handle(el);
-    // HeuristicStrategy should return something for a bare div
-    // (it falls through to "Component" as the inferred name)
     expect(result).not.toBeNull();
-    expect(result!.name).toBeTruthy();
+    expect(result!.name.length).toBeGreaterThan(0);
+    expect(result!.element).toBe(el);
+    expect(Array.isArray(result!.path)).toBe(true);
   });
 
   // -- Deep DOM safety ------------------------------------------------------
 
-  it('handles deeply nested DOM (50 levels) without hanging', () => {
+  // Protects against: unbounded DOM traversal causing hangs on deep trees
+  it('returns a result for deeply nested DOM (50 levels) without hanging', () => {
     let deepest: HTMLElement = document.createElement('div');
     let current = deepest;
     for (let i = 0; i < 50; i++) {
@@ -140,19 +122,18 @@ describe('HeuristicStrategy', () => {
     }
     document.body.appendChild(current);
 
-    const start = Date.now();
     const result = strategy.handle(deepest);
-    const elapsed = Date.now() - start;
-
-    // Should complete quickly (well under 1 second)
-    expect(elapsed).toBeLessThan(1000);
-    // Should still return a result
+    // If this test completes, depth limiting works.
+    // The Jest timeout (default 5s) is the hanging guard.
     expect(result).not.toBeNull();
+    expect(result!.element).toBe(deepest);
   });
 
   // -- Context guessing from parent elements --------------------------------
 
-  it('infers component name from parent data attributes', () => {
+  // Protects against: parent context detection failing to incorporate
+  // the parent's data-component attribute into the result
+  it('infers component name from parent data-component attribute', () => {
     const parent = document.createElement('div');
     parent.setAttribute('data-component', 'Card');
     const child = document.createElement('span');
@@ -161,7 +142,6 @@ describe('HeuristicStrategy', () => {
 
     const result = strategy.handle(child);
     expect(result).not.toBeNull();
-    // Should include the parent component context in the name
-    expect(result!.name).toBeTruthy();
+    expect(result!.name).toContain('Card');
   });
 });

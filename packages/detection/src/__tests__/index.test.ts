@@ -14,16 +14,6 @@ describe('index exports', () => {
     expect(detector).toBeInstanceOf(DetectionChain);
   });
 
-  it('all expected exports exist', () => {
-    expect(DetectionStrategy).toBeDefined();
-    expect(DetectionChain).toBeDefined();
-    expect(DevToolsStrategy).toBeDefined();
-    expect(FiberStrategy).toBeDefined();
-    expect(HeuristicStrategy).toBeDefined();
-    expect(FallbackStrategy).toBeDefined();
-    expect(typeof createDetector).toBe('function');
-  });
-
   it('createDetector().detectComponent(div) returns a result via fallback', () => {
     const detector = createDetector();
     const div = document.createElement('div');

@@ -83,11 +83,15 @@
     },
     {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "parserOptions": {
+        "project": "./tsconfig.test.json"
+      },
       "env": {
         "jest": true
       },
       "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-empty-function": "off"
       }
     },
     {

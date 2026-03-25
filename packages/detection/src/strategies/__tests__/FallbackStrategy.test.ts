@@ -60,29 +60,24 @@ describe('FallbackStrategy', () => {
 
   // -- Semantic tag mapping -------------------------------------------------
 
-  it('maps <header> semantic tag to a component-like name', () => {
-    const el = document.createElement('header');
+  // Protects against: semantic tag mapping regression where tags stop
+  // producing path entries that include the expected component name.
+  // FallbackStrategy puts the inferred semantic name into the path
+  // (via inferComponentName), not into result.name.
+  it.each([
+    ['header', 'Header'],
+    ['nav', 'Navigation'],
+    ['footer', 'Footer'],
+    ['main', 'Main'],
+    ['aside', 'Sidebar'],
+  ])('maps <%s> semantic tag to a path containing "%s"', (tag, expectedName) => {
+    const el = document.createElement(tag);
     document.body.appendChild(el);
 
     const result = strategy.handle(el);
     expect(result).not.toBeNull();
-    expect(result!.name).toBeTruthy();
-  });
-
-  it('maps <nav> semantic tag', () => {
-    const el = document.createElement('nav');
-    document.body.appendChild(el);
-
-    const result = strategy.handle(el);
-    expect(result).not.toBeNull();
-  });
-
-  it('maps <footer> semantic tag', () => {
-    const el = document.createElement('footer');
-    document.body.appendChild(el);
-
-    const result = strategy.handle(el);
-    expect(result).not.toBeNull();
+    expect(result!.path).toContain(expectedName);
+    expect(result!.element).toBe(el);
   });
 
   // -- Stops at document.body -----------------------------------------------
@@ -112,6 +107,52 @@ describe('FallbackStrategy', () => {
     const result = strategy.handle(el);
     expect(result).not.toBeNull();
     expect(result!.element).toBe(el);
+  });
+
+  // -- Semantic name from element characteristics --------------------------
+
+  // Protects against: ARIA labels not being included in the fallback name
+  it('includes ARIA label in the fallback name', () => {
+    const el = document.createElement('div');
+    el.setAttribute('aria-label', 'Search');
+    document.body.appendChild(el);
+
+    const result = strategy.handle(el);
+    expect(result).not.toBeNull();
+    expect(result!.name).toContain('Search');
+  });
+
+  // Protects against: button text not being used for identification
+  it('includes button text in the fallback name', () => {
+    const el = document.createElement('button');
+    el.textContent = 'Submit';
+    document.body.appendChild(el);
+
+    const result = strategy.handle(el);
+    expect(result).not.toBeNull();
+    expect(result!.name).toContain('Submit');
+  });
+
+  // Protects against: input placeholder not being used for identification
+  it('includes input placeholder in the fallback name', () => {
+    const el = document.createElement('input');
+    el.setAttribute('placeholder', 'Email');
+    document.body.appendChild(el);
+
+    const result = strategy.handle(el);
+    expect(result).not.toBeNull();
+    expect(result!.name).toContain('Email');
+  });
+
+  // Protects against: link text not being used for identification
+  it('includes link text in the fallback name', () => {
+    const el = document.createElement('a');
+    el.textContent = 'Home';
+    document.body.appendChild(el);
+
+    const result = strategy.handle(el);
+    expect(result).not.toBeNull();
+    expect(result!.name).toContain('Home');
   });
 
   // -- Error resilience -----------------------------------------------------
