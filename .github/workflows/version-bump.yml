@@ -56,6 +56,20 @@ jobs:
           cd ../detection
           npm version ${NEW_VERSION} --no-git-tag-version --allow-same-version
 
+          # Keep core package in sync
+          cd ../core
+          npm version ${NEW_VERSION} --no-git-tag-version --allow-same-version
+
+          # Keep extension package and manifest in sync
+          cd ../extension
+          npm version ${NEW_VERSION} --no-git-tag-version --allow-same-version
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
+            m.version = '${NEW_VERSION}';
+            fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2) + '\n');
+          "
+
           # Update root package.json for consistency
           cd ../..
           npm version ${NEW_VERSION} --no-git-tag-version --allow-same-version || true

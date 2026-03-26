@@ -8,10 +8,16 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup -c",
+    "build:prod": "NODE_ENV=production rollup -c",
+    "build:test": "FEEDBACKER_TEST_MODE=1 rollup -c",
+    "pack": "npm run build:prod && node scripts/pack.js",
     "build:watch": "rollup -c --watch",
     "dev": "npm run build:watch",
     "clean": "rimraf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "npm run build:test && npx playwright test",
+    "test:e2e:headed": "npm run build:test && npx playwright test --headed",
+    "test:e2e:debug": "npm run build:test && npx playwright test --debug"
   },
   "dependencies": {
     "@feedbacker/core": "*",
@@ -23,6 +29,9 @@
     "@rollup/plugin-replace": "^6.0.2",
     "@rollup/plugin-terser": "^0.4.3",
     "@rollup/plugin-typescript": "^11.1.3",
+    "archiver": "^7.0.1",
+    "glob": "^11.0.0",
+    "@playwright/test": "^1.54.2",
     "@types/chrome": "^0.0.287",
     "rimraf": "^5.0.4",
     "rollup": "^3.29.2",

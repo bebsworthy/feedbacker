@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
- * Handle keyboard shortcut (Ctrl+Shift+F)
+ * Handle keyboard shortcut (Alt+Shift+F)
  */
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'toggle-feedbacker') {

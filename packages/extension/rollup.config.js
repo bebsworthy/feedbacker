@@ -14,6 +14,7 @@ const commonPlugins = [
     preventAssignment: true,
     values: {
       'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+      'process.env.FEEDBACKER_TEST_MODE': JSON.stringify(process.env.FEEDBACKER_TEST_MODE || ''),
       __VERSION__: JSON.stringify(pkg.version)
     }
   }),

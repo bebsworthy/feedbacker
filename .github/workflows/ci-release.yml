@@ -113,29 +113,66 @@ jobs:
         run: npm publish --access public
         working-directory: packages/feedbacker
 
+  build-extension:
+    # Build extension ZIP on version tags or manual dispatch
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build core package
+        run: npm run build
+        working-directory: packages/core
+
+      - name: Build detection package
+        run: npm run build
+        working-directory: packages/detection
+
+      - name: Pack extension
+        run: npm run pack
+        working-directory: packages/extension
+
+      - name: Upload extension ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: feedbacker-extension
+          path: packages/extension/feedbacker-extension-*.zip
+          retention-days: 90
+
   create-github-release:
     # Only run on version tags (not manual dispatch)
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'workflow_dispatch'
-    needs: publish-npm
+    needs: [publish-npm, build-extension]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Need full history for changelog generation
-      
+
       - name: Get version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Get previous tag
         id: previoustag
         run: |
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           echo "PREVIOUS_TAG=${PREVIOUS_TAG}" >> $GITHUB_OUTPUT
-      
+
       - name: Generate changelog
         id: changelog
         run: |
@@ -153,30 +190,44 @@ jobs:
             echo "" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           fi
-      
+
+      - name: Download extension ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: feedbacker-extension
+          path: ./extension-artifact
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref }}
-          name: Feedbacker React v${{ steps.get_version.outputs.VERSION }}
+          name: Feedbacker v${{ steps.get_version.outputs.VERSION }}
           body: |
-            ## 📦 Installation
-            
+            ## 📦 React Widget
+
             ```bash
             npm install feedbacker-react@${{ steps.get_version.outputs.VERSION }}
             ```
-            
+
+            ## 🌐 Chrome Extension
+
+            Download `feedbacker-extension-v${{ steps.get_version.outputs.VERSION }}.zip` below, then:
+            1. Go to `chrome://extensions`
+            2. Enable Developer mode
+            3. Click "Load unpacked" and select the extracted folder
+
             ${{ steps.changelog.outputs.CHANGELOG }}
-            
+
             ## 📚 Links
-            
+
             - [NPM Package](https://www.npmjs.com/package/feedbacker-react)
             - [Documentation](https://github.com/bebsworthy/feedbacker#readme)
             - [Demo](https://bebsworthy.github.io/feedbacker/)
-            
+
             ---
-            
+
             **Full Changelog**: https://github.com/bebsworthy/feedbacker/compare/${{ steps.previoustag.outputs.PREVIOUS_TAG }}...${{ github.ref }}
+          files: ./extension-artifact/feedbacker-extension-*.zip
           draft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') || contains(github.ref, '-rc') }}
           token: ${{ secrets.GITHUB_TOKEN }}

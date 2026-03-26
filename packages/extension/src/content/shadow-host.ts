@@ -18,8 +18,9 @@ export class ShadowHost {
     this.host.id = HOST_ID;
     this.host.style.cssText = 'all: initial; position: fixed; z-index: 2147483647; top: 0; left: 0; width: 0; height: 0;';
 
-    // Create closed shadow root
-    this.shadow = this.host.attachShadow({ mode: 'closed' });
+    // Create shadow root (open in test mode for Playwright to pierce)
+    const shadowMode = process.env.FEEDBACKER_TEST_MODE === '1' ? 'open' : 'closed';
+    this.shadow = this.host.attachShadow({ mode: shadowMode });
 
     // Inject styles
     const style = document.createElement('style');

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Capture visual feedback on any website — select elements, take screenshots, and export reports.",
   "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["http://localhost/*"],
   "background": {
     "service_worker": "dist/background/service-worker.js",
     "type": "module"
@@ -24,8 +25,8 @@
   "commands": {
     "toggle-feedbacker": {
       "suggested_key": {
-        "default": "Ctrl+Shift+F",
-        "mac": "Command+Shift+F"
+        "default": "Alt+Shift+F",
+        "mac": "Alt+Shift+F"
       },
       "description": "Toggle Feedbacker on current page"
     }

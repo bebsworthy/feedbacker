@@ -27,38 +27,24 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ captureLibrary, setCaptureLibrary }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [activeCodeTab, setActiveCodeTab] = useState<'install' | 'basic' | 'advanced'>('install');
+  const [activeCodeTab, setActiveCodeTab] = useState<'install' | 'basic' | 'advanced' | 'extension'>('install');
   const [copiedCode, setCopiedCode] = useState(false);
   const { emit } = useFeedbackEvent();
 
-  // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Add scroll animations
   useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
+        if (entry.isIntersecting) entry.target.classList.add('visible');
       });
-    }, observerOptions);
-
-    document.querySelectorAll('.scroll-fade-in').forEach(el => {
-      observer.observe(el);
-    });
-
+    }, { threshold: 0.1, rootMargin: '0px 0px -100px 0px' });
+    document.querySelectorAll('.scroll-fade-in').forEach(el => observer.observe(el));
     return () => observer.disconnect();
   }, []);
 
-  // Add particles to hero
   useEffect(() => {
     const particlesContainer = document.querySelector('.hero-particles');
     if (particlesContainer) {
@@ -79,79 +65,76 @@ const LandingPage: React.FC<LandingPageProps> = ({ captureLibrary, setCaptureLib
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const codeExamples = {
-    install: `# Install Feedbacker
+  const codeExamples: Record<string, string> = {
+    install: `# Install Feedbacker React widget
 npm install feedbacker-react
 
 # Install SnapDOM (Recommended - faster screenshots)
 npm install @zumer/snapdom
 
-# Or use html2canvas (default, loaded from CDN if not installed)
+# Or use html2canvas (default)
 npm install html2canvas`,
     basic: `import { FeedbackProvider } from 'feedbacker-react';
 
 function App() {
   return (
-    <FeedbackProvider 
-      captureLibrary="snapdom" // Use SnapDOM for 2x faster screenshots
+    <FeedbackProvider
+      captureLibrary="snapdom"
     >
       <YourApp />
     </FeedbackProvider>
   );
 }`,
     advanced: `<FeedbackProvider
-  // Position: "top-left" | "top-right" | "bottom-left" | "bottom-right"
   position="bottom-right"
-  
-  // Theme color for UI elements
   primaryColor="#3b82f6"
-  
-  // Screenshot library: "snapdom" | "html2canvas"
   captureLibrary="snapdom"
-  
-  // Enable/disable the feedback system
   enabled={true}
-  
-  // Storage key for localStorage
   storageKey="feedbacker"
-  
-  // Auto-copy feedback to clipboard
   autoCopy={true}
-  
-  // Auto-download: false | true | "markdown" | "zip"
   autoDownload="markdown"
-  
-  // Handle feedback submission
   onFeedbackSubmit={(feedback) => {
-    // Send to your backend
     api.submitFeedback(feedback);
   }}
 >
   <YourApp />
-</FeedbackProvider>`
+</FeedbackProvider>`,
+    extension: `# Chrome Extension — no code required!
+
+1. Install from Chrome Web Store (or load unpacked)
+2. Click the Feedbacker icon on any website
+3. Hover to detect elements, click to capture
+4. Type your feedback and submit
+5. Open sidebar to view, edit, or export
+
+# Keyboard shortcut
+Alt+Shift+F  (Cmd+Shift+F on Mac)
+
+# Settings (via extension popup)
+- Button position: top-left / top-right / bottom-left / bottom-right
+- Accent color: any color
+- Feedback persists across all websites`
   };
+
+  const codeLanguage = activeCodeTab === 'extension' || activeCodeTab === 'install' ? 'bash' : 'jsx';
 
   return (
     <div className="landing-page">
       {/* Navigation */}
       <nav className="nav">
         <div className="nav-container">
-          <a href="#" className="nav-logo">
-            🎯 Feedbacker
-          </a>
+          <a href="#" className="nav-logo">Feedbacker</a>
           <div className="nav-links">
             <a href="#features" className="nav-link">Features</a>
-            <a href="#demo" className="nav-link">Demo</a>
-            <a href="#code" className="nav-link">Code</a>
+            <a href="#how-it-works" className="nav-link">How It Works</a>
+            <a href="#code" className="nav-link">Get Started</a>
             <a href="https://github.com/bebsworthy/feedbacker" className="nav-link">GitHub</a>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => {
-                emit('selection:start', {});
-              }}
-            >
-              Try It Live
+            <button className="btn btn-primary btn-sm" onClick={() => emit('selection:start', {})}>
+              Try Widget
             </button>
+            <a href="#extension-cta" className="btn btn-chrome btn-sm">
+              Chrome Extension
+            </a>
           </div>
         </div>
       </nav>
@@ -165,86 +148,100 @@ function App() {
         <div className="container">
           <div className="hero-content">
             <div className="hero-badge">
-              ✨ Zero Configuration Required
+              Visual Feedback for Developers & Teams
             </div>
             <h1 className="hero-title">
-              Component-Level Feedback in Seconds
+              Capture Feedback on Any Screen
             </h1>
             <p className="hero-subtitle">
-              The React feedback widget that actually understands your components. 
-              Point, click, and collect contextual feedback with automatic screenshots.
+              Point at any element, click, and collect contextual feedback with automatic screenshots.
+              As a React widget in your app, or a Chrome extension on any website.
             </p>
-            <div className="hero-actions">
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  emit('selection:start', {});
-                }}
-              >
-                🚀 Try It Live
-              </button>
-              <a href="#installation" className="btn btn-secondary">
-                📦 Get Started
-              </a>
-              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-ghost">
-                ⭐ Star on GitHub
-              </a>
-            </div>
-            <div className="hero-demo">
-              <div className="live-demo-card glass">
-                <p style={{ marginBottom: '1rem', fontSize: '0.875rem', opacity: 0.8 }}>
-                  👆 Click "Try It Live" then select any component on this page
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{'<50KB'}</div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Bundle Size</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>Pluggable</div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Capture Library</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>2min</div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Setup Time</div>
-                  </div>
+            <div className="hero-cards">
+              <div className="hero-product-card glass scroll-fade-in">
+                <div className="hero-product-icon">{'</>'}</div>
+                <h3>React Widget</h3>
+                <p>Embed in your React app. Detects components, captures screenshots, stores feedback locally.</p>
+                <code className="hero-product-code">npm install feedbacker-react</code>
+                <a href="#code" className="btn btn-primary btn-sm">Get Started</a>
+              </div>
+              <div className="hero-product-card glass scroll-fade-in">
+                <div className="hero-product-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
                 </div>
+                <h3>Chrome Extension</h3>
+                <p>Works on any website. No code needed. Select elements, capture feedback, export reports.</p>
+                <code className="hero-product-code">Alt+Shift+F to activate</code>
+                <a href="#extension-cta" className="btn btn-chrome btn-sm">Add to Chrome</a>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="how-it-works">
+      {/* How It Works — Two Tracks */}
+      <section id="how-it-works" className="how-it-works">
         <div className="container">
           <h2 className="section-title">How It Works</h2>
           <p className="section-subtitle">
-            Three simple steps to start collecting meaningful feedback
+            Two ways to capture feedback — choose what fits your workflow
           </p>
-          <div className="steps-grid">
-            <div className="step-card scroll-fade-in">
-              <div className="step-number">1</div>
-              <h3 className="step-title">Wrap Your App</h3>
-              <p className="step-description">
-                Add FeedbackProvider around your app. That's it. No configuration needed.
-              </p>
-              <div className="step-arrow">→</div>
+          <div className="tracks-grid">
+            <div className="track scroll-fade-in">
+              <div className="track-header">
+                <span className="track-badge">React Widget</span>
+              </div>
+              <div className="steps-grid">
+                <div className="step-card">
+                  <div className="step-number">1</div>
+                  <h3 className="step-title">Wrap Your App</h3>
+                  <p className="step-description">
+                    Add {'<FeedbackProvider>'} around your app. Zero config needed.
+                  </p>
+                </div>
+                <div className="step-card">
+                  <div className="step-number">2</div>
+                  <h3 className="step-title">Users Select Components</h3>
+                  <p className="step-description">
+                    Hover and click any React component. Detected automatically via fiber tree.
+                  </p>
+                </div>
+                <div className="step-card">
+                  <div className="step-number">3</div>
+                  <h3 className="step-title">Collect Rich Feedback</h3>
+                  <p className="step-description">
+                    Get feedback with component hierarchy, screenshots, and browser info.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="step-card scroll-fade-in">
-              <div className="step-number">2</div>
-              <h3 className="step-title">Users Select Components</h3>
-              <p className="step-description">
-                Users hover and click on any React component. We detect it automatically.
-              </p>
-              <div className="step-arrow">→</div>
-            </div>
-            <div className="step-card scroll-fade-in">
-              <div className="step-number">3</div>
-              <h3 className="step-title">Collect Rich Feedback</h3>
-              <p className="step-description">
-                Get feedback with component context, screenshots, and browser info.
-              </p>
+            <div className="track scroll-fade-in">
+              <div className="track-header">
+                <span className="track-badge track-badge-ext">Chrome Extension</span>
+              </div>
+              <div className="steps-grid">
+                <div className="step-card">
+                  <div className="step-number">1</div>
+                  <h3 className="step-title">Install Extension</h3>
+                  <p className="step-description">
+                    Add to Chrome from the Web Store. No code or configuration required.
+                  </p>
+                </div>
+                <div className="step-card">
+                  <div className="step-number">2</div>
+                  <h3 className="step-title">Click on Any Website</h3>
+                  <p className="step-description">
+                    Press Alt+Shift+F or click the icon. Works on any page — React, Vue, plain HTML.
+                  </p>
+                </div>
+                <div className="step-card">
+                  <div className="step-number">3</div>
+                  <h3 className="step-title">Capture & Export</h3>
+                  <p className="step-description">
+                    Native screenshots, cross-site storage, and export as Markdown or ZIP.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -255,15 +252,16 @@ function App() {
         <div className="container">
           <h2 className="section-title">Powerful Features</h2>
           <p className="section-subtitle">
-            Everything you need for better feedback collection
+            Shared core, tailored for each platform
           </p>
           <div className="features-grid">
             <div className="feature-card large scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
               <div className="feature-icon">🎯</div>
-              <h3 className="feature-title">Smart Component Detection</h3>
+              <h3 className="feature-title">Smart Element Detection</h3>
               <p className="feature-description">
-                Automatically detects React components using multiple strategies including React DevTools integration, 
-                Fiber tree inspection, and intelligent DOM heuristics.
+                Multiple detection strategies: React DevTools, fiber tree inspection, DOM heuristics,
+                and semantic HTML analysis. Works on React sites and plain HTML alike.
               </p>
               <div className="feature-demo">
                 <code style={{ fontSize: '0.875rem', color: 'var(--brand-violet)' }}>
@@ -271,69 +269,77 @@ function App() {
                 </code>
               </div>
             </div>
-            
+
             <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
               <div className="feature-icon">📸</div>
-              <h3 className="feature-title">Pluggable Screenshots</h3>
+              <h3 className="feature-title">Automatic Screenshots</h3>
               <p className="feature-description">
-                Choose between SnapDOM (2x faster) or html2canvas. Custom adapters supported.
+                Widget: SnapDOM or html2canvas. Extension: native browser capture via Chrome API.
               </p>
             </div>
 
             <div className="feature-card scroll-fade-in">
-              <div className="feature-icon">📱</div>
-              <h3 className="feature-title">Mobile Ready</h3>
+              <span className="availability-badge badge-ext">Extension</span>
+              <div className="feature-icon">🌐</div>
+              <h3 className="feature-title">Works on Any Website</h3>
               <p className="feature-description">
-                Touch gestures, haptic feedback, and responsive UI for all devices.
+                No code integration needed. Activate on any page with a click or keyboard shortcut.
               </p>
             </div>
 
             <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
               <div className="feature-icon">💾</div>
-              <h3 className="feature-title">Local Storage</h3>
+              <h3 className="feature-title">Persistent Storage</h3>
               <p className="feature-description">
-                All feedback stored locally with automatic cleanup and export options.
+                Widget uses localStorage. Extension uses chrome.storage for cross-site persistence.
               </p>
             </div>
 
             <div className="feature-card wide scroll-fade-in">
-              <div className="feature-icon">🚀</div>
-              <h3 className="feature-title">Performance First</h3>
-              <p className="feature-description">
-                RequestIdleCallback optimization, debounced interactions, and React.memo throughout. 
-                Zero performance impact when inactive.
-              </p>
-            </div>
-
-            <div className="feature-card scroll-fade-in">
-              <div className="feature-icon">🎨</div>
-              <h3 className="feature-title">Fully Customizable</h3>
-              <p className="feature-description">
-                Theme colors, positioning, and complete control over the UI.
-              </p>
-            </div>
-
-            <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
               <div className="feature-icon">📤</div>
-              <h3 className="feature-title">Export Options</h3>
+              <h3 className="feature-title">Export as Markdown or ZIP</h3>
               <p className="feature-description">
-                Export as Markdown or ZIP with images and metadata included.
+                Download feedback reports with component info, screenshots, browser metadata, and HTML snippets.
+                ZIP export includes images as separate files.
               </p>
             </div>
 
             <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
+              <div className="feature-icon">🎨</div>
+              <h3 className="feature-title">Customizable Theme</h3>
+              <p className="feature-description">
+                Accent color, button position, dark mode. Widget via props, extension via popup settings.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-ext">Extension</span>
+              <div className="feature-icon">🔍</div>
+              <h3 className="feature-title">Site Filter</h3>
+              <p className="feature-description">
+                View feedback for the current site or across all sites. Filter and manage from the sidebar.
+              </p>
+            </div>
+
+            <div className="feature-card scroll-fade-in">
+              <span className="availability-badge badge-both">Both</span>
               <div className="feature-icon">🔒</div>
               <h3 className="feature-title">Privacy First</h3>
               <p className="feature-description">
-                No external requests. All data stays in the browser until you export.
+                No external requests. All data stays in the browser until you export it.
               </p>
             </div>
 
             <div className="feature-card scroll-fade-in">
-              <div className="feature-icon">🔌</div>
-              <h3 className="feature-title">Pluggable Architecture</h3>
+              <span className="availability-badge badge-widget">Widget</span>
+              <div className="feature-icon">📱</div>
+              <h3 className="feature-title">Mobile Ready</h3>
               <p className="feature-description">
-                Swap capture libraries or implement custom adapters for your needs.
+                Touch gestures, haptic feedback, and responsive UI for all devices.
               </p>
             </div>
           </div>
@@ -341,57 +347,53 @@ function App() {
       </section>
 
       {/* Live Playground V2 */}
+      <section id="demo">
+        <div className="container" style={{ textAlign: 'center', marginBottom: '-2rem' }}>
+          <p className="section-note">
+            Using the Chrome extension? Just click the Feedbacker icon on any website — no setup needed.
+          </p>
+        </div>
+      </section>
       <PlaygroundV2 captureLibrary={captureLibrary} setCaptureLibrary={setCaptureLibrary} />
 
-      {/* Code Examples */}
+      {/* Code Examples — Two Tabs */}
       <section id="code" className="code-section">
         <div className="container">
-          <h2 className="section-title">Quick Start</h2>
+          <h2 className="section-title">Get Started</h2>
           <p className="section-subtitle">
-            Get up and running in under 2 minutes
+            Choose your integration method
           </p>
-          
+
           <div className="code-tabs">
-            <button 
-              className={`code-tab ${activeCodeTab === 'install' ? 'active' : ''}`}
-              onClick={() => setActiveCodeTab('install')}
-            >
+            <button className={`code-tab ${activeCodeTab === 'install' ? 'active' : ''}`} onClick={() => setActiveCodeTab('install')}>
               Installation
             </button>
-            <button 
-              className={`code-tab ${activeCodeTab === 'basic' ? 'active' : ''}`}
-              onClick={() => setActiveCodeTab('basic')}
-            >
+            <button className={`code-tab ${activeCodeTab === 'basic' ? 'active' : ''}`} onClick={() => setActiveCodeTab('basic')}>
               Basic Usage
             </button>
-            <button 
-              className={`code-tab ${activeCodeTab === 'advanced' ? 'active' : ''}`}
-              onClick={() => setActiveCodeTab('advanced')}
-            >
+            <button className={`code-tab ${activeCodeTab === 'advanced' ? 'active' : ''}`} onClick={() => setActiveCodeTab('advanced')}>
               Advanced
             </button>
+            <button className={`code-tab ${activeCodeTab === 'extension' ? 'active' : ''}`} onClick={() => setActiveCodeTab('extension')}>
+              Chrome Extension
+            </button>
           </div>
-          
+
           <div className="code-block">
             <div className="code-header">
-              <span className="code-lang">
-                {activeCodeTab === 'install' ? 'bash' : 'jsx'}
-              </span>
-              <button 
-                className={`code-copy ${copiedCode ? 'copied' : ''}`}
-                onClick={() => handleCopyCode(codeExamples[activeCodeTab])}
-              >
+              <span className="code-lang">{codeLanguage}</span>
+              <button className={`code-copy ${copiedCode ? 'copied' : ''}`} onClick={() => handleCopyCode(codeExamples[activeCodeTab])}>
                 {copiedCode ? '✓ Copied' : 'Copy'}
               </button>
             </div>
             <pre className="language-jsx">
-              <code 
-                className={activeCodeTab === 'install' ? 'language-bash' : 'language-jsx'}
-                dangerouslySetInnerHTML={{ 
+              <code
+                className={`language-${codeLanguage}`}
+                dangerouslySetInnerHTML={{
                   __html: Prism.highlight(
-                    codeExamples[activeCodeTab], 
-                    activeCodeTab === 'install' ? Prism.languages.bash : Prism.languages.jsx,
-                    activeCodeTab === 'install' ? 'bash' : 'jsx'
+                    codeExamples[activeCodeTab],
+                    codeLanguage === 'bash' ? Prism.languages.bash : Prism.languages.jsx,
+                    codeLanguage
                   )
                 }}
               />
@@ -406,19 +408,19 @@ function App() {
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-number">{'<50KB'}</div>
-              <div className="stat-label">Gzipped Size</div>
+              <div className="stat-label">React Widget</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">Pluggable</div>
-              <div className="stat-label">Capture Library</div>
+              <div className="stat-number">166KB</div>
+              <div className="stat-label">Extension (prod)</div>
             </div>
             <div className="stat-card">
               <div className="stat-number">100%</div>
               <div className="stat-label">TypeScript</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">2min</div>
-              <div className="stat-label">Setup Time</div>
+              <div className="stat-number">Any Site</div>
+              <div className="stat-label">Extension Works On</div>
             </div>
           </div>
         </div>
@@ -429,14 +431,15 @@ function App() {
         <div className="container">
           <h2 className="section-title">Why Feedbacker?</h2>
           <p className="section-subtitle">
-            Compare with traditional feedback methods
+            Compare across feedback approaches
           </p>
-          
+
           <table className="comparison-table">
             <thead>
               <tr>
                 <th>Feature</th>
-                <th>Feedbacker</th>
+                <th>React Widget</th>
+                <th>Extension</th>
                 <th>Generic Forms</th>
                 <th>Screenshot Tools</th>
               </tr>
@@ -445,53 +448,55 @@ function App() {
               <tr>
                 <td>Component Detection</td>
                 <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
                 <td><span className="cross">✗</span></td>
               </tr>
               <tr>
                 <td>Automatic Screenshots</td>
                 <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
+                <td><span className="check">✓</span></td>
+              </tr>
+              <tr>
+                <td>Works on Any Website</td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
                 <td><span className="check">✓</span></td>
               </tr>
               <tr>
                 <td>Zero Configuration</td>
                 <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
                 <td><span className="cross">✗</span></td>
               </tr>
               <tr>
-                <td>React Integration</td>
+                <td>Cross-Site Storage</td>
+                <td><span className="cross">✗</span></td>
                 <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
                 <td><span className="cross">✗</span></td>
+              </tr>
+              <tr>
+                <td>Export (Markdown/ZIP)</td>
+                <td><span className="check">✓</span></td>
+                <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
+                <td><span className="check">✓</span></td>
               </tr>
               <tr>
                 <td>Mobile Support</td>
                 <td><span className="check">✓</span></td>
+                <td><span className="cross">✗</span></td>
                 <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
               </tr>
               <tr>
-                <td>Local Storage</td>
+                <td>Privacy (No External Requests)</td>
                 <td><span className="check">✓</span></td>
-                <td><span className="cross">✗</span></td>
-                <td><span className="cross">✗</span></td>
-              </tr>
-              <tr>
-                <td>Pluggable Capture Libraries</td>
-                <td><span className="check">✓</span></td>
-                <td><span className="cross">✗</span></td>
-                <td><span className="cross">✗</span></td>
-              </tr>
-              <tr>
-                <td>Export Options</td>
-                <td><span className="check">✓</span></td>
-                <td><span className="cross">✗</span></td>
-                <td><span className="check">✓</span></td>
-              </tr>
-              <tr>
-                <td>Minimal Dependencies</td>
                 <td><span className="check">✓</span></td>
                 <td><span className="cross">✗</span></td>
                 <td><span className="cross">✗</span></td>
@@ -501,43 +506,39 @@ function App() {
         </div>
       </section>
 
-      {/* Installation Section */}
-      <section id="installation" className="installation">
+      {/* Extension CTA */}
+      <section id="extension-cta" className="extension-cta">
         <div className="container">
-          <h2 className="section-title">Get Started Today</h2>
-          <p className="section-subtitle">
-            Join developers who are collecting better feedback
-          </p>
-          
-          <div className="install-grid">
-            <div className="install-content">
-              <h3>1. Install the package</h3>
-              <p>Add Feedbacker to your React project with npm or yarn.</p>
-              
-              <h3>2. Wrap your app</h3>
-              <p>Import and wrap your app with the FeedbackProvider component.</p>
-              
-              <h3>3. Start collecting</h3>
-              <p>That's it! Your users can now provide component-level feedback.</p>
-              
-              <div style={{ marginTop: '2rem' }}>
-                <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-primary">
-                  View Documentation →
-                </a>
-              </div>
+          <div className="extension-cta-content scroll-fade-in">
+            <div className="extension-cta-text">
+              <h2>Chrome Extension</h2>
+              <p>
+                Capture feedback on any website without writing a single line of code.
+                Install the extension, press Alt+Shift+F, and start clicking.
+              </p>
+              <ul className="extension-features-list">
+                <li>Works on any website — React, Vue, Angular, plain HTML</li>
+                <li>Native browser screenshots via Chrome API</li>
+                <li>Feedback persists across all sites</li>
+                <li>Filter by current site or view all</li>
+                <li>Customizable position and accent color</li>
+                <li>Shadow DOM isolation — no style conflicts</li>
+              </ul>
+              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-chrome">
+                Add to Chrome
+              </a>
             </div>
-            
-            <div>
-              <div className="terminal">
-                <div className="terminal-header">
-                  <span className="terminal-dot red"></span>
-                  <span className="terminal-dot yellow"></span>
-                  <span className="terminal-dot green"></span>
-                </div>
-                <div className="terminal-content">
+            <div className="extension-cta-visual">
+              <div className="extension-preview glass">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--brand-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem' }}>💬</div>
                   <div>
-                    <span className="terminal-prompt">$</span> <span dangerouslySetInnerHTML={{ __html: Prism.highlight('npm install feedbacker-react', Prism.languages.bash, 'bash') }} />
+                    <div style={{ fontWeight: 600 }}>Feedbacker</div>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>Click any element</div>
                   </div>
+                </div>
+                <div style={{ background: 'var(--bg-tertiary)', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+                  Alt+Shift+F → Select → Capture → Export
                 </div>
               </div>
             </div>
@@ -549,23 +550,21 @@ function App() {
       <section className="cta">
         <div className="container">
           <div className="cta-content">
-            <h2 className="cta-title">Ready to Improve Your Feedback?</h2>
+            <h2 className="cta-title">Ready to Capture Better Feedback?</h2>
             <p className="cta-description">
-              Start collecting meaningful, contextual feedback from your users today.
-              Zero configuration, maximum insight.
+              Embed in your React app or use on any website with the Chrome extension.
+              Zero external requests, maximum insight.
             </p>
             <div className="cta-actions">
-              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-primary">
-                Get Started Free →
+              <a href="#code" className="btn btn-primary">
+                React Widget →
               </a>
-              <button 
-                className="btn btn-secondary"
-                onClick={() => {
-                  emit('selection:start', {});
-                }}
-              >
-                Try Demo Again
-              </button>
+              <a href="#extension-cta" className="btn btn-chrome">
+                Chrome Extension →
+              </a>
+              <a href="https://github.com/bebsworthy/feedbacker" className="btn btn-ghost">
+                Star on GitHub
+              </a>
             </div>
           </div>
         </div>
@@ -577,26 +576,24 @@ function App() {
           <div className="footer-links">
             <a href="https://github.com/bebsworthy/feedbacker" className="footer-link">GitHub</a>
             <a href="https://npmjs.com/package/feedbacker-react" className="footer-link">NPM</a>
+            <a href="#extension-cta" className="footer-link">Chrome Extension</a>
             <a href="#" className="footer-link">Documentation</a>
-            <a href="#" className="footer-link">Examples</a>
             <a href="#" className="footer-link">Support</a>
           </div>
           <p className="footer-credits">
-            Built with ❤️ by developers, for developers<br />
-            © 2024 Feedbacker. MIT Licensed.
+            Built with care by developers, for developers<br />
+            © 2025 Feedbacker. MIT Licensed.
           </p>
         </div>
       </footer>
 
       {/* Theme Toggle */}
-      <button 
+      <button
         className="theme-toggle"
         onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         aria-label="Toggle theme"
       >
-        <span className="theme-icon">
-          {theme === 'light' ? '🌙' : '☀️'}
-        </span>
+        <span className="theme-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
       </button>
     </div>
   );
@@ -608,7 +605,13 @@ export const App: React.FC = () => {
   
   // Simple routing based on pathname
   const isTestPage = window.location.pathname === '/test';
-  
+  const isExtTestPage = window.location.pathname === '/test-ext';
+
+  // Extension test page — no FeedbackProvider (extension injects its own UI)
+  if (isExtTestPage) {
+    return <TestPage />;
+  }
+
   return (
     <FeedbackProvider
       // Position of the feedback button on the screen

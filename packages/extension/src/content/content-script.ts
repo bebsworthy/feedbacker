@@ -12,8 +12,8 @@ import { logger } from '@feedbacker/core';
 
 const SETTINGS_KEY = 'feedbacker-settings';
 
-// Prevent double-injection
-if (!(window as any).__feedbacker_extension_loaded) {
+// Prevent double-injection (check both window flag and DOM)
+if (!(window as any).__feedbacker_extension_loaded && !document.getElementById('feedbacker-extension-root')) {
   (window as any).__feedbacker_extension_loaded = true;
   init();
 }
