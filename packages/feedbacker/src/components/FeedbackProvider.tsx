@@ -5,9 +5,9 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode, useEffect, useState } from 'react';
+import { logger } from '@feedbacker/core';
 import { FeedbackProviderProps } from '../types';
 import { FeedbackProviderInternal } from './FeedbackProviderInternal';
-import logger from '../utils/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;

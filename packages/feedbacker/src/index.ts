@@ -53,8 +53,8 @@ export {
   cleanupCaptureResources
 } from './utils/screenshot-adapter';
 export { loadHtml2Canvas, lazyLoad, isLibraryLoaded, clearLoadCache } from './utils/lazyLoad';
-export { formatDistanceToNow, formatDate } from './utils/dateUtils';
-export { logger, LogLevel } from './utils/logger';
+export { formatDistanceToNow, formatDate } from '@feedbacker/core';
+export { logger, LogLevel } from '@feedbacker/core';
 
 // Export functionality
 export { MarkdownExporter, ZipExporter, ExportManager } from './export';

@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useFeedbackEvent } from '../hooks/useFeedbackEvent';
 import { useComponentDetection } from '../hooks/useComponentDetection';
 import { useFeedbackContext } from '../context/FeedbackContext';
-import logger from '../utils/logger';
+import { logger } from '@feedbacker/core';
 
 interface EventBridgeProps {
   onOpenModal: () => void;

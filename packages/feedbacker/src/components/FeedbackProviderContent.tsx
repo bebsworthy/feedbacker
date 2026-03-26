@@ -6,7 +6,7 @@
 import React from 'react';
 import { ComponentDetectionProvider } from '../context/ComponentDetectionContext';
 import { FeedbackProviderInner } from './FeedbackProviderInner';
-import { Feedback } from '../types';
+import { Feedback } from '@feedbacker/core';
 
 interface FeedbackProviderContentProps {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';

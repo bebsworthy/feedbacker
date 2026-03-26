@@ -5,7 +5,7 @@
  */
 
 import { CaptureAdapter, CaptureOptions, CaptureResult } from '../types/capture';
-import logger from '../utils/logger';
+import { logger } from '@feedbacker/core';
 
 export class SnapDOMAdapter implements CaptureAdapter {
   name = 'snapdom';

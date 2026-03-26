@@ -8,15 +8,16 @@ import {
   Draft,
   StorageManager as IStorageManager,
   StorageInfo,
-  FeedbackStore
-} from '../types';
-import { migrateData } from './migrations';
-import { validateStorageData } from '../utils/validation';
-import { sanitizeFeedback, sanitizeDraft } from '../utils/sanitize';
-import logger from '../utils/logger';
+  FeedbackStore,
+  migrateData,
+  validateStorageData,
+  sanitizeFeedback,
+  sanitizeDraft,
+  logger
+} from '@feedbacker/core';
 
 // Re-export the interfaces from types for convenience
-export type { FeedbackStore, StorageInfo, StorageManager } from '../types';
+export type { FeedbackStore, StorageInfo, StorageManager } from '@feedbacker/core';
 
 const STORAGE_VERSION = '1.0.0';
 const DEFAULT_STORAGE_KEY = 'feedbacker';

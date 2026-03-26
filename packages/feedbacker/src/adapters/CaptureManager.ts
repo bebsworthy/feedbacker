@@ -12,7 +12,7 @@ import {
 } from '../types/capture';
 import { Html2CanvasAdapter } from './Html2CanvasAdapter';
 import { SnapDOMAdapter } from './SnapDOMAdapter';
-import logger from '../utils/logger';
+import { logger } from '@feedbacker/core';
 
 export class CaptureManager {
   private static instance: CaptureManager | null = null;

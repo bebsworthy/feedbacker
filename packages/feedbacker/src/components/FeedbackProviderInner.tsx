@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { ComponentInfo, Feedback, Draft } from '../types';
+import { ComponentInfo, Feedback, Draft } from '@feedbacker/core';
 import { FAB } from './FAB/FAB';
 import { FeedbackModal } from './FeedbackModal/FeedbackModal';
 import { FeedbackManager } from './ManagerSidebar/FeedbackManager';
@@ -18,8 +18,7 @@ import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { useFeedbackContext } from '../context/FeedbackContext';
 import { captureScreenshotWithAdapters as captureScreenshot } from '../utils/screenshot-adapter';
 import { initializeCaptureManager } from '../utils/screenshot-adapter';
-import { captureHtmlSnippet, formatHtmlSnippet } from '../utils/htmlSnippet';
-import logger from '../utils/logger';
+import { captureHtmlSnippet, formatHtmlSnippet, logger } from '@feedbacker/core';
 
 interface FeedbackProviderInnerProps {
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
@@ -257,7 +256,7 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
         const targetFeedbacks = feedbacksToExport || feedbacks;
 
         if (format === 'markdown') {
-          const { MarkdownExporter } = await import('../export/MarkdownExporter');
+          const { MarkdownExporter } = await import('@feedbacker/core');
           const markdown = MarkdownExporter.exportAsMarkdown(targetFeedbacks);
           const blob = new Blob([markdown], { type: 'text/markdown' });
           const url = URL.createObjectURL(blob);
@@ -269,7 +268,7 @@ export const FeedbackProviderInner: React.FC<FeedbackProviderInnerProps> = ({
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
         } else {
-          const { ZipExporter } = await import('../export/ZipExporter');
+          const { ZipExporter } = await import('@feedbacker/core');
           const zipBlob = await ZipExporter.exportAsZip(targetFeedbacks);
           const url = URL.createObjectURL(zipBlob);
           const link = document.createElement('a');

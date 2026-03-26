@@ -3,10 +3,14 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { Feedback, Draft, ComponentInfo } from '../types';
-import { MarkdownExporter } from '../export/MarkdownExporter';
-import { ZipExporter } from '../export/ZipExporter';
-import logger from '../utils/logger';
+import {
+  Feedback,
+  Draft,
+  ComponentInfo,
+  MarkdownExporter,
+  ZipExporter,
+  logger
+} from '@feedbacker/core';
 
 interface FeedbackContextValue {
   // State

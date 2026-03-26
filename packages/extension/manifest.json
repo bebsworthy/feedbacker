@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Feedbacker",
+  "version": "0.1.0",
+  "description": "Capture visual feedback on any website — select elements, take screenshots, and export reports.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "background": {
+    "service_worker": "dist/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "toggle-feedbacker": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Toggle Feedbacker on current page"
+    }
+  }
+}

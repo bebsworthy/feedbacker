@@ -109,8 +109,8 @@
     }
   },
   "dependencies": {
-    "@feedbacker/detection": "*",
-    "jszip": "^3.10.1"
+    "@feedbacker/core": "*",
+    "@feedbacker/detection": "*"
   },
   "repository": {
     "type": "git",

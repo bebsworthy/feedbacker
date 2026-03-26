@@ -10,14 +10,24 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const external = ['react', 'react-dom', 'react/jsx-runtime', 'html2canvas', '@zumer/snapdom'];
+const external = [
+  'react',
+  'react-dom',
+  'react/jsx-runtime',
+  'html2canvas',
+  '@zumer/snapdom',
+  '@feedbacker/core',
+  '@feedbacker/detection'
+];
 
 const globals = {
   react: 'React',
   'react-dom': 'ReactDOM',
   'react/jsx-runtime': 'React',
   html2canvas: 'html2canvas',
-  '@zumer/snapdom': 'SnapDOM'
+  '@zumer/snapdom': 'SnapDOM',
+  '@feedbacker/core': 'FeedbacerCore',
+  '@feedbacker/detection': 'FeedbackerDetection'
 };
 
 export default [
@@ -121,7 +131,14 @@ export default [
   // UMD build for browser usage
   {
     input: 'src/index.ts',
-    external: ['react', 'react-dom', 'html2canvas', '@zumer/snapdom'],
+    external: [
+      'react',
+      'react-dom',
+      'html2canvas',
+      '@zumer/snapdom',
+      '@feedbacker/core',
+      '@feedbacker/detection'
+    ],
     output: {
       file: 'dist/index.umd.js',
       format: 'umd',

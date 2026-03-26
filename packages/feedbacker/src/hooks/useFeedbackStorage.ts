@@ -4,10 +4,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { UseFeedbackStorageResult } from '../types';
+import { UseFeedbackStorageResult, logger } from '@feedbacker/core';
 import { createStorageManager } from '../storage/StorageManager';
 import { useFeedbackContext } from '../context/FeedbackContext';
-import logger from '../utils/logger';
 
 export const useFeedbackStorage = (storageKey?: string): UseFeedbackStorageResult => {
   const [isLoading, setIsLoading] = useState(true);

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedbacker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <div class="popup-header">
+      <h1>Feedbacker</h1>
+    </div>
+    <div class="popup-body">
+      <div class="stat">
+        <span class="stat-count" id="feedback-count">0</span>
+        <span class="stat-label">feedback items</span>
+      </div>
+      <button id="activate-btn" class="activate-btn">
+        Start Capturing
+      </button>
+
+      <div class="settings-section">
+        <h2>Settings</h2>
+        <div class="setting-row">
+          <label for="position-select">Button position</label>
+          <select id="position-select">
+            <option value="bottom-right">Bottom right</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="top-right">Top right</option>
+            <option value="top-left">Top left</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label for="color-input">Accent color</label>
+          <input type="color" id="color-input" value="#3b82f6">
+        </div>
+      </div>
+    </div>
+    <div class="popup-footer">
+      <span>v0.1.0</span>
+    </div>
+  </div>
+  <script src="../dist/popup/popup.js"></script>
+</body>
+</html>

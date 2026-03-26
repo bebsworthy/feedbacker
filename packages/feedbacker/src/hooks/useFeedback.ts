@@ -4,11 +4,15 @@
  */
 
 import { useCallback } from 'react';
-import { Feedback, ExportOptions, UseFeedbackResult } from '../types';
+import {
+  Feedback,
+  ExportOptions,
+  UseFeedbackResult,
+  MarkdownExporter,
+  ZipExporter,
+  logger
+} from '@feedbacker/core';
 import { useFeedbackContext } from '../context/FeedbackContext';
-import { MarkdownExporter } from '../export/MarkdownExporter';
-import { ZipExporter } from '../export/ZipExporter';
-import logger from '../utils/logger';
 
 export const useFeedback = (): UseFeedbackResult => {
   const {

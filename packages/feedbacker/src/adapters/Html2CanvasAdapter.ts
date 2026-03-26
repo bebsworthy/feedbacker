@@ -5,7 +5,7 @@
 
 import { CaptureAdapter, CaptureOptions, CaptureResult } from '../types/capture';
 import { loadHtml2Canvas } from '../utils/lazyLoad';
-import logger from '../utils/logger';
+import { logger } from '@feedbacker/core';
 
 export class Html2CanvasAdapter implements CaptureAdapter {
   name = 'html2canvas';

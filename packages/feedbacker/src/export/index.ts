@@ -2,19 +2,15 @@
  * Export module - Handles feedback data export in multiple formats
  */
 
-export { MarkdownExporter } from './MarkdownExporter';
-export { ZipExporter } from './ZipExporter';
+export { MarkdownExporter, ZipExporter } from '@feedbacker/core';
 
 // Re-export types for convenience
-export type { ExportOptions, ExportManager as IExportManager } from '../types';
+export type { ExportOptions, ExportManager as IExportManager } from '@feedbacker/core';
 
 /**
  * Combined export manager that handles both formats
  */
-import { Feedback, ExportOptions } from '../types';
-import { MarkdownExporter } from './MarkdownExporter';
-import { ZipExporter } from './ZipExporter';
-import logger from '../utils/logger';
+import { Feedback, ExportOptions, MarkdownExporter, ZipExporter, logger } from '@feedbacker/core';
 
 export class ExportManager {
   /**

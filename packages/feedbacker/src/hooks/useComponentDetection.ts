@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { UseComponentDetectionResult, ComponentInfo } from '../types';
+import { UseComponentDetectionResult, ComponentInfo } from '@feedbacker/core';
 import {
   DetectionChain,
   DevToolsStrategy,

@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useComponentDetection as useComponentDetectionHook } from '../hooks/useComponentDetection';
-import { UseComponentDetectionResult } from '../types';
+import { UseComponentDetectionResult } from '@feedbacker/core';
 
 const ComponentDetectionContext = createContext<UseComponentDetectionResult | null>(null);
 

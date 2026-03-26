@@ -9,7 +9,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useComponentDetection } from '../context/ComponentDetectionContext';
 import { debounce, throttle, performanceMonitor } from '../utils/performance';
-import logger from '../utils/logger';
+import { logger } from '@feedbacker/core';
 
 interface OverlayPosition {
   top: number;
