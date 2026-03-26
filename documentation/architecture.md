@@ -3,45 +3,47 @@
 ## 1. System Overview
 
 ### Architecture Style
-Monorepo with Multi-Package Structure - A single repository containing a core React library and demo application, managed with npm workspaces.
+Monorepo with Multi-Package Structure managed with npm workspaces. Contains a React widget, Chrome extension, shared core library, component detection engine, and demo application.
 
 ### System Components
 ```mermaid
 graph TB
     subgraph "Feedbacker System"
-        FL[feedbacker-react Library]
+        CO[("@feedbacker/core<br/>Types, Utils, Exporters")]
+        DT[("@feedbacker/detection<br/>Component Detection")]
+        FL[feedbacker-react<br/>React Widget]
+        EX["@feedbacker/extension<br/>Chrome Extension"]
         DA[Demo Application]
-        
+
+        CO -->|shared types & utils| FL
+        CO -->|shared types & utils| EX
+        DT -->|detection strategies| FL
+        DT -->|detection strategies| EX
         FL -->|imported by| DA
-        
-        subgraph "Library Components"
+
+        subgraph "React Widget Internals"
             FP[FeedbackProvider]
-            CD[Component Detection]
-            SC[Screenshot Capture]
-            SM[State Management]
-            EX[Export System]
-            ST[Storage Layer]
+            SC[Screenshot Capture<br/>SnapDOM / html2canvas]
+            SM[React Context State]
         end
-        
-        subgraph "External Dependencies"
-            R[React 18+]
-            SD[SnapDOM/html2canvas]
-            JZ[JSZip]
+
+        subgraph "Extension Internals"
+            SW[Service Worker]
+            CS[Content Script + Shadow DOM]
+            DB[Detection Bridge]
         end
-        
-        FL --> R
-        FL --> SD
-        FL --> JZ
     end
 ```
 
 ### Modules/Services Inventory
 | Module/Service | Purpose | Location | Status |
 |:---------------|:--------|:---------|:-------|
-| feedbacker-react | Core feedback widget library | packages/feedbacker | active |
-| @feedbacker/demo | Demo and testing application | packages/demo | active |
-| Documentation | Architecture and spec documentation | documentation/ | active |
-| CI/CD Workflows | GitHub Actions for testing and deployment | .github/workflows | active |
+| feedbacker-react | React feedback widget (npm published) | packages/feedbacker | active |
+| @feedbacker/extension | Chrome extension for any website | packages/extension | active |
+| @feedbacker/core | Shared types, utilities, exporters, event bus | packages/core | active |
+| @feedbacker/detection | Component detection strategies | packages/detection | active |
+| @feedbacker/demo | Landing page and playground | packages/demo | active |
+| CI/CD Workflows | GitHub Actions for testing, publishing, releases | .github/workflows | active |
 
 ## 2. Modules & Services
 
@@ -102,8 +104,8 @@ packages/feedbacker/
 | html2canvas | ^1.4.1 (optional) | Fallback screenshot capture |
 
 #### Testing
-- **Framework**: Jest (configured but not implemented)
-- **Coverage**: 0% (tests pending implementation)
+- **Framework**: Jest (unit) + Playwright (e2e)
+- **Coverage**: 290+ tests (192 feedbacker-react, 98 detection, 2 extension e2e)
 - **Test Location**: `src/__tests__/` (planned)
 
 #### Build & Run

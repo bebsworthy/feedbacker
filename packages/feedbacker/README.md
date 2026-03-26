@@ -1,4 +1,4 @@
-# 🎯 Feedbacker Core
+# Feedbacker React Widget
 
 A zero-configuration React feedback system that enables component-level feedback capture with automatic screenshot functionality.
 
@@ -285,7 +285,7 @@ await exportFeedback({
 Run the demo locally:
 
 ```bash
-cd packages/feedbacker/demo
+cd packages/demo
 open index.html
 ```
 
@@ -350,11 +350,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 📚 [Documentation](https://feedbacker.dev/docs)
-- 🐛 [Issues](https://github.com/feedbacker/core/issues)
-- 💬 [Discussions](https://github.com/feedbacker/core/discussions)
-- 📧 [Support Email](mailto:support@feedbacker.dev)
-
----
-
-Made with ❤️ by the Feedbacker team
+- 🐛 [Issues](https://github.com/bebsworthy/feedbacker/issues)
+- 💬 [Discussions](https://github.com/bebsworthy/feedbacker/discussions)
+- 📚 [Live Demo](https://bebsworthy.github.io/feedbacker/)

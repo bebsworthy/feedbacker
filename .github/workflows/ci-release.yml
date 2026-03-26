@@ -32,6 +32,10 @@ jobs:
       - name: Install React ${{ matrix.react-version }}
         run: npm install react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} --workspace=packages/feedbacker --no-save
 
+      - name: Build core
+        run: npm run build
+        working-directory: packages/core
+
       - name: Build detection
         run: npm run build
         working-directory: packages/detection
@@ -100,6 +104,10 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+
+      - name: Build core
+        run: npm run build
+        working-directory: packages/core
 
       - name: Build detection
         run: npm run build
@@ -258,8 +266,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build library and demo
+      - name: Build all packages and demo
         run: |
+          npm run build --workspace=@feedbacker/core
+          npm run build --workspace=@feedbacker/detection
           npm run build
           npm run build:demo
         env:

@@ -1,19 +1,16 @@
-# Feedbacker React - LLM Setup Instructions
+# Feedbacker - LLM Setup Instructions
 
-This file contains concise instructions for LLMs to install and configure the Feedbacker React library.
+Feedbacker provides visual feedback capture with two products:
+- **React widget** (`feedbacker-react`) — embed in your React app
+- **Chrome extension** — works on any website, no code needed
 
-## Library Purpose
-Feedbacker is a React component-level feedback collection library with automatic screenshots. Users can click any React component to provide targeted feedback with captured context.
-
-## Installation
+## React Widget Installation
 
 ```bash
 npm install feedbacker-react @zumer/snapdom
 ```
 
-## Basic Setup
-
-1. Wrap your app with FeedbackProvider:
+### Setup
 
 ```jsx
 import { FeedbackProvider } from 'feedbacker-react';
@@ -26,7 +23,6 @@ function App() {
       captureLibrary="snapdom"
       onFeedbackSubmit={(feedback) => {
         console.log('Feedback received:', feedback);
-        // Send to your backend API
       }}
     >
       <YourApp />
@@ -35,15 +31,63 @@ function App() {
 }
 ```
 
-## Key Configuration Options
+### Configuration Options
 
 - `position`: "top-left" | "top-right" | "bottom-left" | "bottom-right"
 - `primaryColor`: Any CSS color value
 - `captureLibrary`: "snapdom" (recommended) or "html2canvas"
 - `enabled`: boolean (default: true)
-- `autoCopy`: boolean - Copy feedback to clipboard
+- `autoCopy`: boolean — copy feedback to clipboard
 - `autoDownload`: false | true | "markdown" | "zip"
-- `onFeedbackSubmit`: Callback function for handling feedback
+- `onFeedbackSubmit`: Callback for handling submitted feedback
+
+### Framework Examples
+
+**Next.js App Router:**
+```jsx
+// app/layout.tsx
+import { FeedbackProvider } from 'feedbacker-react';
+
+export default function RootLayout({ children }) {
+  return (
+    <html><body>
+      <FeedbackProvider captureLibrary="snapdom">
+        {children}
+      </FeedbackProvider>
+    </body></html>
+  );
+}
+```
+
+**Vite / CRA:**
+```jsx
+import { FeedbackProvider } from 'feedbacker-react';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <FeedbackProvider captureLibrary="snapdom">
+    <App />
+  </FeedbackProvider>
+);
+```
+
+### Programmatic API
+
+```jsx
+import { useFeedback, useFeedbackEvent } from 'feedbacker-react';
+
+function MyComponent() {
+  const { feedbacks, exportFeedback } = useFeedback();
+  const { emit } = useFeedbackEvent();
+
+  const startFeedback = () => emit('selection:start', {});
+  const handleExport = () => exportFeedback({ format: 'zip' });
+}
+```
+
+## Chrome Extension
+
+Download from GitHub Releases. No code needed — works on any website.
+Keyboard shortcut: Alt+Shift+F. Configurable position and color via popup.
 
 ## Feedback Data Structure
 
@@ -53,70 +97,20 @@ function App() {
   componentName: string;
   componentPath: string[];
   comment: string;
-  screenshot?: string;  // Base64 data URL
+  screenshot?: string;
   url: string;
   timestamp: string;
   browserInfo: {
     userAgent: string;
-    viewportWidth: number;
-    viewportHeight: number;
+    viewport: { width: number; height: number };
+    platform?: string;
   };
 }
 ```
 
-## Framework Integration Examples
-
-### Next.js App Router
-```jsx
-// app/layout.tsx
-import { FeedbackProvider } from 'feedbacker-react';
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <FeedbackProvider captureLibrary="snapdom">
-          {children}
-        </FeedbackProvider>
-      </body>
-    </html>
-  );
-}
-```
-
-### Vite/Create React App
-```jsx
-// main.jsx or index.js
-import { FeedbackProvider } from 'feedbacker-react';
-import ReactDOM from 'react-dom/client';
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <FeedbackProvider captureLibrary="snapdom">
-    <App />
-  </FeedbackProvider>
-);
-```
-
-## Programmatic Usage
-
-```jsx
-import { useFeedback, useFeedbackEvent } from 'feedbacker-react';
-
-function MyComponent() {
-  const { feedbacks, exportFeedback } = useFeedback();
-  const { emit } = useFeedbackEvent();
-  
-  // Start feedback selection
-  const startFeedback = () => emit('selection:start', {});
-  
-  // Export feedback
-  const handleExport = () => exportFeedback({ format: 'zip' });
-}
-```
-
 ## Notes
-- @zumer/snapdom is recommended for 2x faster screenshots
-- Feedback is stored in localStorage with 5MB limit
+- @zumer/snapdom recommended for 2x faster screenshots
+- Feedback stored locally (localStorage for widget, chrome.storage for extension)
 - Zero performance impact when inactive
-- React 18+ required
-- Works on Chrome 60+, Firefox 60+, Safari 12+, Edge 79+
+- React 18+ required for widget
+- Extension works on Chrome/Chromium

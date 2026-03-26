@@ -23,7 +23,7 @@
     "build": "rollup -c",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@feedbacker/detection": "*",

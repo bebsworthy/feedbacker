@@ -1,17 +1,13 @@
-# MANDATORY: Spec Workflow
+# Feedbacker
 
-**⚠️ IMPORTANT: You MUST read `.spec/WORKFLOW.md` before starting any feature development.**
+Monorepo with 5 packages:
 
-The spec workflow is mandatory for all feature development. It ensures systematic, high-quality implementation through defined phases:
-1. Architecture Analysis
-2. Feature Creation  
-3. Research
-4. Requirements
-5. Design
-6. Tasks
-7. Implementation
+| Package | Path | Description |
+|---------|------|-------------|
+| `feedbacker-react` | `packages/feedbacker` | React widget (npm published) |
+| `@feedbacker/extension` | `packages/extension` | Chrome extension |
+| `@feedbacker/core` | `packages/core` | Shared types, utilities, exporters |
+| `@feedbacker/detection` | `packages/detection` | Component detection strategies |
+| `@feedbacker/demo` | `packages/demo` | Landing page and playground |
 
-See `.spec/WORKFLOW.md` for complete details.
-
----
-
+Build order matters: core → detection → feedbacker → extension → demo.

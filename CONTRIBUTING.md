@@ -1,6 +1,16 @@
 # Contributing to Feedbacker
 
-Thank you for your interest in contributing to Feedbacker! We welcome contributions from the community.
+Thank you for your interest in contributing to Feedbacker!
+
+## Important: Discuss Before You Code
+
+**Pull requests without a prior issue discussion will not be reviewed.** Before starting any work:
+
+1. Open an issue describing the bug, feature, or change you want to make
+2. Wait for feedback and alignment on the approach
+3. Only then start coding and submit a PR referencing the issue
+
+This saves everyone's time and avoids wasted effort on changes that don't fit the project direction.
 
 ## Getting Started
 
@@ -14,39 +24,51 @@ Thank you for your interest in contributing to Feedbacker! We welcome contributi
    ```bash
    npm install
    ```
-4. Start development:
+4. Start the demo:
    ```bash
    npm run dev
    ```
 
-## Development Setup
+## Monorepo Structure
 
-This is a monorepo using npm workspaces:
-- `/packages/feedbacker` - Core library
-- `/packages/demo` - Demo application
+This project uses npm workspaces:
 
-### Running the Demo
+| Package | Path | Description |
+|---------|------|-------------|
+| `feedbacker-react` | `packages/feedbacker` | React widget |
+| `@feedbacker/extension` | `packages/extension` | Chrome extension |
+| `@feedbacker/core` | `packages/core` | Shared types, utilities, exporters |
+| `@feedbacker/detection` | `packages/detection` | Component detection strategies |
+| `@feedbacker/demo` | `packages/demo` | Landing page and playground |
+
+## Building
 
 ```bash
-npm run dev
-# Opens at http://localhost:3001
-```
+# Build shared packages first (order matters)
+npm run build --workspace=@feedbacker/core
+npm run build --workspace=@feedbacker/detection
 
-### Building
+# Build React widget
+npm run build --workspace=feedbacker-react
 
-```bash
-# Build library
-npm run build
+# Build Chrome extension
+cd packages/extension && npm run build
 
 # Build demo
 npm run build:demo
 ```
 
-### Testing
+## Testing
 
 ```bash
-# Run tests
+# Unit tests (all packages)
 npm test
+
+# React widget e2e tests
+npm run test:e2e --workspace=feedbacker-react
+
+# Extension e2e tests (requires headed Chromium)
+cd packages/extension && npm run test:e2e:headed
 
 # Type checking
 npm run typecheck --workspace=feedbacker-react
@@ -54,25 +76,28 @@ npm run typecheck --workspace=feedbacker-react
 
 ## Pull Request Process
 
-1. Create a feature branch from `main`
-2. Make your changes
-3. Ensure the build passes: `npm run build`
-4. Update documentation if needed
-5. Submit a pull request
+1. **Open an issue first** and get agreement on the approach
+2. Create a feature branch from `main`
+3. Make your changes
+4. Ensure builds pass: `npm run build`
+5. Ensure tests pass: `npm test`
+6. Update documentation if needed
+7. Submit a PR referencing the issue
 
 ### PR Guidelines
 
 - Keep PRs focused on a single feature or fix
 - Include a clear description of changes
-- Update CHANGELOG.md in the "Unreleased" section
+- Reference the issue number (e.g., "Fixes #42")
 - Ensure all TypeScript types are properly defined
 - Follow existing code style and conventions
 
 ## Code Style
 
-- Use TypeScript for all new code
+- TypeScript for all new code
 - Follow existing patterns in the codebase
-- Components should be functional with hooks
+- React components should be functional with hooks
+- Extension UI uses vanilla TypeScript (no React)
 - Use semantic HTML and ARIA attributes
 - Avoid external dependencies when possible
 
@@ -82,26 +107,6 @@ npm run typecheck --workspace=feedbacker-react
 - Include reproduction steps
 - Provide browser and React version information
 - Include screenshots for UI issues
-
-## Feature Requests
-
-- Open an issue with the "enhancement" label
-- Describe the use case and benefits
-- Consider submitting a PR with the implementation
-
-## Testing Guidelines
-
-- Test in multiple browsers (Chrome, Firefox, Safari, Edge)
-- Test mobile interactions
-- Verify screenshot capture works
-- Check TypeScript types compile correctly
-
-## Documentation
-
-- Update README.md for API changes
-- Add JSDoc comments for public APIs
-- Include code examples for new features
-- Update TypeScript definitions
 
 ## License
 
