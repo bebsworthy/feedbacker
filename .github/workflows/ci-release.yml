@@ -230,7 +230,7 @@ jobs:
 
             - [NPM Package](https://www.npmjs.com/package/feedbacker-react)
             - [Documentation](https://github.com/bebsworthy/feedbacker#readme)
-            - [Demo](https://bebsworthy.github.io/feedbacker/)
+            - [Demo](https://feedbacker.mnbv.dev/)
 
             ---
 
@@ -273,7 +273,7 @@ jobs:
           npm run build
           npm run build:demo
         env:
-          BASE_URL: /feedbacker/
+          BASE_URL: /
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

@@ -352,4 +352,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - 🐛 [Issues](https://github.com/bebsworthy/feedbacker/issues)
 - 💬 [Discussions](https://github.com/bebsworthy/feedbacker/discussions)
-- 📚 [Live Demo](https://bebsworthy.github.io/feedbacker/)
+- 📚 [Live Demo](https://feedbacker.mnbv.dev/)

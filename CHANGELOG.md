@@ -84,5 +84,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [NPM Package](https://www.npmjs.com/package/feedbacker-react)
 - [GitHub Repository](https://github.com/bebsworthy/feedbacker)
-- [Demo Site](https://bebsworthy.github.io/feedbacker/)
+- [Demo Site](https://feedbacker.mnbv.dev/)
 - [Release Notes](https://github.com/bebsworthy/feedbacker/releases)
