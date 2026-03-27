@@ -1,4 +1,4 @@
-import { MarkdownExporter } from '../MarkdownExporter';
+import { MarkdownExporter } from '..';
 import type { Feedback } from '../../types';
 
 function makeFeedback(overrides: Partial<Feedback> = {}): Feedback {
@@ -142,6 +142,40 @@ describe('MarkdownExporter', () => {
       expect(feedbackSection).toContain('\\`');
       expect(feedbackSection).toContain('\\~');
       expect(feedbackSection).toContain('\\\\');
+    });
+  });
+
+  describe('exportSingleItem', () => {
+    it('omits the report header and summary', () => {
+      const feedback = makeFeedback();
+      const result = MarkdownExporter.exportSingleItem(feedback);
+
+      expect(result).not.toContain('# Feedback Report');
+      expect(result).not.toContain('## Summary');
+      expect(result).not.toContain('Total feedback items');
+      expect(result).not.toContain('Generated on');
+    });
+
+    it('uses the component name as heading without a numbered index', () => {
+      const feedback = makeFeedback({ componentName: 'SubmitForm' });
+      const result = MarkdownExporter.exportSingleItem(feedback);
+
+      expect(result).toMatch(/^## SubmitForm\n/);
+      expect(result).not.toContain('## 1. SubmitForm');
+    });
+
+    it('includes all item sections', () => {
+      const feedback = makeFeedback({
+        htmlSnippet: '<div>test</div>',
+        metadata: { key: 'value' }
+      });
+      const result = MarkdownExporter.exportSingleItem(feedback);
+
+      expect(result).toContain('### Feedback');
+      expect(result).toContain('### Component Information');
+      expect(result).toContain('### Browser Information');
+      expect(result).toContain('### HTML Snippet');
+      expect(result).toContain('### Additional Metadata');
     });
   });
 

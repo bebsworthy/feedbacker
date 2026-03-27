@@ -1,4 +1,4 @@
-import { ZipExporter } from '../ZipExporter';
+import { ZipExporter } from '..';
 import type { Feedback } from '../../types';
 
 // ---------------------------------------------------------------------------

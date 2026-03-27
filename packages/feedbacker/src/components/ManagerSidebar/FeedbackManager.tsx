@@ -10,6 +10,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ExportDialog } from './ExportDialog';
 import { FeedbackCard } from './FeedbackCard';
 import { useFeedbackContext } from '../../context/FeedbackContext';
+import { MarkdownExporter } from '../../export';
 import logger from '../../utils/logger';
 
 interface FeedbackManagerProps {
@@ -115,43 +116,7 @@ export const FeedbackManager: React.FC<FeedbackManagerProps> = ({
   }, []);
 
   const handleCopyFeedback = useCallback((feedback: Feedback) => {
-    // Generate markdown format for single feedback
-    let markdown = `## ${feedback.componentName}\n\n`;
-
-    // Feedback Comment
-    markdown += `### Feedback\n${feedback.comment}\n\n`;
-
-    // Component Information
-    markdown += `### Component Information\n`;
-    markdown += `- **Component:** ${feedback.componentName}\n`;
-    markdown += `- **Path:** ${feedback.componentPath.join(' > ')}\n`;
-    markdown += `- **URL:** ${feedback.url}\n`;
-    markdown += `- **Timestamp:** ${feedback.timestamp}\n\n`;
-
-    // Browser Information
-    markdown += `### Browser Information\n`;
-    if (feedback.browserInfo.platform) {
-      markdown += `- **Platform:** ${feedback.browserInfo.platform}\n`;
-    }
-    markdown += `- **Viewport:** ${feedback.browserInfo.viewport.width} x ${feedback.browserInfo.viewport.height}\n`;
-    markdown += `- **User Agent:** ${feedback.browserInfo.userAgent}\n`;
-
-    // HTML Snippet (if available)
-    if (feedback.htmlSnippet) {
-      markdown += `\n### HTML Snippet\n`;
-      markdown += '```html\n';
-      markdown += feedback.htmlSnippet;
-      markdown += '\n```\n';
-    }
-
-    // Metadata (if available)
-    if (feedback.metadata && Object.keys(feedback.metadata).length > 0) {
-      markdown += `\n### Additional Metadata\n`;
-      markdown += '```json\n';
-      markdown += JSON.stringify(feedback.metadata, null, 2);
-      markdown += '\n```\n';
-    }
-
+    const markdown = MarkdownExporter.exportSingleItem(feedback);
     navigator.clipboard
       .writeText(markdown)
       .then(() => {

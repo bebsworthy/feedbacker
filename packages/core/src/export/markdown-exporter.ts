@@ -71,12 +71,20 @@ export class MarkdownExporter {
   }
 
   /**
+   * Export a single feedback item without the report header/summary
+   */
+  public static exportSingleItem(feedback: Feedback): string {
+    return this.generateFeedbackItem(feedback);
+  }
+
+  /**
    * Generate a single feedback item
    */
-  private static generateFeedbackItem(feedback: Feedback, index: number): string {
+  private static generateFeedbackItem(feedback: Feedback, index?: number): string {
     const timestamp = feedback.timestamp;
 
-    let item = `## ${index}. ${feedback.componentName}\n\n`;
+    const heading = index != null ? `${index}. ${feedback.componentName}` : feedback.componentName;
+    let item = `## ${heading}\n\n`;
 
     // Feedback Comment
     item += '### Feedback\n';

@@ -96,7 +96,7 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
   // Auto-action helper functions
   const performAutoCopy = useCallback(async (feedback: Feedback) => {
     try {
-      const markdown = MarkdownExporter.exportAsMarkdown([feedback]);
+      const markdown = MarkdownExporter.exportSingleItem(feedback);
       await navigator.clipboard.writeText(markdown);
       logger.info('Feedback copied to clipboard');
     } catch (error) {
@@ -110,7 +110,7 @@ export const FeedbackContextProvider: React.FC<FeedbackContextProviderProps> = (
         const timestamp = new Date().toISOString().split('T')[0];
 
         if (format === 'markdown') {
-          const markdown = MarkdownExporter.exportAsMarkdown([feedback]);
+          const markdown = MarkdownExporter.exportSingleItem(feedback);
           const blob = new Blob([markdown], { type: 'text/markdown' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');

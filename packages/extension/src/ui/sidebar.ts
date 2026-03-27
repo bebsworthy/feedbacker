@@ -3,7 +3,7 @@
  */
 
 import type { Feedback } from '@feedbacker/core';
-import { formatDistanceToNow } from '@feedbacker/core';
+import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
 import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 
@@ -251,8 +251,8 @@ export class ManagerSidebar {
     copyBtn.innerHTML = copyIcon(16);
     copyBtn.title = 'Copy to clipboard';
     copyBtn.addEventListener('click', () => {
-      const text = `**${fb.componentName}**\n${fb.comment}\n\nURL: ${fb.url}\nTimestamp: ${fb.timestamp}`;
-      navigator.clipboard.writeText(text);
+      const markdown = MarkdownExporter.exportSingleItem(fb);
+      navigator.clipboard.writeText(markdown);
     });
 
     const deleteBtn = document.createElement('button');
