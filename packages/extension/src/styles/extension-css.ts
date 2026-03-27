@@ -521,7 +521,7 @@ export const EXTENSION_CSS = `
   align-items: center;
   gap: 8px;
   box-shadow: var(--fb-shadow-lg);
-  z-index: 10000;
+  z-index: 10003;
   font-family: var(--fb-font);
   font-size: 13px;
   color: var(--fb-text);

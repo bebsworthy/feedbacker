@@ -74,6 +74,9 @@ export class FeedbackApp {
   // Milestone badge auto-dismiss timer (FE-006)
   private milestoneTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Pending milestone to show when sidebar next opens
+  private pendingMilestone: string | null = null;
+
   constructor(container: HTMLDivElement, state: StateManager, detection: DetectionController) {
     this.container = container;
     this.state = state;
@@ -385,6 +388,9 @@ export class FeedbackApp {
       onStartCapture: () => this.startCapture(),
       onAnnounce: (message: string) => this.announce(message)
     });
+
+    // Show any pending milestone badge
+    this.displayMilestoneBadge();
   }
 
   private showExportDialog(): void {
@@ -613,28 +619,38 @@ export class FeedbackApp {
 
     logger.debug(`Milestone reached: ${count} items`);
 
-    // Show milestone in sidebar header if sidebar is open
+    // Store milestone — will be shown when sidebar is next opened (or now if already open)
+    this.pendingMilestone = milestone.text;
+
     if (this.sidebar) {
-      const header = this.container.querySelector('.fb-sidebar-header');
-      if (header) {
-        // Remove any existing milestone and clear previous timer
-        header.querySelector('.fb-milestone')?.remove();
-        if (this.milestoneTimer) {
-          clearTimeout(this.milestoneTimer);
-        }
-
-        const badge = document.createElement('span');
-        badge.className = 'fb-milestone';
-        badge.textContent = milestone.text;
-        header.appendChild(badge);
-
-        // Auto-remove after 5 seconds (FE-006)
-        this.milestoneTimer = setTimeout(() => {
-          badge.remove();
-          this.milestoneTimer = null;
-        }, 5000);
-      }
+      this.displayMilestoneBadge();
     }
+  }
+
+  private displayMilestoneBadge(): void {
+    if (!this.pendingMilestone) return;
+    const text = this.pendingMilestone;
+    this.pendingMilestone = null;
+
+    const header = this.container.querySelector('.fb-sidebar-header');
+    if (!header) return;
+
+    // Remove any existing milestone and clear previous timer
+    header.querySelector('.fb-milestone')?.remove();
+    if (this.milestoneTimer) {
+      clearTimeout(this.milestoneTimer);
+    }
+
+    const badge = document.createElement('span');
+    badge.className = 'fb-milestone';
+    badge.textContent = text;
+    header.appendChild(badge);
+
+    // Auto-remove after 5 seconds (FE-006)
+    this.milestoneTimer = setTimeout(() => {
+      badge.remove();
+      this.milestoneTimer = null;
+    }, 5000);
   }
 
   private async cropScreenshot(dataUrl: string, element: HTMLElement): Promise<string> {

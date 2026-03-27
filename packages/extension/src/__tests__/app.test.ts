@@ -980,6 +980,35 @@ describe('FeedbackApp', () => {
       app.destroy();
     });
 
+    it('shows milestone when sidebar is opened after reaching count', async () => {
+      const feedbacks = Array.from(
+        { length: 4 },
+        (_, i) => createFeedback({ id: `fb_def_${i}` })
+      );
+      const app = renderAppWithFeedbacks(feedbacks);
+      await jest.advanceTimersByTimeAsync(0);
+
+      (state.addFeedback as jest.Mock).mockImplementation(async (fb: Feedback) => {
+        (state.feedbacks as Feedback[]).push(fb);
+      });
+
+      // Sidebar is NOT open — submit 5th item via modal
+      await submitFeedbackItem(container, detection, 'Fifth feedback');
+
+      // No milestone badge yet (sidebar not open)
+      expect(container.querySelector('.fb-milestone')).toBeNull();
+
+      // Now open sidebar — milestone should appear
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+
+      const milestone = container.querySelector('.fb-milestone');
+      expect(milestone).not.toBeNull();
+      expect(milestone!.textContent).toBe('Thorough review!');
+
+      app.destroy();
+    });
+
     it('removes milestone badge after 5000ms', async () => {
       const feedbacks = Array.from(
         { length: 4 },
