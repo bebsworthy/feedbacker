@@ -51,8 +51,8 @@ phases:
   steps:
     ideas: skipped
     brd: complete
-    research: in_progress
-    spec: not_started
+    research: complete
+    spec: in_progress
     plan: not_started
     build: not_started
     check: not_started
