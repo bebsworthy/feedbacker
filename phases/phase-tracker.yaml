@@ -68,7 +68,7 @@ phases:
   - .audit/ux/04-audit.md
   - .audit/ux/01-user-goals.md
   - .audit/ux/03-patterns.md
-  status: not_started
+  status: started
   summary: ''
   depends_on:
   - 2
@@ -76,11 +76,11 @@ phases:
   - ux
   - frontend
   size: medium
-  start_commit: null
+  start_commit: 73277204bae650598c93d17e654c9fd990697217
   end_commit: null
   steps:
     ideas: skipped
-    brd: not_started
+    brd: in_progress
     research: not_started
     spec: not_started
     plan: not_started
