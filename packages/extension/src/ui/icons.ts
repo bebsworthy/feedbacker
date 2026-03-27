@@ -62,3 +62,11 @@ export function archiveBoxIcon(size = 24, color = 'currentColor'): string {
 export function minimizeIcon(size = 20, color = 'currentColor'): string {
   return svg(size, stroke('M20 12H4', color));
 }
+
+export function checkIcon(size = 16, color = 'currentColor'): string {
+  return svg(size, stroke('M20 6L9 17L4 12', color));
+}
+
+export function photoIcon(size = 16, color = 'currentColor'): string {
+  return svg(size, stroke('M2.25 15.75L7.409 10.591C7.784 10.216 8.291 10.006 8.818 10.006C9.346 10.006 9.853 10.216 10.227 10.591L15.75 16.114M14.25 14.614L15.659 13.205C16.034 12.83 16.541 12.62 17.068 12.62C17.596 12.62 18.103 12.83 18.477 13.205L21.75 16.478M3.75 19.5H20.25C20.6478 19.5 21.0294 19.342 21.3107 19.0607C21.592 18.7794 21.75 18.3978 21.75 18V6C21.75 5.60218 21.592 5.22064 21.3107 4.93934C21.0294 4.65804 20.6478 4.5 20.25 4.5H3.75C3.35218 4.5 2.97064 4.65804 2.68934 4.93934C2.40804 5.22064 2.25 5.60218 2.25 6V18C2.25 18.3978 2.40804 18.7794 2.68934 19.0607C2.97064 19.342 3.35218 19.5 3.75 19.5Z', color));
+}

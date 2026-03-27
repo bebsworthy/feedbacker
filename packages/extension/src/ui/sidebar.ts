@@ -4,7 +4,7 @@
 
 import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
-import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon } from './icons';
+import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 
 interface SidebarOptions {
@@ -141,7 +141,7 @@ export class ManagerSidebar {
     const filtered = this.getFilteredFeedbacks();
     const total = this.opts.feedbacks.length;
     const label = this.filterMode === 'this-site'
-      ? `This site (${filtered.length}/${total})`
+      ? `This site (${filtered.length} of ${total})`
       : `All feedback (${total})`;
     this.headerH3.textContent = label;
 
@@ -191,17 +191,71 @@ export class ManagerSidebar {
     }
   }
 
+  private async copyImageToClipboard(dataUrl: string, btn: HTMLButtonElement): Promise<void> {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const pngBlob = blob.type === 'image/png' ? blob : await this.convertToPng(dataUrl);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+      this.flashCopied(btn, photoIcon(16));
+    } catch {
+      // Fallback: copy the data URL as text
+      await navigator.clipboard.writeText(dataUrl);
+      this.flashCopied(btn, photoIcon(16));
+    }
+  }
+
+  private convertToPng(dataUrl: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/png');
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  private flashCopied(btn: HTMLButtonElement, originalIcon: string): void {
+    const originalTooltip = btn.dataset.tooltip || '';
+    btn.innerHTML = checkIcon(16);
+    btn.dataset.tooltip = 'Copied!';
+    btn.style.color = 'var(--fb-success)';
+    setTimeout(() => {
+      btn.innerHTML = originalIcon;
+      btn.dataset.tooltip = originalTooltip;
+      btn.style.color = '';
+    }, 1500);
+  }
+
   private createCard(fb: Feedback): HTMLDivElement {
     const card = document.createElement('div');
     card.className = 'fb-card';
 
     // Screenshot
     if (fb.screenshot) {
+      const screenshotWrap = document.createElement('div');
+      screenshotWrap.style.cssText = 'position: relative;';
       const img = document.createElement('img');
       img.className = 'fb-card-screenshot';
       img.src = fb.screenshot;
       img.alt = 'Screenshot';
-      card.appendChild(img);
+      screenshotWrap.appendChild(img);
+
+      const copyImgBtn = document.createElement('button');
+      copyImgBtn.className = 'fb-btn-icon fb-screenshot-copy';
+      copyImgBtn.innerHTML = photoIcon(16);
+      copyImgBtn.dataset.tooltip = 'Copy image';
+      copyImgBtn.addEventListener('click', () => {
+        this.copyImageToClipboard(fb.screenshot!, copyImgBtn);
+      });
+      screenshotWrap.appendChild(copyImgBtn);
+      card.appendChild(screenshotWrap);
     }
 
     // Header
@@ -243,22 +297,24 @@ export class ManagerSidebar {
     const editBtn = document.createElement('button');
     editBtn.className = 'fb-btn-icon';
     editBtn.innerHTML = pencilIcon(16);
-    editBtn.title = 'Edit';
+    editBtn.dataset.tooltip = 'Edit';
     editBtn.addEventListener('click', () => this.opts.onEdit(fb));
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'fb-btn-icon';
     copyBtn.innerHTML = copyIcon(16);
-    copyBtn.title = 'Copy to clipboard';
+    copyBtn.dataset.tooltip = 'Copy markdown';
     copyBtn.addEventListener('click', () => {
       const markdown = MarkdownExporter.exportSingleItem(fb);
-      navigator.clipboard.writeText(markdown);
+      navigator.clipboard.writeText(markdown).then(() => {
+        this.flashCopied(copyBtn, copyIcon(16));
+      });
     });
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'fb-btn-icon';
     deleteBtn.innerHTML = trashIcon(16);
-    deleteBtn.title = 'Delete';
+    deleteBtn.dataset.tooltip = 'Delete';
     deleteBtn.style.color = 'var(--fb-error)';
     deleteBtn.addEventListener('click', () => this.opts.onDelete(fb.id));
 

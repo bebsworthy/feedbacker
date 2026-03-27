@@ -89,6 +89,7 @@ export class FeedbackModal {
 
     // Wire textarea events
     this.textarea.addEventListener('input', () => {
+      submitBtn.disabled = !this.textarea.value.trim();
       if (this.draftTimer) clearTimeout(this.draftTimer);
       this.draftTimer = setTimeout(() => {
         if (this.textarea.value.trim()) {
@@ -121,6 +122,7 @@ export class FeedbackModal {
     const submitBtn = document.createElement('button');
     submitBtn.className = 'fb-btn fb-btn-primary';
     submitBtn.textContent = 'Submit';
+    submitBtn.disabled = !this.textarea.value.trim();
     submitBtn.addEventListener('click', () => {
       const comment = this.textarea.value.trim();
       if (comment) opts.onSubmit(comment);

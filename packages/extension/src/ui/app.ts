@@ -4,7 +4,7 @@
  */
 
 import type { Feedback } from '@feedbacker/core';
-import { captureHtmlSnippet, logger } from '@feedbacker/core';
+import { captureHtmlSnippet, logger, MarkdownExporter } from '@feedbacker/core';
 import type { ComponentInfo } from '@feedbacker/detection';
 import { StateManager } from '../core/state-manager';
 import { DetectionController } from '../core/detection-controller';
@@ -21,6 +21,7 @@ export class FeedbackApp {
   private state: StateManager;
   private detection: DetectionController;
   private visible = true;
+  private settings: { position?: string; primaryColor?: string; autoCopy?: boolean } = {};
 
   // UI components
   private fab: FAB | null = null;
@@ -43,7 +44,8 @@ export class FeedbackApp {
     );
   }
 
-  render(settings?: { position?: string; primaryColor?: string }): void {
+  render(settings?: { position?: string; primaryColor?: string; autoCopy?: boolean }): void {
+    this.settings = settings || {};
     // Create FAB
     this.fab = new FAB(this.container, {
       feedbackCount: this.state.feedbacks.length,
@@ -62,7 +64,8 @@ export class FeedbackApp {
     logger.debug('FeedbackApp rendered');
   }
 
-  applySettings(settings: { position?: string; primaryColor?: string }): void {
+  applySettings(settings: { position?: string; primaryColor?: string; autoCopy?: boolean }): void {
+    this.settings = { ...this.settings, ...settings };
     if (settings.position) this.fab?.applyPosition(settings.position);
     if (settings.primaryColor) this.fab?.applyColor(settings.primaryColor);
   }
@@ -152,6 +155,10 @@ export class FeedbackApp {
           }
         };
         await this.state.addFeedback(feedback);
+        if (this.settings.autoCopy) {
+          const markdown = MarkdownExporter.exportSingleItem(feedback);
+          navigator.clipboard.writeText(markdown).catch(() => {});
+        }
         this.modal?.destroy();
         this.modal = null;
         this.fab?.updateCount(this.state.feedbacks.length);

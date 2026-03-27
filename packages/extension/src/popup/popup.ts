@@ -7,11 +7,13 @@ const SETTINGS_KEY = 'feedbacker-settings';
 interface ExtensionSettings {
   position: string;
   primaryColor: string;
+  autoCopy: boolean;
 }
 
 const DEFAULT_SETTINGS: ExtensionSettings = {
   position: 'bottom-right',
-  primaryColor: '#3b82f6'
+  primaryColor: '#3b82f6',
+  autoCopy: false
 };
 
 async function init(): Promise<void> {
@@ -19,6 +21,7 @@ async function init(): Promise<void> {
   const activateBtn = document.getElementById('activate-btn');
   const positionSelect = document.getElementById('position-select') as HTMLSelectElement | null;
   const colorInput = document.getElementById('color-input') as HTMLInputElement | null;
+  const autoCopyInput = document.getElementById('auto-copy-input') as HTMLInputElement | null;
 
   // Get feedback count
   try {
@@ -36,6 +39,7 @@ async function init(): Promise<void> {
 
   if (positionSelect) positionSelect.value = settings.position;
   if (colorInput) colorInput.value = settings.primaryColor;
+  if (autoCopyInput) autoCopyInput.checked = settings.autoCopy;
 
   // Save settings on change
   positionSelect?.addEventListener('change', () => {
@@ -45,6 +49,11 @@ async function init(): Promise<void> {
 
   colorInput?.addEventListener('input', () => {
     settings.primaryColor = colorInput.value;
+    saveSettings(settings);
+  });
+
+  autoCopyInput?.addEventListener('change', () => {
+    settings.autoCopy = autoCopyInput.checked;
     saveSettings(settings);
   });
 

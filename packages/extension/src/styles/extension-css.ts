@@ -234,11 +234,15 @@ export const EXTENSION_CSS = `
   border: 1px solid transparent;
   transition: background var(--fb-transition);
 }
+.fb-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .fb-btn-primary {
   background: var(--fb-primary);
   color: white;
 }
-.fb-btn-primary:hover { background: var(--fb-primary-hover); }
+.fb-btn-primary:hover:not(:disabled) { background: var(--fb-primary-hover); }
 .fb-btn-secondary {
   background: var(--fb-bg-secondary);
   color: var(--fb-text);
@@ -264,6 +268,29 @@ export const EXTENSION_CSS = `
 .fb-btn-icon:hover {
   background: var(--fb-bg-tertiary);
   color: var(--fb-text);
+}
+.fb-btn-icon[data-tooltip] {
+  position: relative;
+}
+.fb-btn-icon[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: var(--fb-text);
+  color: var(--fb-bg);
+  font-size: 11px;
+  font-family: var(--fb-font);
+  white-space: nowrap;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.fb-btn-icon[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 /* ---- Sidebar ---- */
@@ -348,6 +375,19 @@ export const EXTENSION_CSS = `
   object-fit: cover;
   border-radius: 4px;
   margin-bottom: 8px;
+}
+.fb-screenshot-copy {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--fb-bg) !important;
+  border: 1px solid var(--fb-border) !important;
+  box-shadow: var(--fb-shadow);
+  opacity: 0;
+  transition: opacity 150ms;
+}
+.fb-card:hover .fb-screenshot-copy {
+  opacity: 1;
 }
 .fb-card-actions {
   display: flex;
