@@ -53,8 +53,8 @@ phases:
     brd: complete
     research: complete
     spec: complete
-    plan: in_progress
-    build: not_started
+    plan: complete
+    build: complete
     check: not_started
 - number: 3
   title: Strategic UX Features
