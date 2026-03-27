@@ -162,7 +162,7 @@ export class DetectionController {
     const info = this.detector.detectComponent(element);
     this._hoveredComponent = info;
     this.onHover?.(info);
-    const name = getHumanReadableName(element, info.name);
+    const name = info ? getHumanReadableName(element, info.name) : element.tagName.toLowerCase();
     this.announceToLiveRegion(`Highlighting: ${name}`);
     logger.debug(`DOM navigation: set current to <${element.tagName.toLowerCase()}>`);
   }
