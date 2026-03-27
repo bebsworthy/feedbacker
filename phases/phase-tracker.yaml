@@ -1,1 +1,88 @@
-phases: []
+phases:
+- number: 1
+  title: Fix Critical UX Issues
+  brief: '17 quick wins: WCAG a11y fixes (F-18,F-19,F-20,F-21,F-22,F-23,F-24,F-29,F-30),
+    plain-language labels (F-04), Cmd/Ctrl+Enter submit (F-06), demote Clear All (F-07),
+    draft save indicator (F-10), shortcut visibility (F-12), privacy trust signal
+    (F-28), screenshot copy always visible (F-32), first-use coach mark (F-01), submit
+    success toast (F-02)'
+  brief_file: ''
+  refs:
+  - .audit/ux/05-proposals.md
+  - .audit/ux/04-audit.md
+  status: started
+  summary: ''
+  depends_on: []
+  tags:
+  - ux
+  - frontend
+  size: small
+  start_commit: 41fc7f8b16f58064818e582eb12432499d16bffe
+  end_commit: null
+  steps:
+    ideas: skipped
+    brd: in_progress
+    research: skipped
+    spec: not_started
+    plan: not_started
+    build: not_started
+    check: not_started
+- number: 2
+  title: Polish Core User Flows
+  brief: '10 improvements: undo toast for delete (F-03), export success toast (F-13),
+    empty state redesign (F-14), larger card action icons (F-15), selection mode banner
+    (F-16), entrance/exit animations (F-25), copy all button (F-31), inline card editing
+    (F-08), unified export surface (F-09), milestone celebrations (F-26)'
+  brief_file: ''
+  refs:
+  - .audit/ux/05-proposals.md
+  - .audit/ux/04-audit.md
+  - .audit/ux/01-user-goals.md
+  status: not_started
+  summary: ''
+  depends_on:
+  - 1
+  tags:
+  - ux
+  - frontend
+  size: medium
+  start_commit: null
+  end_commit: null
+  steps:
+    ideas: skipped
+    brd: not_started
+    research: not_started
+    spec: not_started
+    plan: not_started
+    build: not_started
+    check: not_started
+- number: 3
+  title: Strategic UX Features
+  brief: '6 strategic investments: human-readable element names (F-05), search and
+    sort in sidebar (F-11), element selection granularity (F-17), feedback type categorization
+    chips (F-34), navigate from card to element (F-35), keyboard-accessible selection
+    (F-19)'
+  brief_file: ''
+  refs:
+  - .audit/ux/05-proposals.md
+  - .audit/ux/04-audit.md
+  - .audit/ux/01-user-goals.md
+  - .audit/ux/03-patterns.md
+  status: not_started
+  summary: ''
+  depends_on:
+  - 2
+  tags:
+  - ux
+  - frontend
+  size: medium
+  start_commit: null
+  end_commit: null
+  steps:
+    ideas: skipped
+    brd: not_started
+    research: not_started
+    spec: not_started
+    plan: not_started
+    build: not_started
+    check: not_started
