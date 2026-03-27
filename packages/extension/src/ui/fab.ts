@@ -116,6 +116,15 @@ export class FAB {
       this.actionsEl.appendChild(btn);
     }
 
+    // Escape to collapse menu
+    this.actionsEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.collapse();
+        this.button.focus();
+      }
+    });
+
     this.container.appendChild(this.actionsEl);
   }
 

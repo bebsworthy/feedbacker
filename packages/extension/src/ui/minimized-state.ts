@@ -73,8 +73,17 @@ export class MinimizedState {
     });
     this.el.appendChild(discardBtn);
 
-    // Click to restore
+    // Click or keyboard to restore
+    this.el.tabIndex = 0;
+    this.el.setAttribute('role', 'button');
+    this.el.setAttribute('aria-label', `Restore feedback for ${opts.componentName}`);
     this.el.addEventListener('click', () => opts.onRestore());
+    this.el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        opts.onRestore();
+      }
+    });
 
     container.appendChild(this.el);
   }

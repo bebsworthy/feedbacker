@@ -101,6 +101,12 @@ export class ExportDialog {
       </div>
     `;
     option.addEventListener('click', onClick);
+    option.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick();
+      }
+    });
     return option;
   }
 

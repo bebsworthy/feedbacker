@@ -147,6 +147,20 @@ describe('FeedbackApp', () => {
 
       app.destroy();
     });
+
+    it('live region can receive announcement text', () => {
+      const app = new FeedbackApp(container, state, detection);
+      app.render();
+
+      const liveRegion = container.querySelector('[role="status"][aria-live="polite"]') as HTMLElement;
+      expect(liveRegion).not.toBeNull();
+
+      // The announce method sets textContent via requestAnimationFrame
+      // Verify the region starts empty and is ready for announcements
+      expect(liveRegion.textContent).toBe('');
+
+      app.destroy();
+    });
   });
 
   /**
