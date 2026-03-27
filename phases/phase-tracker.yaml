@@ -84,5 +84,5 @@ phases:
     research: complete
     spec: complete
     plan: complete
-    build: in_progress
+    build: complete
     check: not_started

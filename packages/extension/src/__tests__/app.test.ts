@@ -36,6 +36,24 @@ Object.assign(navigator, {
   },
 });
 
+jest.mock('../utils/css-selector-generator', () => ({
+  generateCssSelector: jest.fn().mockReturnValue('#mock-selector'),
+}));
+
+jest.mock('../ui/breadcrumb-trail', () => ({
+  BreadcrumbTrail: jest.fn().mockImplementation(() => ({
+    activate: jest.fn(),
+    deactivate: jest.fn(),
+    update: jest.fn(),
+    getElement: jest.fn().mockReturnValue(null),
+  })),
+}));
+
+jest.mock('../utils/element-relocator', () => ({
+  relocateElement: jest.fn().mockReturnValue(null),
+  highlightElement: jest.fn(),
+}));
+
 // Mock @feedbacker/core
 jest.mock('@feedbacker/core', () => ({
   captureHtmlSnippet: jest.fn().mockReturnValue('<div>test</div>'),
@@ -64,6 +82,7 @@ jest.mock('@feedbacker/detection', () => ({
     detect: jest.fn(),
   }),
   throttle: jest.fn((fn: Function) => fn),
+  getHumanReadableName: jest.fn((el: HTMLElement, name?: string) => name || el.tagName.toLowerCase()),
 }));
 
 import type { Feedback } from '@feedbacker/core';

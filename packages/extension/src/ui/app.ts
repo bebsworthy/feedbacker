@@ -24,6 +24,7 @@ import { ExportDialog } from './export-dialog';
 import { MinimizedState } from './minimized-state';
 import { checkIcon } from './icons';
 import { relocateElement, highlightElement } from '../utils/element-relocator';
+import { BreadcrumbTrail } from './breadcrumb-trail';
 
 /** Rotating toast messages for submit confirmation (PH-012) */
 const SUBMIT_TOAST_MESSAGES = [
@@ -59,6 +60,7 @@ export class FeedbackApp {
   private modal: FeedbackModal | null = null;
   private sidebar: ManagerSidebar | null = null;
   private overlay: ComponentOverlayUI | null = null;
+  private breadcrumb: BreadcrumbTrail = new BreadcrumbTrail();
   private confirmDialog: ConfirmDialog | null = null;
   private exportDialog: ExportDialog | null = null;
   private minimizedState: MinimizedState | null = null;
@@ -270,12 +272,14 @@ export class FeedbackApp {
 
   private startCapture(): void {
     this.fab?.collapse();
+    this.breadcrumb.activate();
     this.detection.activate();
   }
 
   private onComponentHover(info: ComponentInfo | null): void {
     if (info) {
       this.overlay?.show(info);
+      this.breadcrumb.update(info.element);
     } else {
       this.overlay?.hide();
     }
@@ -653,6 +657,7 @@ export class FeedbackApp {
       this.selectionBanner = null;
       logger.debug('Selection banner dismissed');
     }
+    this.breadcrumb.deactivate();
   }
 
   // ---- Toast rotation and milestones (PH-012) ----

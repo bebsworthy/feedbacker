@@ -77,7 +77,7 @@ describe('highlightElement', () => {
     highlightElement(el);
 
     expect(el.scrollIntoView).toHaveBeenCalledWith({
-      behavior: 'smooth',
+      behavior: 'instant',
       block: 'center',
     });
   });

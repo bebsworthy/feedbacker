@@ -35,7 +35,11 @@ export function highlightElement(
   element: HTMLElement,
   durationMs: number = DEFAULT_HIGHLIGHT_DURATION_MS
 ): void {
-  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Remove any existing highlight overlay before creating a new one
+  const existing = document.querySelector('[data-feedbacker-highlight]');
+  if (existing) existing.remove();
+
+  element.scrollIntoView({ behavior: 'instant', block: 'center' });
 
   const overlay = document.createElement('div');
   overlay.setAttribute('data-feedbacker-highlight', 'true');

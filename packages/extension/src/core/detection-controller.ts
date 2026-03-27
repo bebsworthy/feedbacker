@@ -4,7 +4,7 @@
  */
 
 import type { ComponentInfo } from '@feedbacker/detection';
-import { createDetector, throttle } from '@feedbacker/detection';
+import { createDetector, throttle, getHumanReadableName } from '@feedbacker/detection';
 import { logger } from '@feedbacker/core';
 
 const MESSAGE_PREFIX = 'feedbacker-detection';
@@ -162,6 +162,8 @@ export class DetectionController {
     const info = this.detector.detectComponent(element);
     this._hoveredComponent = info;
     this.onHover?.(info);
+    const name = getHumanReadableName(element, info.name);
+    this.announceToLiveRegion(`Highlighting: ${name}`);
     logger.debug(`DOM navigation: set current to <${element.tagName.toLowerCase()}>`);
   }
 
@@ -383,17 +385,22 @@ export class DetectionController {
     }
   }
 
+  private static readonly EXTENSION_IDS = new Set([
+    'feedbacker-extension-root',
+    'feedbacker-overlay',
+    'feedbacker-breadcrumb',
+    'feedbacker-aria-live',
+  ]);
+
   private isExtensionElement(el: HTMLElement): boolean {
-    // Check if element is part of our shadow DOM host or overlay
-    if (el.id === 'feedbacker-overlay' || el.id === 'feedbacker-extension-root') {
+    // Check if element is part of our shadow DOM host, overlay, breadcrumb, or ARIA region
+    if (DetectionController.EXTENSION_IDS.has(el.id)) {
       return true;
     }
     let node: Node | null = el;
     while (node) {
-      if (node instanceof HTMLElement) {
-        if (node.id === 'feedbacker-extension-root' || node.id === 'feedbacker-overlay') {
-          return true;
-        }
+      if (node instanceof HTMLElement && DetectionController.EXTENSION_IDS.has(node.id)) {
+        return true;
       }
       node = node.parentNode;
     }
