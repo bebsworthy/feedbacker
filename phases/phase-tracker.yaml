@@ -38,7 +38,7 @@ phases:
   - .audit/ux/05-proposals.md
   - .audit/ux/04-audit.md
   - .audit/ux/01-user-goals.md
-  status: started
+  status: complete
   summary: ''
   depends_on:
   - 1
@@ -47,7 +47,7 @@ phases:
   - frontend
   size: medium
   start_commit: 9c3bd17103a7837e9ad6bb47eb549bca03f78c4b
-  end_commit: null
+  end_commit: 5698200a060ddf4f763044cdea4c9fc7eca3b818
   steps:
     ideas: skipped
     brd: complete
@@ -55,7 +55,7 @@ phases:
     spec: complete
     plan: complete
     build: complete
-    check: not_started
+    check: complete
 - number: 3
   title: Strategic UX Features
   brief: '6 strategic investments: human-readable element names (F-05), search and
