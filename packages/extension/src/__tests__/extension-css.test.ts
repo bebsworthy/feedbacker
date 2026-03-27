@@ -1,6 +1,8 @@
 /**
  * Tests for extension CSS styles.
- * Covers T-014, T-020, T-021, T-022, T-026.
+ * Covers Phase 1: T-014, T-020, T-021, T-022, T-026.
+ * Covers Phase 2: T-011 (icon sizing), T-015 (keyframes),
+ *   T-016 (animation classes), T-017 (reduced motion).
  */
 
 import { EXTENSION_CSS } from '../styles/extension-css';
@@ -170,6 +172,124 @@ describe('Extension CSS', () => {
       expect(opacityMatch).not.toBeNull();
       const opacity = parseFloat(opacityMatch![1]);
       expect(opacity).toBeGreaterThanOrEqual(0.85);
+    });
+  });
+
+  // ============================================================
+  // Phase 2 Tests
+  // ============================================================
+
+  /**
+   * T-011: .fb-btn-icon has padding 8px, .fb-card-actions has gap 8px.
+   */
+  describe('T-011: Card action icon sizing', () => {
+    it('.fb-btn-icon has padding: 8px', () => {
+      const match = EXTENSION_CSS.match(
+        /\.fb-btn-icon\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      expect(match![1]).toContain('padding: 8px');
+    });
+
+    it('.fb-card-actions has gap: 8px', () => {
+      const match = EXTENSION_CSS.match(
+        /\.fb-card-actions\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      expect(match![1]).toContain('gap: 8px');
+    });
+  });
+
+  /**
+   * T-015: Animation keyframes defined (fb-sidebar-in, fb-modal-in, fb-fab-cascade).
+   */
+  describe('T-015: Entrance animation keyframes exist', () => {
+    it('contains @keyframes fb-sidebar-in', () => {
+      expect(EXTENSION_CSS).toContain('@keyframes fb-sidebar-in');
+    });
+
+    it('fb-sidebar-in animates from translateX(100%) to translateX(0)', () => {
+      // Match the full keyframes block including nested braces
+      const match = EXTENSION_CSS.match(
+        /@keyframes fb-sidebar-in\s*\{([\s\S]*?)\}\s*\}/
+      );
+      expect(match).not.toBeNull();
+      const block = match![1];
+      expect(block).toContain('translateX(100%)');
+      expect(block).toContain('translateX(0)');
+    });
+
+    it('contains @keyframes fb-modal-in', () => {
+      expect(EXTENSION_CSS).toContain('@keyframes fb-modal-in');
+    });
+
+    it('fb-modal-in animates from translateY(12px) opacity 0 to final', () => {
+      const match = EXTENSION_CSS.match(
+        /@keyframes fb-modal-in\s*\{([\s\S]*?)\}\s*\}/
+      );
+      expect(match).not.toBeNull();
+      const block = match![1];
+      expect(block).toContain('translateY(12px)');
+      expect(block).toContain('opacity: 0');
+    });
+
+    it('contains @keyframes fb-fab-cascade', () => {
+      expect(EXTENSION_CSS).toContain('@keyframes fb-fab-cascade');
+    });
+  });
+
+  /**
+   * T-016: Animation classes applied (.fb-sidebar, .fb-modal, .fb-fab-action).
+   */
+  describe('T-016: Animation classes are applied to elements', () => {
+    it('.fb-sidebar has animation: fb-sidebar-in 200ms ease-out', () => {
+      // Find the .fb-sidebar rule (not .fb-sidebar-backdrop, etc.)
+      const match = EXTENSION_CSS.match(
+        /\.fb-sidebar\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      expect(match![1]).toContain('animation: fb-sidebar-in 200ms ease-out');
+    });
+
+    it('.fb-modal has animation: fb-modal-in 200ms ease-out', () => {
+      const match = EXTENSION_CSS.match(
+        /\.fb-modal\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      expect(match![1]).toContain('animation: fb-modal-in 200ms ease-out');
+    });
+
+    it('.fb-fab-action uses fb-fab-cascade animation', () => {
+      const match = EXTENSION_CSS.match(
+        /\.fb-fab-action\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      expect(match![1]).toContain('fb-fab-cascade');
+    });
+  });
+
+  /**
+   * T-017: prefers-reduced-motion suppresses animations.
+   */
+  describe('T-017: prefers-reduced-motion disables all animations', () => {
+    it('contains @media (prefers-reduced-motion: reduce) block', () => {
+      expect(EXTENSION_CSS).toContain('@media (prefers-reduced-motion: reduce)');
+    });
+
+    it('sets animation-duration: 0s !important', () => {
+      const reducedMotionBlock = EXTENSION_CSS.match(
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\}\s*\}/
+      );
+      expect(reducedMotionBlock).not.toBeNull();
+      expect(reducedMotionBlock![1]).toContain('animation-duration: 0s !important');
+    });
+
+    it('sets transition-duration: 0s !important', () => {
+      const reducedMotionBlock = EXTENSION_CSS.match(
+        /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\}\s*\}/
+      );
+      expect(reducedMotionBlock).not.toBeNull();
+      expect(reducedMotionBlock![1]).toContain('transition-duration: 0s !important');
     });
   });
 });
