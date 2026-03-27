@@ -24,9 +24,9 @@ phases:
     brd: complete
     research: skipped
     spec: complete
-    plan: in_progress
-    build: not_started
-    check: not_started
+    plan: complete
+    build: complete
+    check: in_progress
 - number: 2
   title: Polish Core User Flows
   brief: '10 improvements: undo toast for delete (F-03), export success toast (F-13),
