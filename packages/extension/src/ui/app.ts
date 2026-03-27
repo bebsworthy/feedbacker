@@ -675,6 +675,7 @@ export class FeedbackApp {
       logger.debug('Selection banner dismissed');
     }
     this.breadcrumb.deactivate();
+    this.fab?.expand();
   }
 
   // ---- Toast rotation and milestones (PH-012) ----
