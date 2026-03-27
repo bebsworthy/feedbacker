@@ -17,6 +17,8 @@ export class DetectionController {
 
   private onHover: ((info: ComponentInfo | null) => void) | null = null;
   private onSelect: ((info: ComponentInfo) => void) | null = null;
+  private onActivate: (() => void) | null = null;
+  private onDeactivate: (() => void) | null = null;
 
   private throttledMouseMove: ((e: MouseEvent) => void) | null = null;
   private boundClick: ((e: MouseEvent) => void) | null = null;
@@ -41,6 +43,14 @@ export class DetectionController {
   ): void {
     this.onHover = onHover;
     this.onSelect = onSelect;
+  }
+
+  setLifecycleCallbacks(
+    onActivate: () => void,
+    onDeactivate: () => void
+  ): void {
+    this.onActivate = onActivate;
+    this.onDeactivate = onDeactivate;
   }
 
   activate(): void {
@@ -79,6 +89,7 @@ export class DetectionController {
 
     document.body.style.cursor = 'crosshair';
     logger.debug('Detection activated');
+    this.onActivate?.();
   }
 
   deactivate(): void {
@@ -102,12 +113,15 @@ export class DetectionController {
     document.body.style.cursor = '';
     this.onHover?.(null);
     logger.debug('Detection deactivated');
+    this.onDeactivate?.();
   }
 
   destroy(): void {
     this.deactivate();
     this.onHover = null;
     this.onSelect = null;
+    this.onActivate = null;
+    this.onDeactivate = null;
   }
 
   private handleMouseMove(e: MouseEvent): void {

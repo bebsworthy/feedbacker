@@ -70,3 +70,23 @@ export function checkIcon(size = 16, color = 'currentColor'): string {
 export function photoIcon(size = 16, color = 'currentColor'): string {
   return svg(size, stroke('M2.25 15.75L7.409 10.591C7.784 10.216 8.291 10.006 8.818 10.006C9.346 10.006 9.853 10.216 10.227 10.591L15.75 16.114M14.25 14.614L15.659 13.205C16.034 12.83 16.541 12.62 17.068 12.62C17.596 12.62 18.103 12.83 18.477 13.205L21.75 16.478M3.75 19.5H20.25C20.6478 19.5 21.0294 19.342 21.3107 19.0607C21.592 18.7794 21.75 18.3978 21.75 18V6C21.75 5.60218 21.592 5.22064 21.3107 4.93934C21.0294 4.65804 20.6478 4.5 20.25 4.5H3.75C3.35218 4.5 2.97064 4.65804 2.68934 4.93934C2.40804 5.22064 2.25 5.60218 2.25 6V18C2.25 18.3978 2.40804 18.7794 2.68934 19.0607C2.97064 19.342 3.35218 19.5 3.75 19.5Z', color));
 }
+
+export function emptyStateIllustration(size = 64, color = 'currentColor'): string {
+  return `<svg class="fb-empty-illustration" width="${size}" height="${size}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="14" y="8" width="36" height="48" rx="4" stroke="${color}" stroke-width="2"/>
+    <path d="M24 8V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="24" x2="38" y2="24" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="32" x2="38" y2="32" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="44" cy="44" r="10" stroke="${color}" stroke-width="2"/>
+    <line x1="44" y1="39" x2="44" y2="49" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="39" y1="44" x2="49" y2="44" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+
+export function clipboardCopyIcon(size = 20, color = 'currentColor'): string {
+  return svg(size, [
+    stroke('M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-12a2 2 0 00-2-2h-2', color),
+    stroke('M9 3h6a1 1 0 011 1v1a1 1 0 01-1 1H9a1 1 0 01-1-1V4a1 1 0 011-1z', color),
+    stroke('M9 12h6M9 16h4', color),
+  ].join(''));
+}
