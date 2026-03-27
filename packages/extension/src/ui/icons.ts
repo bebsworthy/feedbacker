@@ -83,6 +83,19 @@ export function emptyStateIllustration(size = 64, color = 'currentColor'): strin
   </svg>`;
 }
 
+export function searchIcon(size = 16, color = 'currentColor'): string {
+  return svg(size, [
+    stroke('M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', color),
+  ].join(''));
+}
+
+export function sortIcon(size = 16, color = 'currentColor'): string {
+  return svg(size, [
+    stroke('M3 4h13M3 8h9M3 12h5', color),
+    stroke('M17 8l3 4-3 4', color),
+  ].join(''));
+}
+
 export function clipboardCopyIcon(size = 20, color = 'currentColor'): string {
   return svg(size, [
     stroke('M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-12a2 2 0 00-2-2h-2', color),

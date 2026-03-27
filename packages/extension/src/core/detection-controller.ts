@@ -9,11 +9,15 @@ import { logger } from '@feedbacker/core';
 
 const MESSAGE_PREFIX = 'feedbacker-detection';
 
+/** Tag names that should be skipped during DOM hierarchy navigation */
+const SKIP_TAGS = new Set(['SCRIPT', 'STYLE']);
+
 export class DetectionController {
   private detector = createDetector();
   private _isActive = false;
   private _hoveredComponent: ComponentInfo | null = null;
   private _selectedComponent: ComponentInfo | null = null;
+  private _currentElement: HTMLElement | null = null;
 
   private onHover: ((info: ComponentInfo | null) => void) | null = null;
   private onSelect: ((info: ComponentInfo) => void) | null = null;
@@ -24,6 +28,7 @@ export class DetectionController {
   private boundClick: ((e: MouseEvent) => void) | null = null;
   private boundKeydown: ((e: KeyboardEvent) => void) | null = null;
   private boundMessage: ((e: MessageEvent) => void) | null = null;
+  private boundWheel: ((e: WheelEvent) => void) | null = null;
 
   get isActive(): boolean {
     return this._isActive;
@@ -35,6 +40,10 @@ export class DetectionController {
 
   get selectedComponent(): ComponentInfo | null {
     return this._selectedComponent;
+  }
+
+  get currentElement(): HTMLElement | null {
+    return this._currentElement;
   }
 
   setCallbacks(
@@ -82,10 +91,15 @@ export class DetectionController {
       }
     };
 
+    this.boundWheel = (e: WheelEvent) => {
+      this.handleWheel(e);
+    };
+
     document.addEventListener('mousemove', this.throttledMouseMove, true);
     document.addEventListener('click', this.boundClick, true);
     document.addEventListener('keydown', this.boundKeydown, true);
     window.addEventListener('message', this.boundMessage);
+    document.addEventListener('wheel', this.boundWheel, { capture: true, passive: false });
 
     document.body.style.cursor = 'crosshair';
     logger.debug('Detection activated');
@@ -109,7 +123,11 @@ export class DetectionController {
     if (this.boundMessage) {
       window.removeEventListener('message', this.boundMessage);
     }
+    if (this.boundWheel) {
+      document.removeEventListener('wheel', this.boundWheel, true);
+    }
 
+    this._currentElement = null;
     document.body.style.cursor = '';
     this.onHover?.(null);
     logger.debug('Detection deactivated');
@@ -124,6 +142,89 @@ export class DetectionController {
     this.onDeactivate = null;
   }
 
+  /** Set the current element for DOM hierarchy navigation */
+  setCurrentElement(element: HTMLElement): void {
+    this._currentElement = element;
+    const info = this.detector.detectComponent(element);
+    this._hoveredComponent = info;
+    this.onHover?.(info);
+    logger.debug(`DOM navigation: set current to <${element.tagName.toLowerCase()}>`);
+  }
+
+  /** Navigate to the parent element, skipping non-navigable elements */
+  navigateToParent(): HTMLElement | null {
+    if (!this._currentElement) return null;
+
+    let candidate = this._currentElement.parentElement;
+    while (candidate) {
+      if (this.isNavigableElement(candidate)) {
+        this.setCurrentElement(candidate);
+        return candidate;
+      }
+      candidate = candidate.parentElement;
+    }
+    return null;
+  }
+
+  /** Navigate to the first navigable child element */
+  navigateToChild(): HTMLElement | null {
+    if (!this._currentElement) return null;
+
+    const children = this._currentElement.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child instanceof HTMLElement && this.isNavigableElement(child)) {
+        this.setCurrentElement(child);
+        return child;
+      }
+    }
+    return null;
+  }
+
+  /** Navigate to the next or previous sibling, skipping non-navigable elements */
+  navigateToSibling(direction: 'next' | 'previous'): HTMLElement | null {
+    if (!this._currentElement) return null;
+
+    const prop = direction === 'next' ? 'nextElementSibling' : 'previousElementSibling';
+    let candidate = this._currentElement[prop];
+    while (candidate) {
+      if (candidate instanceof HTMLElement && this.isNavigableElement(candidate)) {
+        this.setCurrentElement(candidate);
+        return candidate;
+      }
+      candidate = candidate[prop];
+    }
+    return null;
+  }
+
+  /** Check if an element is suitable for navigation (not script/style/extension) */
+  private isNavigableElement(el: HTMLElement): boolean {
+    if (SKIP_TAGS.has(el.tagName)) return false;
+    if (this.isExtensionElement(el)) return false;
+    // Stop at document element (html) — it is navigable but its parent is not
+    return true;
+  }
+
+  private handleWheel(e: WheelEvent): void {
+    if (!this._isActive) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    // If no current element, use the hovered component's element
+    if (!this._currentElement && this._hoveredComponent) {
+      this._currentElement = this._hoveredComponent.element;
+    }
+    if (!this._currentElement) return;
+
+    if (e.deltaY < 0) {
+      // Scroll up — navigate to parent
+      this.navigateToParent();
+    } else if (e.deltaY > 0) {
+      // Scroll down — navigate to child
+      this.navigateToChild();
+    }
+  }
+
   private handleMouseMove(e: MouseEvent): void {
     const target = e.target as HTMLElement;
     if (!target || this.isExtensionElement(target)) {
@@ -132,6 +233,7 @@ export class DetectionController {
       return;
     }
 
+    this._currentElement = target;
     const info = this.detector.detectComponent(target);
     this._hoveredComponent = info;
     this.onHover?.(info);

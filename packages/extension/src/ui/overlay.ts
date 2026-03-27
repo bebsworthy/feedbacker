@@ -2,7 +2,7 @@
  * ComponentOverlayUI — renders outside the shadow DOM to visually cover page elements
  */
 
-import type { ComponentInfo } from '@feedbacker/detection';
+import { type ComponentInfo, getHumanReadableName } from '@feedbacker/detection';
 
 export class ComponentOverlayUI {
   private overlayEl: HTMLDivElement;
@@ -55,10 +55,8 @@ export class ComponentOverlayUI {
     this.overlayEl.style.height = `${rect.height}px`;
 
     // Position tooltip above or below depending on space
-    const tooltipText = info.path.length > 1
-      ? `${info.name} (${info.path.slice(0, -1).join(' > ')})`
-      : info.name;
-    this.tooltipEl.textContent = tooltipText;
+    const humanName = getHumanReadableName(info.element, info.name);
+    this.tooltipEl.textContent = humanName;
 
     if (rect.top < 40) {
       // Not enough space above — show below

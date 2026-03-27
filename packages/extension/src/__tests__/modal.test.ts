@@ -64,16 +64,29 @@ describe('FeedbackModal', () => {
   }
 
   /**
-   * T-004: Modal component path has label prefix.
-   * Path element textContent starts with "Element location:".
+   * T-004: Modal component path shown in technical details.
+   * Path is inside the technical details toggle section with "Path:" label.
    */
-  describe('T-004: Modal component path has label prefix', () => {
-    it('path element starts with "Element location:"', () => {
+  describe('T-004: Modal component path in technical details', () => {
+    it('technical details contain path with component hierarchy', () => {
       const modal = createModal();
-      const pathEl = container.querySelector('.fb-component-path');
-      expect(pathEl).not.toBeNull();
-      expect(pathEl!.textContent).toMatch(/^Element location:/);
-      expect(pathEl!.textContent).toContain('App > Layout > TestButton');
+
+      // Expand the technical details toggle
+      const toggle = container.querySelector('.fb-details-toggle') as HTMLButtonElement;
+      expect(toggle).not.toBeNull();
+      toggle.click();
+
+      const detailsContent = container.querySelector('.fb-details-content') as HTMLElement;
+      expect(detailsContent.style.display).toBe('block');
+
+      const pathLabel = detailsContent.querySelector('.fb-detail-label');
+      expect(pathLabel).not.toBeNull();
+
+      // Find the path row specifically
+      const rows = detailsContent.querySelectorAll('.fb-detail-row');
+      const pathRow = Array.from(rows).find(r => r.textContent?.includes('Path:'));
+      expect(pathRow).toBeDefined();
+      expect(pathRow!.textContent).toContain('App > Layout > TestButton');
 
       modal.destroy();
     });

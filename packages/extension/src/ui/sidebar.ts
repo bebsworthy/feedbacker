@@ -1,13 +1,14 @@
 /**
  * ManagerSidebar — vanilla TS sidebar for viewing/managing feedback
  * Note: Exceeds 200-line guideline due to imperative DOM construction
- * (no JSX/template engine). Cannot be reasonably split further as all
+ * (no JSX/template engine) plus search/sort/inline-edit features that
+ * share private state. Cannot be reasonably split further as all
  * methods share private state and the DOM tree is tightly coupled.
  */
 
 import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
-import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration } from './icons';
+import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration, searchIcon, sortIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 import { InlineEditController } from './inline-edit';
 
@@ -34,6 +35,12 @@ export class ManagerSidebar {
   private filterMode: FilterMode = 'this-site';
   private currentOrigin: string;
   private inlineEdit: InlineEditController;
+  private searchTerm = '';
+  private sortOrder: 'newest' | 'oldest' = 'newest';
+  private searchInput: HTMLInputElement;
+  private sortBtn: HTMLButtonElement;
+  private noMatchEl: HTMLDivElement;
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(container: HTMLElement, opts: SidebarOptions) {
     this.container = container;
@@ -89,10 +96,39 @@ export class ManagerSidebar {
     filterBar.appendChild(allSitesBtn);
     this.sidebar.appendChild(filterBar);
 
+    // Search & Sort bar
+    const searchBar = document.createElement('div');
+    searchBar.className = 'fb-search-bar';
+
+    this.searchInput = document.createElement('input');
+    this.searchInput.type = 'text';
+    this.searchInput.className = 'fb-search-input';
+    this.searchInput.placeholder = 'Search feedback...';
+    this.searchInput.setAttribute('aria-label', 'Search feedback');
+    this.searchInput.addEventListener('input', () => this.onSearchInput());
+    searchBar.appendChild(this.searchInput);
+
+    this.sortBtn = document.createElement('button');
+    this.sortBtn.className = 'fb-sort-btn';
+    this.sortBtn.setAttribute('aria-label', 'Toggle sort order');
+    this.sortBtn.innerHTML = `${sortIcon(14)} Newest`;
+    this.sortBtn.addEventListener('click', () => this.toggleSort());
+    searchBar.appendChild(this.sortBtn);
+
+    this.sidebar.appendChild(searchBar);
+
+    // No-match message (hidden by default)
+    this.noMatchEl = document.createElement('div');
+    this.noMatchEl.className = 'fb-no-match';
+    this.noMatchEl.style.display = 'none';
+    this.noMatchEl.setAttribute('role', 'status');
+    this.noMatchEl.textContent = 'No matching feedback';
+
     // Body
     this.body = document.createElement('div');
     this.body.className = 'fb-sidebar-body';
     this.sidebar.appendChild(this.body);
+    this.sidebar.appendChild(this.noMatchEl);
 
     container.appendChild(this.backdrop);
     container.appendChild(this.sidebar);
@@ -117,6 +153,9 @@ export class ManagerSidebar {
   }
 
   destroy(): void {
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+    }
     this.inlineEdit.destroy();
     this.focusTrap?.destroy();
     this.backdrop.remove();
@@ -146,6 +185,11 @@ export class ManagerSidebar {
 
     this.body.innerHTML = '';
     this.renderFeedbackList(filtered);
+
+    // Re-apply search filter after re-render
+    if (this.searchTerm) {
+      this.applySearch();
+    }
 
     // Update active tab styles and aria-selected
     this.sidebar.querySelectorAll('[data-filter]').forEach((tab) => {
@@ -214,6 +258,72 @@ export class ManagerSidebar {
     }
   }
 
+  private onSearchInput(): void {
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+    }
+    this.debounceTimer = setTimeout(() => {
+      this.searchTerm = this.searchInput.value;
+      this.applySearch();
+    }, 300);
+  }
+
+  private applySearch(): void {
+    const term = this.searchTerm.toLowerCase();
+    const cards = this.body.querySelectorAll('.fb-card');
+    let visibleCount = 0;
+
+    cards.forEach((cardEl) => {
+      const card = cardEl as HTMLElement;
+      if (!term) {
+        card.classList.remove('fb-card-hidden');
+        visibleCount++;
+        return;
+      }
+      const fbId = card.dataset.fbId ?? '';
+      const fb = this.opts.feedbacks.find((f) => f.id === fbId);
+      if (!fb) {
+        card.classList.add('fb-card-hidden');
+        return;
+      }
+      const matches =
+        fb.comment.toLowerCase().includes(term) ||
+        fb.componentName.toLowerCase().includes(term) ||
+        fb.url.toLowerCase().includes(term);
+      if (matches) {
+        card.classList.remove('fb-card-hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('fb-card-hidden');
+      }
+    });
+
+    // Show/hide no-match message
+    const hasCards = cards.length > 0;
+    if (hasCards && visibleCount === 0 && term) {
+      this.noMatchEl.textContent = 'No matching feedback';
+      this.noMatchEl.style.display = '';
+    } else {
+      this.noMatchEl.style.display = 'none';
+    }
+  }
+
+  private toggleSort(): void {
+    this.sortOrder = this.sortOrder === 'newest' ? 'oldest' : 'newest';
+    this.sortBtn.innerHTML = `${sortIcon(14)} ${this.sortOrder === 'newest' ? 'Newest' : 'Oldest'}`;
+    this.reorderCards();
+  }
+
+  private reorderCards(): void {
+    const cards = Array.from(this.body.querySelectorAll('.fb-card')) as HTMLElement[];
+    if (cards.length <= 1) return;
+
+    // Reverse the current order using insertBefore (DOM reordering, not rebuild)
+    for (let i = 1; i < cards.length; i++) {
+      this.body.insertBefore(cards[i], this.body.firstChild);
+    }
+  }
+
   private async copyImageToClipboard(dataUrl: string, btn: HTMLButtonElement): Promise<void> {
     try {
       const res = await fetch(dataUrl);
@@ -259,6 +369,7 @@ export class ManagerSidebar {
   private createCard(fb: Feedback): HTMLDivElement {
     const card = document.createElement('div');
     card.className = 'fb-card';
+    card.dataset.fbId = fb.id;
 
     // Screenshot
     if (fb.screenshot) {
