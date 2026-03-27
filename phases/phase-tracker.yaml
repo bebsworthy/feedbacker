@@ -21,9 +21,9 @@ phases:
   end_commit: null
   steps:
     ideas: skipped
-    brd: in_progress
+    brd: complete
     research: skipped
-    spec: not_started
+    spec: in_progress
     plan: not_started
     build: not_started
     check: not_started
