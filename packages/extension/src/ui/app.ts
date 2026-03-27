@@ -283,9 +283,16 @@ export class FeedbackApp {
         this.fab?.updateCount(this.state.feedbacks.length);
         this.announce('Feedback deleted');
       },
-      onEdit: (feedback: Feedback) => this.editFeedback(feedback),
-      onExport: (format: 'markdown' | 'zip') => this.doExport(format),
-      onClearAll: () => this.confirmClearAll(),
+      onSaveEdit: async (id: string, comment: string) => {
+        const existing = this.state.feedbacks.find(f => f.id === id);
+        if (existing) {
+          const updated = { ...existing, comment, timestamp: new Date().toISOString() };
+          await this.state.addFeedback(updated);
+          this.sidebar?.updateFeedbacks(this.state.feedbacks);
+        }
+      },
+      onShowExportDialog: () => this.showExportDialog(),
+      onStartCapture: () => this.startCapture(),
       onAnnounce: (message: string) => this.announce(message)
     });
   }
@@ -298,11 +305,24 @@ export class FeedbackApp {
     this.exportDialog = new ExportDialog(this.container, {
       feedbackCount: this.state.feedbacks.length,
       onExport: (format) => this.doExport(format),
+      onCopyAll: () => this.copyAllToClipboard(),
       onCancel: () => {
         this.exportDialog?.destroy();
         this.exportDialog = null;
       }
     });
+  }
+
+  private async copyAllToClipboard(): Promise<void> {
+    try {
+      const feedbacks = this.state.feedbacks;
+      const markdown = MarkdownExporter.exportAsMarkdown(feedbacks);
+      await navigator.clipboard.writeText(markdown);
+      this.showToast(`Copied ${feedbacks.length} item${feedbacks.length !== 1 ? 's' : ''} to clipboard`);
+      this.announce(`Copied ${feedbacks.length} items to clipboard`);
+    } catch {
+      this.showToast('Failed to copy. Please try again.');
+    }
   }
 
   private async doExport(format: 'markdown' | 'zip'): Promise<void> {

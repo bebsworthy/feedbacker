@@ -2,12 +2,13 @@
  * ExportDialog — vanilla TS export format picker
  */
 
-import { documentTextIcon, archiveBoxIcon, closeIcon } from './icons';
+import { documentTextIcon, archiveBoxIcon, closeIcon, clipboardCopyIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 
 interface ExportDialogOptions {
   feedbackCount: number;
   onExport: (format: 'markdown' | 'zip') => void;
+  onCopyAll: () => void;
   onCancel: () => void;
 }
 
@@ -29,13 +30,13 @@ export class ExportDialog {
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute(
       'aria-label',
-      `Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}`
+      `Share / Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}`
     );
 
     // Header
     const header = document.createElement('div');
     header.className = 'fb-modal-header';
-    header.innerHTML = `<h3>Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}</h3>`;
+    header.innerHTML = `<h3>Share / Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}</h3>`;
     const closeBtn = document.createElement('button');
     closeBtn.className = 'fb-btn-icon';
     closeBtn.setAttribute('aria-label', 'Close export dialog');
@@ -47,6 +48,18 @@ export class ExportDialog {
     // Body
     const body = document.createElement('div');
     body.className = 'fb-modal-body';
+
+    // Copy all option
+    const copyAllOption = this.createOption(
+      clipboardCopyIcon(24),
+      'Copy all to clipboard',
+      'Copy all items as Markdown text',
+      () => {
+        opts.onCopyAll();
+        opts.onCancel();
+      }
+    );
+    body.appendChild(copyAllOption);
 
     // Markdown option
     const mdOption = this.createOption(

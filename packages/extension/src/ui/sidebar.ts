@@ -7,16 +7,16 @@
 
 import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
-import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon } from './icons';
+import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration } from './icons';
 import { FocusTrap } from './focus-trap';
 
 interface SidebarOptions {
   feedbacks: Feedback[];
   onClose: () => void;
   onDelete: (id: string) => void;
-  onEdit: (feedback: Feedback) => void;
-  onExport: (format: 'markdown' | 'zip') => void;
-  onClearAll: () => void;
+  onSaveEdit: (id: string, comment: string) => Promise<void>;
+  onShowExportDialog: () => void;
+  onStartCapture: () => void;
   onAnnounce?: (message: string) => void;
 }
 
@@ -32,7 +32,6 @@ export class ManagerSidebar {
   private focusTrap: FocusTrap | null = null;
   private filterMode: FilterMode = 'this-site';
   private currentOrigin: string;
-  private clearAllBtn: HTMLButtonElement;
 
   constructor(container: HTMLElement, opts: SidebarOptions) {
     this.container = container;
@@ -55,12 +54,25 @@ export class ManagerSidebar {
     header.className = 'fb-sidebar-header';
     this.headerH3 = document.createElement('h3');
     header.appendChild(this.headerH3);
+
+    const headerActions = document.createElement('div');
+    headerActions.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'fb-btn fb-btn-secondary fb-btn-sm';
+    exportBtn.innerHTML = `${arrowDownTrayIcon(16)} <span style="margin-left:4px">Share / Export</span>`;
+    exportBtn.setAttribute('aria-label', 'Share / Export');
+    exportBtn.addEventListener('click', () => opts.onShowExportDialog());
+    headerActions.appendChild(exportBtn);
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'fb-btn-icon';
     closeBtn.innerHTML = closeIcon(20);
     closeBtn.setAttribute('aria-label', 'Close sidebar');
     closeBtn.addEventListener('click', () => opts.onClose());
-    header.appendChild(closeBtn);
+    headerActions.appendChild(closeBtn);
+
+    header.appendChild(headerActions);
     this.sidebar.appendChild(header);
 
     // Filter tabs
@@ -78,31 +90,6 @@ export class ManagerSidebar {
     this.body = document.createElement('div');
     this.body.className = 'fb-sidebar-body';
     this.sidebar.appendChild(this.body);
-
-    // Footer
-    const footer = document.createElement('div');
-    footer.className = 'fb-sidebar-footer';
-
-    const exportMdBtn = document.createElement('button');
-    exportMdBtn.className = 'fb-btn fb-btn-secondary';
-    exportMdBtn.innerHTML = `${arrowDownTrayIcon(16)} <span style="margin-left:4px">Markdown</span>`;
-    exportMdBtn.addEventListener('click', () => opts.onExport('markdown'));
-
-    const exportZipBtn = document.createElement('button');
-    exportZipBtn.className = 'fb-btn fb-btn-secondary';
-    exportZipBtn.innerHTML = `${arrowDownTrayIcon(16)} <span style="margin-left:4px">ZIP</span>`;
-    exportZipBtn.addEventListener('click', () => opts.onExport('zip'));
-
-    this.clearAllBtn = document.createElement('button');
-    this.clearAllBtn.className = 'fb-btn fb-btn-danger';
-    this.clearAllBtn.textContent = 'Clear all';
-    this.clearAllBtn.style.marginLeft = 'auto';
-    this.clearAllBtn.addEventListener('click', () => opts.onClearAll());
-
-    footer.appendChild(exportMdBtn);
-    footer.appendChild(exportZipBtn);
-    footer.appendChild(this.clearAllBtn);
-    this.sidebar.appendChild(footer);
 
     // Escape to close
     const onKeydown = (e: KeyboardEvent) => {
@@ -165,9 +152,6 @@ export class ManagerSidebar {
     this.body.innerHTML = '';
     this.renderFeedbackList(filtered);
 
-    // Hide Clear All when there are 0 total feedback items
-    this.clearAllBtn.style.display = this.opts.feedbacks.length === 0 ? 'none' : '';
-
     // Update active tab styles and aria-selected
     this.sidebar.querySelectorAll('[data-filter]').forEach((tab) => {
       const el = tab as HTMLElement;
@@ -202,10 +186,31 @@ export class ManagerSidebar {
 
   private renderFeedbackList(feedbacks: Feedback[]): void {
     if (feedbacks.length === 0) {
-      const emptyMsg = this.filterMode === 'this-site'
-        ? 'No feedback for this site yet'
-        : 'No feedback yet';
-      this.body.innerHTML = `<div class="fb-empty"><p>${emptyMsg}</p></div>`;
+      const empty = document.createElement('div');
+      empty.className = 'fb-empty';
+
+      empty.innerHTML = emptyStateIllustration(64, 'var(--fb-text-muted)');
+
+      const heading = document.createElement('h4');
+      heading.textContent = 'No feedback yet';
+      heading.style.cssText = 'margin: 16px 0 8px; font-size: 16px; color: var(--fb-text);';
+      empty.appendChild(heading);
+
+      const subtext = document.createElement('p');
+      subtext.textContent = "Click 'New feedback' to start your review";
+      subtext.style.cssText = 'margin: 0 0 16px; font-size: 13px; color: var(--fb-text-secondary);';
+      empty.appendChild(subtext);
+
+      const ctaBtn = document.createElement('button');
+      ctaBtn.className = 'fb-btn fb-btn-primary';
+      ctaBtn.textContent = 'Start reviewing';
+      ctaBtn.addEventListener('click', () => {
+        this.opts.onStartCapture();
+        this.opts.onClose();
+      });
+      empty.appendChild(ctaBtn);
+
+      this.body.appendChild(empty);
       return;
     }
 
@@ -323,7 +328,8 @@ export class ManagerSidebar {
     editBtn.innerHTML = pencilIcon(16);
     editBtn.dataset.tooltip = 'Edit';
     editBtn.setAttribute('aria-label', 'Edit feedback');
-    editBtn.addEventListener('click', () => this.opts.onEdit(fb));
+    // PH-008 will replace this with inline textarea editing
+    editBtn.addEventListener('click', () => {});
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'fb-btn-icon';

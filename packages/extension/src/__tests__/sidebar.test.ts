@@ -1,6 +1,6 @@
 /**
  * Tests for ManagerSidebar component.
- * Covers T-002, T-009, T-016, T-018, T-024.
+ * Covers T-002, T-009, T-010, T-016, T-018, T-024, T-027.
  */
 
 import { ManagerSidebar } from '../ui/sidebar';
@@ -54,18 +54,18 @@ describe('ManagerSidebar', () => {
     feedbacks: Feedback[];
     onClose: jest.Mock;
     onDelete: jest.Mock;
-    onEdit: jest.Mock;
-    onExport: jest.Mock;
-    onClearAll: jest.Mock;
+    onSaveEdit: jest.Mock;
+    onShowExportDialog: jest.Mock;
+    onStartCapture: jest.Mock;
     onAnnounce: jest.Mock;
   }> = {}) {
     return new ManagerSidebar(container, {
       feedbacks: overrides.feedbacks ?? [createFeedback()],
       onClose: overrides.onClose ?? jest.fn(),
       onDelete: overrides.onDelete ?? jest.fn(),
-      onEdit: overrides.onEdit ?? jest.fn(),
-      onExport: overrides.onExport ?? jest.fn(),
-      onClearAll: overrides.onClearAll ?? jest.fn(),
+      onSaveEdit: overrides.onSaveEdit ?? jest.fn().mockResolvedValue(undefined),
+      onShowExportDialog: overrides.onShowExportDialog ?? jest.fn(),
+      onStartCapture: overrides.onStartCapture ?? jest.fn(),
       onAnnounce: overrides.onAnnounce ?? jest.fn(),
     });
   }
@@ -97,40 +97,106 @@ describe('ManagerSidebar', () => {
   });
 
   /**
-   * T-009: Clear all button exists in sidebar footer.
-   * Footer contains a button with text "Clear all" and class "fb-btn-danger".
-   * Clicking it calls onClearAll.
+   * T-009: Empty state shows designed layout.
+   * Render sidebar with zero feedbacks. .fb-empty container exists with SVG
+   * illustration, heading, subtext, and CTA button.
    */
-  describe('T-009: Clear all button in sidebar footer', () => {
-    it('has a "Clear all" button with danger class in the footer', () => {
+  describe('T-009: Empty state shows designed layout', () => {
+    it('renders .fb-empty container with SVG illustration', () => {
+      const sidebar = createSidebar({ feedbacks: [] });
+      const emptyEl = container.querySelector('.fb-empty');
+      expect(emptyEl).not.toBeNull();
+
+      const svg = emptyEl!.querySelector('.fb-empty-illustration');
+      expect(svg).not.toBeNull();
+
+      sidebar.destroy();
+    });
+
+    it('contains heading "No feedback yet"', () => {
+      const sidebar = createSidebar({ feedbacks: [] });
+      const emptyEl = container.querySelector('.fb-empty');
+      const heading = emptyEl!.querySelector('h4');
+      expect(heading).not.toBeNull();
+      expect(heading!.textContent).toBe('No feedback yet');
+
+      sidebar.destroy();
+    });
+
+    it('contains subtext about starting a review', () => {
+      const sidebar = createSidebar({ feedbacks: [] });
+      const emptyEl = container.querySelector('.fb-empty');
+      const subtext = emptyEl!.querySelector('p');
+      expect(subtext).not.toBeNull();
+      expect(subtext!.textContent).toContain('New feedback');
+
+      sidebar.destroy();
+    });
+
+    it('contains "Start reviewing" CTA button with primary class', () => {
+      const sidebar = createSidebar({ feedbacks: [] });
+      const emptyEl = container.querySelector('.fb-empty');
+      const ctaBtn = emptyEl!.querySelector('.fb-btn.fb-btn-primary') as HTMLButtonElement;
+      expect(ctaBtn).not.toBeNull();
+      expect(ctaBtn.textContent).toBe('Start reviewing');
+
+      sidebar.destroy();
+    });
+  });
+
+  /**
+   * T-010: Empty state CTA triggers capture flow.
+   * Click "Start reviewing" button: onStartCapture is called and sidebar closes.
+   */
+  describe('T-010: Empty state CTA triggers capture flow', () => {
+    it('calls onStartCapture and onClose when CTA is clicked', () => {
+      const onStartCapture = jest.fn();
+      const onClose = jest.fn();
+      const sidebar = createSidebar({ feedbacks: [], onStartCapture, onClose });
+      const emptyEl = container.querySelector('.fb-empty');
+      const ctaBtn = emptyEl!.querySelector('.fb-btn.fb-btn-primary') as HTMLButtonElement;
+      ctaBtn.click();
+
+      expect(onStartCapture).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+
+      sidebar.destroy();
+    });
+  });
+
+  /**
+   * T-027: Sidebar header has Share/Export button, footer is removed.
+   * No .fb-sidebar-footer element exists. Header contains "Share / Export" button.
+   */
+  describe('T-027: Sidebar header has Share/Export button, footer is removed', () => {
+    it('does not render .fb-sidebar-footer', () => {
       const sidebar = createSidebar();
       const footer = container.querySelector('.fb-sidebar-footer');
-      expect(footer).not.toBeNull();
-
-      const clearAllBtn = footer!.querySelector('.fb-btn-danger') as HTMLButtonElement;
-      expect(clearAllBtn).not.toBeNull();
-      expect(clearAllBtn.textContent).toBe('Clear all');
+      expect(footer).toBeNull();
 
       sidebar.destroy();
     });
 
-    it('calls onClearAll when clicked', () => {
-      const onClearAll = jest.fn();
-      const sidebar = createSidebar({ onClearAll });
-      const footer = container.querySelector('.fb-sidebar-footer');
-      const clearAllBtn = footer!.querySelector('.fb-btn-danger') as HTMLButtonElement;
-      clearAllBtn.click();
+    it('header contains "Share / Export" button', () => {
+      const sidebar = createSidebar();
+      const header = container.querySelector('.fb-sidebar-header');
+      expect(header).not.toBeNull();
 
-      expect(onClearAll).toHaveBeenCalled();
+      const exportBtn = header!.querySelector('[aria-label="Share / Export"]') as HTMLButtonElement;
+      expect(exportBtn).not.toBeNull();
+      expect(exportBtn.textContent).toContain('Share / Export');
 
       sidebar.destroy();
     });
 
-    it('hides "Clear all" when there are zero feedback items', () => {
-      const sidebar = createSidebar({ feedbacks: [] });
-      const footer = container.querySelector('.fb-sidebar-footer');
-      const clearAllBtn = footer!.querySelector('.fb-btn-danger') as HTMLButtonElement;
-      expect(clearAllBtn.style.display).toBe('none');
+    it('clicking header export button calls onShowExportDialog', () => {
+      const onShowExportDialog = jest.fn();
+      const sidebar = createSidebar({ onShowExportDialog });
+      const header = container.querySelector('.fb-sidebar-header');
+      const exportBtn = header!.querySelector('[aria-label="Share / Export"]') as HTMLButtonElement;
+      exportBtn.click();
+
+      expect(onShowExportDialog).toHaveBeenCalled();
 
       sidebar.destroy();
     });
