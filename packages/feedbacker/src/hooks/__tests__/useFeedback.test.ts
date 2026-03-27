@@ -21,23 +21,15 @@ jest.mock('../../context/FeedbackContext', () => ({
   })
 }));
 
-// Mock exporters
-jest.mock('../../export/MarkdownExporter', () => ({
+// Mock @feedbacker/core (exporters + logger used by useFeedback)
+jest.mock('@feedbacker/core', () => ({
   MarkdownExporter: {
     exportAsMarkdown: jest.fn(() => '# Feedback Report')
-  }
-}));
-
-jest.mock('../../export/ZipExporter', () => ({
+  },
   ZipExporter: {
     exportAsZip: jest.fn(() => Promise.resolve(new Blob(['zip'])))
-  }
-}));
-
-// Mock logger
-jest.mock('../../utils/logger', () => ({
-  __esModule: true,
-  default: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn() }
+  },
+  logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn() }
 }));
 
 const makeFeedback = (overrides: Partial<Feedback> = {}): Feedback => ({
