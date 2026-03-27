@@ -431,10 +431,11 @@ describe('ManagerSidebar', () => {
   });
 
   /**
-   * T-024 (Phase 2): Blur -> debounced save after 1000ms, "Saved" indicator.
+   * T-024 (Phase 2): Blur -> immediate save (no debounce), "Saved" indicator.
+   * Per ARCH-008, blur saves immediately; only typing uses 1000ms debounce.
    */
-  describe('T-024 (P2): Blur triggers debounced save', () => {
-    it('calls onSaveEdit after 1000ms debounce on blur, shows Saved indicator', async () => {
+  describe('T-024 (P2): Blur triggers immediate save', () => {
+    it('calls onSaveEdit immediately on blur and shows Saved indicator', async () => {
       jest.useFakeTimers();
 
       const onSaveEdit = jest.fn().mockResolvedValue(undefined);
@@ -453,11 +454,7 @@ describe('ManagerSidebar', () => {
       // Trigger blur
       textarea.dispatchEvent(new Event('blur'));
 
-      // onSaveEdit should NOT be called immediately
-      expect(onSaveEdit).not.toHaveBeenCalled();
-
-      // After 1000ms debounce
-      jest.advanceTimersByTime(1100);
+      // onSaveEdit should be called immediately (no debounce on blur)
       expect(onSaveEdit).toHaveBeenCalledWith('fb_blur', 'Updated comment');
 
       // Wait for the promise to resolve
@@ -498,8 +495,7 @@ describe('ManagerSidebar', () => {
       textarea.value = 'Failed update';
       textarea.dispatchEvent(new Event('blur'));
 
-      // Advance past debounce
-      jest.advanceTimersByTime(1100);
+      // Blur saves immediately; wait for the rejected promise to settle
       await jest.advanceTimersByTimeAsync(0);
 
       // Textarea should still be present (not reverted)

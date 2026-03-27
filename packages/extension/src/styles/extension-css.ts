@@ -486,7 +486,8 @@ export const EXTENSION_CSS = `
 .fb-btn-icon:focus-visible,
 .fb-fab:focus-visible,
 .fb-fab-action:focus-visible,
-.fb-export-option:focus-visible {
+.fb-export-option:focus-visible,
+.fb-toast-undo-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
 }

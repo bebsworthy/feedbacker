@@ -94,19 +94,10 @@ export class ManagerSidebar {
     this.body.className = 'fb-sidebar-body';
     this.sidebar.appendChild(this.body);
 
-    // Escape to close
-    const onKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        opts.onClose();
-        document.removeEventListener('keydown', onKeydown);
-      }
-    };
-    document.addEventListener('keydown', onKeydown);
-
     container.appendChild(this.backdrop);
     container.appendChild(this.sidebar);
 
-    // Escape to close
+    // Escape to close (scoped to sidebar element only)
     this.sidebar.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();

@@ -66,16 +66,29 @@ export class InlineEditController {
         this.editCancelled = false;
         return;
       }
-      this.commitEdit(textarea, feedbackId);
+      this.commitEdit(textarea, feedbackId, true);
     });
 
     commentEl.replaceWith(textarea);
     textarea.focus();
   }
 
-  /** Clean up timers when sidebar is destroyed. */
+  /** Clean up when sidebar is destroyed; flush any pending save synchronously. */
   destroy(): void {
-    this.clearDebounceTimer();
+    if (this.editingCardId && this.editDebounceTimer !== null) {
+      // Flush the pending debounced save before clearing
+      clearTimeout(this.editDebounceTimer);
+      this.editDebounceTimer = null;
+      // Fire the save callback synchronously with the current textarea value
+      const textarea = document.querySelector(
+        `.fb-inline-edit-textarea[data-fb-id="${this.editingCardId}"]`
+      ) as HTMLTextAreaElement | null;
+      if (textarea) {
+        this.callbacks.onSaveEdit(this.editingCardId, textarea.value).catch(() => {});
+      }
+    } else {
+      this.clearDebounceTimer();
+    }
     this.editingCardId = null;
   }
 
@@ -90,12 +103,15 @@ export class InlineEditController {
     }
   }
 
-  /** Debounced commit: save edited text after 1000ms. */
-  private commitEdit(textarea: HTMLTextAreaElement, feedbackId: string): void {
+  /**
+   * Commit the edit. When immediate is true (blur handler), save without
+   * debounce. The 1000ms debounce only applies to auto-save during typing.
+   */
+  private commitEdit(textarea: HTMLTextAreaElement, feedbackId: string, immediate = false): void {
     this.clearDebounceTimer();
     const updatedComment = textarea.value;
 
-    this.editDebounceTimer = setTimeout(() => {
+    const doSave = (): void => {
       this.callbacks
         .onSaveEdit(feedbackId, updatedComment)
         .then(() => {
@@ -109,7 +125,13 @@ export class InlineEditController {
         .catch(() => {
           this.showErrorIndicator(textarea);
         });
-    }, 1000);
+    };
+
+    if (immediate) {
+      doSave();
+    } else {
+      this.editDebounceTimer = setTimeout(doSave, 1000);
+    }
   }
 
   /** Replace textarea with static comment text. */

@@ -71,6 +71,9 @@ export class FeedbackApp {
   // Toast message rotation (PH-012)
   private toastMessageIndex = 0;
 
+  // Milestone badge auto-dismiss timer (FE-006)
+  private milestoneTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(container: HTMLDivElement, state: StateManager, detection: DetectionController) {
     this.container = container;
     this.state = state;
@@ -142,6 +145,10 @@ export class FeedbackApp {
   }
 
   destroy(): void {
+    if (this.milestoneTimer) {
+      clearTimeout(this.milestoneTimer);
+      this.milestoneTimer = null;
+    }
     if (this.pendingDelete) {
       clearTimeout(this.pendingDelete.timer);
       this.pendingDelete = null;
@@ -153,6 +160,13 @@ export class FeedbackApp {
     this.overlay?.destroy();
     this.detection.destroy();
     this.container.innerHTML = '';
+  }
+
+  /** Return feedbacks excluding any item pending deletion (ARCH-005). */
+  private getVisibleFeedbacks(): Feedback[] {
+    if (!this.pendingDelete) return this.state.feedbacks;
+    const pendingId = this.pendingDelete.id;
+    return this.state.feedbacks.filter(f => f.id !== pendingId);
   }
 
   // ---- Announcements and feedback ----
@@ -167,14 +181,20 @@ export class FeedbackApp {
     });
   }
 
-  private showToast(message: string, durationMs = 3500): void {
+  private showToast(message: string, durationMs = 3500, type: 'success' | 'error' = 'success'): void {
     // Remove any existing toast (undo or informational)
     this.container.querySelector('.fb-toast')?.remove();
 
     const toast = document.createElement('div');
     toast.className = 'fb-toast';
+    if (type === 'error') {
+      toast.style.borderLeft = '4px solid var(--fb-error)';
+    }
     toast.setAttribute('role', 'status');
-    toast.innerHTML = `${checkIcon(16, 'var(--fb-success)')} <span>${message}</span>`;
+    const icon = type === 'error'
+      ? '<span style="color: var(--fb-error); font-weight: 700; font-size: 16px;">&#10005;</span>'
+      : checkIcon(16, 'var(--fb-success)');
+    toast.innerHTML = `${icon} <span>${message}</span>`;
     this.container.appendChild(toast);
 
     // Badge count animation
@@ -369,11 +389,12 @@ export class FeedbackApp {
 
   private showExportDialog(): void {
     this.fab?.collapse();
-    if (this.state.feedbacks.length === 0) return;
+    const visible = this.getVisibleFeedbacks();
+    if (visible.length === 0) return;
 
     this.exportDialog?.destroy();
     this.exportDialog = new ExportDialog(this.container, {
-      feedbackCount: this.state.feedbacks.length,
+      feedbackCount: visible.length,
       onExport: (format) => this.doExport(format),
       onCopyAll: () => this.copyAllToClipboard(),
       onCancel: () => {
@@ -385,20 +406,20 @@ export class FeedbackApp {
 
   private async copyAllToClipboard(): Promise<void> {
     try {
-      const feedbacks = this.state.feedbacks;
+      const feedbacks = this.getVisibleFeedbacks();
       const markdown = MarkdownExporter.exportAsMarkdown(feedbacks);
       await navigator.clipboard.writeText(markdown);
       this.showToast(`Copied ${feedbacks.length} item${feedbacks.length !== 1 ? 's' : ''} to clipboard`);
       this.announce(`Copied ${feedbacks.length} items to clipboard`);
     } catch {
-      this.showToast('Failed to copy. Please try again.');
+      this.showToast('Failed to copy. Please try again.', 3500, 'error');
     }
   }
 
   private async doExport(format: 'markdown' | 'zip'): Promise<void> {
     try {
       const { MarkdownExporter: MdExp, ZipExporter: ZipExp } = await import('@feedbacker/core');
-      const feedbacks = this.state.feedbacks;
+      const feedbacks = this.getVisibleFeedbacks();
 
       if (format === 'markdown') {
         MdExp.downloadMarkdown(feedbacks, MdExp.generateFilename(feedbacks));
@@ -408,7 +429,7 @@ export class FeedbackApp {
       this.showToast('Report downloaded');
     } catch (error) {
       logger.error('Export failed:', error);
-      this.showToast('Export failed. Please try again.');
+      this.showToast('Export failed. Please try again.', 3500, 'error');
     }
   }
 
@@ -519,7 +540,7 @@ export class FeedbackApp {
     }).catch((error) => {
       logger.error(`Failed to finalize delete: ${id}`, error);
       this.restoreDeletedCard(feedback, previousIndex);
-      this.showToast('Failed to delete. Item restored.');
+      this.showToast('Failed to delete. Item restored.', 3500, 'error');
     });
   }
 
@@ -596,13 +617,22 @@ export class FeedbackApp {
     if (this.sidebar) {
       const header = this.container.querySelector('.fb-sidebar-header');
       if (header) {
-        // Remove any existing milestone
+        // Remove any existing milestone and clear previous timer
         header.querySelector('.fb-milestone')?.remove();
+        if (this.milestoneTimer) {
+          clearTimeout(this.milestoneTimer);
+        }
 
         const badge = document.createElement('span');
         badge.className = 'fb-milestone';
         badge.textContent = milestone.text;
         header.appendChild(badge);
+
+        // Auto-remove after 5 seconds (FE-006)
+        this.milestoneTimer = setTimeout(() => {
+          badge.remove();
+          this.milestoneTimer = null;
+        }, 5000);
       }
     }
   }

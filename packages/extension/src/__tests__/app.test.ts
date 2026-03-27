@@ -800,10 +800,10 @@ describe('FeedbackApp', () => {
   });
 
   /**
-   * T-029: Submit toast rotates messages.
+   * T-029: Submit toast message is from the valid set.
    */
-  describe('T-029: Toast message rotation', () => {
-    it('shows rotating toast messages from the defined set', async () => {
+  describe('T-029: Toast message is from valid set', () => {
+    it('shows a toast message from the defined rotation set after submit', async () => {
       const app = new FeedbackApp(container, state, detection);
       app.render();
       await jest.advanceTimersByTimeAsync(0);
@@ -892,36 +892,17 @@ describe('FeedbackApp', () => {
 
   /**
    * T-031: Milestone at count 5 and 10.
+   * After submitting the 5th/10th item with sidebar open, a .fb-milestone
+   * element containing "Thorough review!" / "Detailed review!" is present.
    */
   describe('T-031: Milestones at count 5 and 10', () => {
-    it('triggers milestone at count 5 (logger confirms)', async () => {
-      // Approach: we'll directly verify the milestone by having sidebar open
-      // then triggering the submit flow that results in count=5
-      const feedbacks = Array.from(
-        { length: 4 },
-        (_, i) => createFeedback({ id: `fb_ms${i}` })
-      );
-      const app = renderAppWithFeedbacks(feedbacks);
-      await jest.advanceTimersByTimeAsync(0);
-
-      // We need to simulate a submit that makes feedbacks.length === 5.
-      // When addFeedback is called, it resolves, then showMilestoneIfNeeded runs.
-      // We mock addFeedback to add a 5th feedback to the array.
-      (state.addFeedback as jest.Mock).mockImplementation(async (fb: Feedback) => {
-        (state.feedbacks as Feedback[]).push(fb);
-      });
-
-      // Open sidebar
-      openSidebar();
-      await jest.advanceTimersByTimeAsync(0);
-
-      // Close sidebar -- because the modal needs to render on top
-      const closeBtn = container.querySelector('[aria-label="Close sidebar"]') as HTMLButtonElement;
-      closeBtn?.click();
-      await jest.advanceTimersByTimeAsync(0);
-
-      // Trigger component selection and submit
-      const setCallbacksCall = (detection.setCallbacks as jest.Mock).mock.calls[0];
+    /** Helper: submit a feedback item via the modal flow. */
+    async function submitFeedbackItem(
+      cont: HTMLDivElement,
+      det: DetectionController,
+      comment: string
+    ): Promise<void> {
+      const setCallbacksCall = (det.setCallbacks as jest.Mock).mock.calls[0];
       const onSelect = setCallbacksCall[1];
 
       const mockElement = document.createElement('div');
@@ -935,26 +916,44 @@ describe('FeedbackApp', () => {
         element: mockElement,
       });
 
-      const textarea = container.querySelector('.fb-textarea') as HTMLTextAreaElement;
-      textarea.value = 'Fifth feedback';
+      const textarea = cont.querySelector('.fb-textarea') as HTMLTextAreaElement;
+      textarea.value = comment;
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      const submitBtn = container.querySelector('.fb-btn-primary') as HTMLButtonElement;
+      const submitBtn = cont.querySelector('.fb-btn-primary') as HTMLButtonElement;
       submitBtn.click();
       await jest.advanceTimersByTimeAsync(10);
+      // Clear toast so it doesn't interfere
+      jest.advanceTimersByTime(4000);
+    }
 
-      // Now feedbacks.length is 5. Open sidebar to check milestone.
-      // showMilestoneIfNeeded runs after submit but sidebar was closed.
-      // Milestone won't appear in header unless sidebar was open.
-      // Let's verify the milestone logic works by directly checking
-      // that the toast contains the rotating message (which it does),
-      // and that the logger was called with the milestone message.
-      const { logger } = jest.requireMock('@feedbacker/core') as { logger: { debug: jest.Mock } };
-      expect(logger.debug).toHaveBeenCalledWith('Milestone reached: 5 items');
+    it('shows "Thorough review!" milestone badge at count 5', async () => {
+      const feedbacks = Array.from(
+        { length: 4 },
+        (_, i) => createFeedback({ id: `fb_ms${i}` })
+      );
+      const app = renderAppWithFeedbacks(feedbacks);
+      await jest.advanceTimersByTimeAsync(0);
+
+      (state.addFeedback as jest.Mock).mockImplementation(async (fb: Feedback) => {
+        (state.feedbacks as Feedback[]).push(fb);
+      });
+
+      // Open sidebar so milestone badge can appear in the header
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+
+      // Submit 5th item (modal renders on top of sidebar)
+      await submitFeedbackItem(container, detection, 'Fifth feedback');
+
+      // Assert milestone badge is present in the sidebar DOM
+      const milestone = container.querySelector('.fb-milestone');
+      expect(milestone).not.toBeNull();
+      expect(milestone!.textContent).toBe('Thorough review!');
 
       app.destroy();
     });
 
-    it('logs milestone at count 10', async () => {
+    it('shows "Detailed review!" milestone badge at count 10', async () => {
       const feedbacks = Array.from(
         { length: 9 },
         (_, i) => createFeedback({ id: `fb_m10_${i}` })
@@ -966,29 +965,43 @@ describe('FeedbackApp', () => {
         (state.feedbacks as Feedback[]).push(fb);
       });
 
-      const setCallbacksCall = (detection.setCallbacks as jest.Mock).mock.calls[0];
-      const onSelect = setCallbacksCall[1];
+      // Open sidebar so milestone badge can appear in the header
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
 
-      const mockElement = document.createElement('div');
-      mockElement.getBoundingClientRect = jest.fn().mockReturnValue({
-        x: 0, y: 0, width: 100, height: 100,
+      // Submit 10th item
+      await submitFeedbackItem(container, detection, 'Tenth feedback');
+
+      // Assert milestone badge is present in the sidebar DOM
+      const milestone = container.querySelector('.fb-milestone');
+      expect(milestone).not.toBeNull();
+      expect(milestone!.textContent).toBe('Detailed review!');
+
+      app.destroy();
+    });
+
+    it('removes milestone badge after 5000ms', async () => {
+      const feedbacks = Array.from(
+        { length: 4 },
+        (_, i) => createFeedback({ id: `fb_auto_${i}` })
+      );
+      const app = renderAppWithFeedbacks(feedbacks);
+      await jest.advanceTimersByTimeAsync(0);
+
+      (state.addFeedback as jest.Mock).mockImplementation(async (fb: Feedback) => {
+        (state.feedbacks as Feedback[]).push(fb);
       });
 
-      await onSelect({
-        name: 'Test',
-        path: ['App', 'Test'],
-        element: mockElement,
-      });
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
 
-      const textarea = container.querySelector('.fb-textarea') as HTMLTextAreaElement;
-      textarea.value = 'Tenth feedback';
-      textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      const submitBtn = container.querySelector('.fb-btn-primary') as HTMLButtonElement;
-      submitBtn.click();
-      await jest.advanceTimersByTimeAsync(10);
+      await submitFeedbackItem(container, detection, 'Fifth feedback');
 
-      const { logger } = jest.requireMock('@feedbacker/core') as { logger: { debug: jest.Mock } };
-      expect(logger.debug).toHaveBeenCalledWith('Milestone reached: 10 items');
+      expect(container.querySelector('.fb-milestone')).not.toBeNull();
+
+      // After 5000ms the badge should auto-remove
+      jest.advanceTimersByTime(5100);
+      expect(container.querySelector('.fb-milestone')).toBeNull();
 
       app.destroy();
     });
