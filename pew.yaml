@@ -1,0 +1,45 @@
+project:
+  name: feedbacker
+  description: "Monorepo for Feedbacker — React widget, Chrome extension, core library, detection, and demo site for component-level visual feedback capture"
+
+stack:
+  description: "TypeScript, React 18, Vite, Rollup, Chrome Extension (Manifest V3), Shadow DOM, Playwright"
+  frontend_src: packages/feedbacker/src
+  component_paths:
+    - packages/feedbacker/src/components
+    - packages/extension/src/ui
+
+commands:
+  verify: "npm run lint && npm run test"
+  e2e: "npm run test:e2e"
+
+competitors:
+  - Marker.io
+  - BugHerd
+  - Pastel
+
+paths:
+  tracker: phases/phase-tracker.yaml
+  phases: phases
+  audit_test: .audit/test
+  audit_ux: .audit/ux
+
+product_review:
+  enabled: true
+  start_command: "npm run dev"
+  app_url: "http://localhost:5173"
+
+# --- Phase Sizing ---
+# Sizes: large (all steps), medium (skip IDEAS), small (skip IDEAS+RESEARCH),
+# vibe (build first, document post-hoc — use /pew-vibe command)
+
+# --- Council Review ---
+# council:
+#   enabled: true            # set false to skip council review
+#   max_findings_per_expert: 15
+#   skip_tags: [docs-only]   # phases with these tags skip council
+
+# --- Approval Gates ---
+# approval_gates:
+#   before_build: true       # require approval before BUILD step
+#   before_close: true       # require approval before CLOSE step
