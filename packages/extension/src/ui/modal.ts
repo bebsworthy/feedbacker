@@ -4,7 +4,7 @@
 
 import type { FeedbackType, BugSeverity } from '@feedbacker/core';
 import type { ComponentInfo } from '@feedbacker/detection';
-import { closeIcon, minimizeIcon, chevronDownIcon } from './icons';
+import { closeIcon, minimizeIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 import { createTypeChipBar } from './type-chip-bar';
 
@@ -94,30 +94,6 @@ export class FeedbackModal {
       body.appendChild(pathEl);
     }
 
-    // HTML snippet (collapsible — can be long)
-    if (opts.htmlSnippet) {
-      const snippetToggle = document.createElement('button');
-      snippetToggle.className = 'fb-details-toggle';
-      snippetToggle.setAttribute('aria-expanded', 'false');
-      snippetToggle.innerHTML = `${chevronDownIcon(14)} <span>HTML snippet</span>`;
-
-      const snippetContent = document.createElement('div');
-      snippetContent.className = 'fb-details-content';
-      snippetContent.style.display = 'none';
-      const snippetCode = document.createElement('code');
-      snippetCode.className = 'fb-detail-snippet';
-      snippetCode.textContent = opts.htmlSnippet;
-      snippetContent.appendChild(snippetCode);
-
-      snippetToggle.addEventListener('click', () => {
-        const isExpanded = snippetContent.style.display !== 'none';
-        snippetContent.style.display = isExpanded ? 'none' : 'block';
-        snippetToggle.setAttribute('aria-expanded', String(!isExpanded));
-      });
-
-      body.appendChild(snippetToggle);
-      body.appendChild(snippetContent);
-    }
 
     // Screenshot preview
     if (opts.screenshot) {

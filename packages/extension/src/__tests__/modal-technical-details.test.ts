@@ -72,24 +72,11 @@ describe('Modal component display (T-009, T-010)', () => {
       modal.destroy();
     });
 
-    it('has HTML snippet behind a collapsible toggle', () => {
+    it('does not show HTML snippet in modal', () => {
       const modal = createModal(container);
 
-      const toggle = container.querySelector('.fb-details-toggle') as HTMLButtonElement;
-      expect(toggle).not.toBeNull();
-      expect(toggle!.textContent).toContain('HTML snippet');
-      expect(toggle.getAttribute('aria-expanded')).toBe('false');
-
-      // Click to expand
-      toggle.click();
-      expect(toggle.getAttribute('aria-expanded')).toBe('true');
-
-      const content = container.querySelector('.fb-details-content') as HTMLElement;
-      expect(content.style.display).toBe('block');
-
-      const snippet = content.querySelector('.fb-detail-snippet');
-      expect(snippet).not.toBeNull();
-      expect(snippet!.textContent).toContain('<button class="btn-primary">Submit Order</button>');
+      const toggle = container.querySelector('.fb-details-toggle');
+      expect(toggle).toBeNull();
 
       modal.destroy();
     });
@@ -148,7 +135,7 @@ describe('Modal component display (T-009, T-010)', () => {
       el.remove();
     });
 
-    it('still shows HTML snippet toggle when no path', () => {
+    it('does not show any toggle when no path', () => {
       const el = document.createElement('span');
       document.body.appendChild(el);
 
@@ -165,7 +152,7 @@ describe('Modal component display (T-009, T-010)', () => {
       });
 
       const toggle = container.querySelector('.fb-details-toggle');
-      expect(toggle).not.toBeNull();
+      expect(toggle).toBeNull();
 
       modal.destroy();
       el.remove();
