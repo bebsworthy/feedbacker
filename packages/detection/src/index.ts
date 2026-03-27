@@ -22,6 +22,7 @@ export {
   PerformanceMonitor
 } from './utils/performance';
 export { logger, Logger, LogLevel } from './utils/logger';
+export { getHumanReadableName } from './utils/human-readable-name';
 
 import { DetectionChain as _DetectionChain } from './DetectionStrategy';
 import {

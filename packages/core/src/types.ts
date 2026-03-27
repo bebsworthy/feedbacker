@@ -7,6 +7,9 @@ import type { ComponentInfo } from '@feedbacker/detection';
 
 export type { ComponentInfo };
 
+export type FeedbackType = 'bug' | 'suggestion' | 'question';
+export type BugSeverity = 'critical' | 'major' | 'minor';
+
 export interface Feedback {
   id: string;
   componentName: string;
@@ -18,6 +21,9 @@ export interface Feedback {
   browserInfo: BrowserInfo;
   htmlSnippet?: string | undefined;
   metadata?: Record<string, unknown> | undefined;
+  type?: FeedbackType | undefined;
+  severity?: BugSeverity | undefined;
+  elementSelector?: string | undefined;
 }
 
 export interface Draft {
@@ -26,6 +32,8 @@ export interface Draft {
   screenshot?: string | undefined;
   createdAt: string;
   updatedAt: string;
+  type?: FeedbackType | undefined;
+  severity?: BugSeverity | undefined;
 }
 
 export interface BrowserInfo {
@@ -105,6 +113,8 @@ export interface ModalState {
   component: ComponentInfo | null;
   screenshot: string | null;
   comment: string;
+  type: FeedbackType;
+  severity?: BugSeverity | undefined;
 }
 
 export interface ModalActions {

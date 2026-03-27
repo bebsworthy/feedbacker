@@ -4,6 +4,20 @@
 
 import { Feedback } from '../types';
 
+/**
+ * Build a heading prefix from feedback type and severity.
+ * Returns empty string when type is undefined (pre-phase-3 feedback).
+ */
+function buildTypePrefix(feedback: Feedback): string {
+  if (!feedback.type) return '';
+  const label = feedback.type.charAt(0).toUpperCase() + feedback.type.slice(1);
+  if (feedback.severity) {
+    const sevLabel = feedback.severity.charAt(0).toUpperCase() + feedback.severity.slice(1);
+    return `[${label} - ${sevLabel}] `;
+  }
+  return `[${label}] `;
+}
+
 export class MarkdownExporter {
   /**
    * Export feedback as markdown string
@@ -83,7 +97,8 @@ export class MarkdownExporter {
   private static generateFeedbackItem(feedback: Feedback, index?: number): string {
     const timestamp = feedback.timestamp;
 
-    const heading = index != null ? `${index}. ${feedback.componentName}` : feedback.componentName;
+    const prefix = buildTypePrefix(feedback);
+    const heading = index != null ? `${index}. ${prefix}${feedback.componentName}` : `${prefix}${feedback.componentName}`;
     let item = `## ${heading}\n\n`;
 
     // Feedback Comment

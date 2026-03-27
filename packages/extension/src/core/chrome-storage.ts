@@ -6,7 +6,7 @@
 import type { Feedback, Draft, StorageManager, StorageInfo, FeedbackStore } from '@feedbacker/core';
 import { sanitizeFeedback, sanitizeDraft, validateStorageData, migrateData, logger } from '@feedbacker/core';
 
-const STORAGE_VERSION = '1.0.0';
+const STORAGE_VERSION = '3.0';
 const DEFAULT_STORAGE_KEY = 'feedbacker-store';
 const STORAGE_LIMIT = 10 * 1024 * 1024; // 10MB chrome.storage.local default
 const MAX_FEEDBACKS = 100;

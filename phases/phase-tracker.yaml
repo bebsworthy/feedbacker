@@ -83,6 +83,6 @@ phases:
     brd: complete
     research: complete
     spec: complete
-    plan: in_progress
-    build: not_started
+    plan: complete
+    build: in_progress
     check: not_started

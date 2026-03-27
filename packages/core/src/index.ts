@@ -23,7 +23,9 @@ export type {
   UseFeedbackResult,
   UseComponentDetectionResult,
   UseFeedbackStorageResult,
-  ComponentInfo
+  ComponentInfo,
+  FeedbackType,
+  BugSeverity
 } from './types';
 
 export { ErrorType } from './types';

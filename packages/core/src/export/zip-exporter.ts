@@ -6,6 +6,20 @@ import JSZip from 'jszip';
 import { Feedback } from '../types';
 import logger from '../logger';
 
+/**
+ * Build a heading prefix from feedback type and severity.
+ * Returns empty string when type is undefined (pre-phase-3 feedback).
+ */
+function buildTypePrefix(feedback: Feedback): string {
+  if (!feedback.type) return '';
+  const label = feedback.type.charAt(0).toUpperCase() + feedback.type.slice(1);
+  if (feedback.severity) {
+    const sevLabel = feedback.severity.charAt(0).toUpperCase() + feedback.severity.slice(1);
+    return `[${label} - ${sevLabel}] `;
+  }
+  return `[${label}] `;
+}
+
 export class ZipExporter {
   /**
    * Export feedback as ZIP archive
@@ -121,7 +135,8 @@ export class ZipExporter {
   private static generateFeedbackItemWithImages(feedback: Feedback, index: number): string {
     const timestamp = feedback.timestamp;
 
-    let item = `## ${index}. ${feedback.componentName}\n\n`;
+    const prefix = buildTypePrefix(feedback);
+    let item = `## ${index}. ${prefix}${feedback.componentName}\n\n`;
 
     // Screenshot FIRST (if available)
     if (feedback.screenshot) {

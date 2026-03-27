@@ -26,7 +26,9 @@ export type {
   FeedbackError,
   UseFeedbackResult,
   UseComponentDetectionResult,
-  UseFeedbackStorageResult
+  UseFeedbackStorageResult,
+  FeedbackType,
+  BugSeverity
 } from '@feedbacker/core';
 
 export { ErrorType } from '@feedbacker/core';
