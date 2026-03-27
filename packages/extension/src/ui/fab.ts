@@ -2,7 +2,7 @@
  * FAB — Floating Action Button (vanilla TS)
  */
 
-import { megaphoneIcon, closeIcon, messageIcon, listIcon, arrowDownTrayIcon, trashIcon } from './icons';
+import { megaphoneIcon, closeIcon, messageIcon, listIcon, arrowDownTrayIcon } from './icons';
 
 interface FABOptions {
   feedbackCount: number;
@@ -12,7 +12,6 @@ interface FABOptions {
   onNewFeedback: () => void;
   onShowManager: () => void;
   onExport: () => void;
-  onClearAll: () => void;
 }
 
 export class FAB {
@@ -31,6 +30,12 @@ export class FAB {
     this.button = document.createElement('button');
     this.button.className = 'fb-fab';
     this.button.innerHTML = megaphoneIcon(24, 'white');
+    this.button.setAttribute('aria-label', 'Feedbacker menu');
+    this.button.setAttribute('aria-expanded', 'false');
+
+    const isMac = navigator.platform.toUpperCase().includes('MAC');
+    this.button.title = `Feedbacker (${isMac ? 'Opt' : 'Alt'}+Shift+F)`;
+
     this.button.addEventListener('click', () => this.toggleExpanded());
 
     // Badge
@@ -38,6 +43,7 @@ export class FAB {
     this.badge.className = 'fb-fab-badge';
     this.badge.style.display = opts.feedbackCount > 0 ? 'flex' : 'none';
     this.badge.textContent = String(opts.feedbackCount);
+    this.badge.setAttribute('aria-label', `${opts.feedbackCount} feedback items`);
     this.button.appendChild(this.badge);
 
     this.applyPosition(opts.position || 'bottom-right');
@@ -86,6 +92,7 @@ export class FAB {
 
   private expand(): void {
     this.expanded = true;
+    this.button.setAttribute('aria-expanded', 'true');
     this.button.innerHTML = closeIcon(24, 'white');
     this.button.appendChild(this.badge);
 
@@ -94,9 +101,8 @@ export class FAB {
 
     const actions = [
       { icon: messageIcon(18), label: 'New feedback', onClick: this.opts.onNewFeedback },
-      { icon: listIcon(18), label: `Show manager (${this.opts.feedbackCount})`, onClick: this.opts.onShowManager },
-      { icon: arrowDownTrayIcon(18), label: 'Export', onClick: this.opts.onExport },
-      { icon: trashIcon(18), label: 'Clear all', onClick: this.opts.onClearAll }
+      { icon: listIcon(18), label: `View feedback (${this.opts.feedbackCount})`, onClick: this.opts.onShowManager },
+      { icon: arrowDownTrayIcon(18), label: 'Share / Export', onClick: this.opts.onExport }
     ];
 
     for (const action of actions) {
@@ -115,6 +121,7 @@ export class FAB {
 
   collapse(): void {
     this.expanded = false;
+    this.button.setAttribute('aria-expanded', 'false');
     this.button.innerHTML = megaphoneIcon(24, 'white');
     this.button.appendChild(this.badge);
     this.actionsEl?.remove();
@@ -125,6 +132,7 @@ export class FAB {
     this.opts.feedbackCount = count;
     this.badge.textContent = count > 99 ? '99+' : String(count);
     this.badge.style.display = count > 0 ? 'flex' : 'none';
+    this.badge.setAttribute('aria-label', `${count} feedback items`);
   }
 
   updateDraft(_hasDraft: boolean): void {

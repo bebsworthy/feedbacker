@@ -27,6 +27,9 @@ export class ConfirmDialog {
 
     const dialog = document.createElement('div');
     dialog.className = 'fb-confirm';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-label', opts.title);
 
     const title = document.createElement('h4');
     title.textContent = opts.title;

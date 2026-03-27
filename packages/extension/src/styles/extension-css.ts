@@ -15,7 +15,7 @@ export const EXTENSION_CSS = `
   /* Text */
   --fb-text: #1f2937;
   --fb-text-secondary: #6b7280;
-  --fb-text-muted: #9ca3af;
+  --fb-text-muted: #6b7280;
   --fb-text-inverse: #ffffff;
 
   /* Backgrounds */
@@ -48,7 +48,7 @@ export const EXTENSION_CSS = `
   :host {
     --fb-text: #f9fafb;
     --fb-text-secondary: #d1d5db;
-    --fb-text-muted: #9ca3af;
+    --fb-text-muted: #d1d5db;
     --fb-text-inverse: #111827;
     --fb-bg: #1f2937;
     --fb-bg-secondary: #374151;
@@ -383,10 +383,10 @@ export const EXTENSION_CSS = `
   background: var(--fb-bg) !important;
   border: 1px solid var(--fb-border) !important;
   box-shadow: var(--fb-shadow);
-  opacity: 0;
+  opacity: 0.85;
   transition: opacity 150ms;
 }
-.fb-card:hover .fb-screenshot-copy {
+.fb-screenshot-copy:hover {
   opacity: 1;
 }
 .fb-card-actions {
@@ -459,5 +459,103 @@ export const EXTENSION_CSS = `
   font-size: 11px;
   color: var(--fb-warning);
   font-weight: 500;
+}
+
+/* ---- Focus-visible (box-shadow per ADR-001) ---- */
+.fb-btn:focus-visible,
+.fb-btn-icon:focus-visible,
+.fb-fab:focus-visible,
+.fb-fab-action:focus-visible,
+.fb-export-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+/* ---- Submit hint ---- */
+.fb-submit-hint {
+  font-size: 12px;
+  color: var(--fb-text-muted);
+  margin-right: auto;
+  align-self: center;
+}
+
+/* ---- Draft saved indicator ---- */
+.fb-draft-saved {
+  font-size: 12px;
+  color: var(--fb-success);
+  margin-top: 4px;
+  transition: opacity 300ms ease;
+}
+
+/* ---- Toast ---- */
+.fb-toast {
+  position: fixed;
+  bottom: 88px;
+  right: 24px;
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--fb-shadow-lg);
+  z-index: 10000;
+  font-family: var(--fb-font);
+  font-size: 13px;
+  color: var(--fb-text);
+  animation: fb-toast-in 200ms ease-out;
+}
+
+@keyframes fb-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Badge bump ---- */
+@keyframes fb-badge-bump {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+.fb-badge-bump {
+  animation: fb-badge-bump 300ms ease-in-out;
+}
+
+/* ---- Coach mark ---- */
+.fb-coach-mark {
+  position: fixed;
+  bottom: 88px;
+  right: 24px;
+  background: var(--fb-text);
+  color: var(--fb-bg);
+  padding: 8px 12px;
+  border-radius: var(--fb-radius);
+  font-size: 13px;
+  font-family: var(--fb-font);
+  box-shadow: var(--fb-shadow-lg);
+  z-index: 10000;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+/* ---- FAB pulse ---- */
+@keyframes fb-pulse {
+  0%, 100% { box-shadow: var(--fb-shadow-lg); }
+  50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3), var(--fb-shadow-lg); }
+}
+.fb-fab-pulse {
+  animation: fb-pulse 1.5s ease-in-out infinite;
+}
+
+/* ---- Reduced motion (ADR-002) ---- */
+@media (prefers-reduced-motion: reduce) {
+  :host *,
+  :host *::before,
+  :host *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+    transition-delay: 0s !important;
+    animation-delay: 0s !important;
+  }
 }
 `;

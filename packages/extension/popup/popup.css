@@ -58,6 +58,20 @@ body {
   background: #2563eb;
 }
 
+.shortcut-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.privacy-notice {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
 .settings-section {
   margin-top: 16px;
   padding-top: 16px;

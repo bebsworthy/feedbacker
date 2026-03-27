@@ -15,6 +15,7 @@ import { ComponentOverlayUI } from './overlay';
 import { ConfirmDialog } from './confirm-dialog';
 import { ExportDialog } from './export-dialog';
 import { MinimizedState } from './minimized-state';
+import { checkIcon } from './icons';
 
 export class FeedbackApp {
   private container: HTMLDivElement;
@@ -31,6 +32,7 @@ export class FeedbackApp {
   private confirmDialog: ConfirmDialog | null = null;
   private exportDialog: ExportDialog | null = null;
   private minimizedState: MinimizedState | null = null;
+  private liveRegion: HTMLDivElement | null = null;
 
   constructor(container: HTMLDivElement, state: StateManager, detection: DetectionController) {
     this.container = container;
@@ -54,12 +56,27 @@ export class FeedbackApp {
       primaryColor: settings?.primaryColor,
       onNewFeedback: () => this.startCapture(),
       onShowManager: () => this.showSidebar(),
-      onExport: () => this.showExportDialog(),
-      onClearAll: () => this.confirmClearAll()
+      onExport: () => this.showExportDialog()
     });
 
     // Create overlay (outside shadow DOM — appended to document.body)
     this.overlay = new ComponentOverlayUI();
+
+    // ARIA live region for screen reader announcements
+    this.liveRegion = document.createElement('div');
+    this.liveRegion.setAttribute('role', 'status');
+    this.liveRegion.setAttribute('aria-live', 'polite');
+    this.liveRegion.style.cssText = 'position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;';
+    this.container.appendChild(this.liveRegion);
+
+    // First-use coach mark
+    chrome.storage.local.get('feedbacker-onboarding-shown').then((result) => {
+      if (!result['feedbacker-onboarding-shown']) {
+        this.showCoachMark();
+      }
+    }).catch(() => {
+      this.showCoachMark(); // On error, show it anyway
+    });
 
     logger.debug('FeedbackApp rendered');
   }
@@ -88,6 +105,59 @@ export class FeedbackApp {
     this.overlay?.destroy();
     this.detection.destroy();
     this.container.innerHTML = '';
+  }
+
+  // ---- Announcements and feedback ----
+
+  private announce(message: string): void {
+    if (!this.liveRegion) return;
+    this.liveRegion.textContent = '';
+    requestAnimationFrame(() => {
+      if (this.liveRegion) {
+        this.liveRegion.textContent = message;
+      }
+    });
+  }
+
+  private showToast(message: string): void {
+    // Remove any existing toast
+    this.container.querySelector('.fb-toast')?.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'fb-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `${checkIcon(16, 'var(--fb-success)')} <span>${message}</span>`;
+    this.container.appendChild(toast);
+
+    // Badge count animation
+    const badge = this.container.querySelector('.fb-fab-badge') as HTMLElement | null;
+    if (badge) {
+      badge.classList.add('fb-badge-bump');
+      setTimeout(() => badge.classList.remove('fb-badge-bump'), 400);
+    }
+
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  private showCoachMark(): void {
+    const mark = document.createElement('div');
+    mark.className = 'fb-coach-mark';
+    mark.textContent = 'Click to start giving feedback';
+    this.container.appendChild(mark);
+
+    // Pulse animation on FAB
+    const fabEl = this.container.querySelector('.fb-fab') as HTMLElement | null;
+    if (fabEl) fabEl.classList.add('fb-fab-pulse');
+
+    const dismiss = (): void => {
+      mark.remove();
+      fabEl?.classList.remove('fb-fab-pulse');
+      chrome.storage.local.set({ 'feedbacker-onboarding-shown': true }).catch(() => {});
+    };
+
+    mark.addEventListener('click', dismiss);
+    fabEl?.addEventListener('click', dismiss, { once: true });
+    setTimeout(dismiss, 8000);
   }
 
   // ---- Actions ----
@@ -163,6 +233,8 @@ export class FeedbackApp {
         this.modal = null;
         this.fab?.updateCount(this.state.feedbacks.length);
         this.fab?.updateDraft(false);
+        this.showToast('Feedback saved!');
+        this.announce('Feedback saved');
       },
       onCancel: () => {
         this.modal?.destroy();
@@ -209,9 +281,12 @@ export class FeedbackApp {
         await this.state.deleteFeedback(id);
         this.sidebar?.updateFeedbacks(this.state.feedbacks);
         this.fab?.updateCount(this.state.feedbacks.length);
+        this.announce('Feedback deleted');
       },
       onEdit: (feedback: Feedback) => this.editFeedback(feedback),
-      onExport: (format: 'markdown' | 'zip') => this.doExport(format)
+      onExport: (format: 'markdown' | 'zip') => this.doExport(format),
+      onClearAll: () => this.confirmClearAll(),
+      onAnnounce: (message: string) => this.announce(message)
     });
   }
 
@@ -256,6 +331,7 @@ export class FeedbackApp {
           this.fab?.updateCount(0);
           this.fab?.updateDraft(false);
           this.sidebar?.updateFeedbacks([]);
+          this.announce('All feedback deleted');
         });
         this.confirmDialog?.destroy();
         this.confirmDialog = null;

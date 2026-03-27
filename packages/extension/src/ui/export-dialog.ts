@@ -25,6 +25,12 @@ export class ExportDialog {
     const modal = document.createElement('div');
     modal.className = 'fb-modal';
     modal.style.width = '380px';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute(
+      'aria-label',
+      `Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}`
+    );
 
     // Header
     const header = document.createElement('div');
@@ -32,6 +38,7 @@ export class ExportDialog {
     header.innerHTML = `<h3>Export ${opts.feedbackCount} item${opts.feedbackCount !== 1 ? 's' : ''}</h3>`;
     const closeBtn = document.createElement('button');
     closeBtn.className = 'fb-btn-icon';
+    closeBtn.setAttribute('aria-label', 'Close export dialog');
     closeBtn.innerHTML = closeIcon(20);
     closeBtn.addEventListener('click', () => opts.onCancel());
     header.appendChild(closeBtn);
@@ -57,7 +64,7 @@ export class ExportDialog {
     const zipOption = this.createOption(
       archiveBoxIcon(24),
       'ZIP Archive',
-      'Complete export with images and JSON data',
+      'Full report with screenshots',
       () => {
         opts.onExport('zip');
         opts.onCancel();

@@ -35,12 +35,16 @@ export class FeedbackModal {
 
     const modal = document.createElement('div');
     modal.className = 'fb-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', `Feedback for ${opts.componentInfo.name}`);
 
     // Textarea (created early so header can reference it)
     this.textarea = document.createElement('textarea');
     this.textarea.className = 'fb-textarea';
     this.textarea.placeholder = 'Describe the issue or feedback...';
     this.textarea.value = opts.draftComment || '';
+    this.textarea.setAttribute('aria-label', 'Feedback description');
 
     // Header
     const header = document.createElement('div');
@@ -54,6 +58,7 @@ export class FeedbackModal {
       minBtn.className = 'fb-btn-icon';
       minBtn.innerHTML = minimizeIcon(20);
       minBtn.title = 'Minimize';
+      minBtn.setAttribute('aria-label', 'Minimize');
       minBtn.addEventListener('click', () => opts.onMinimize!(this.textarea.value));
       headerActions.appendChild(minBtn);
     }
@@ -61,6 +66,7 @@ export class FeedbackModal {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'fb-btn-icon';
     closeBtn.innerHTML = closeIcon(20);
+    closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.addEventListener('click', () => opts.onCancel());
     headerActions.appendChild(closeBtn);
     header.appendChild(headerActions);
@@ -74,7 +80,7 @@ export class FeedbackModal {
     if (opts.componentInfo.path.length > 0) {
       const pathEl = document.createElement('div');
       pathEl.className = 'fb-component-path';
-      pathEl.textContent = opts.componentInfo.path.join(' > ');
+      pathEl.textContent = 'Element location: ' + opts.componentInfo.path.join(' > ');
       body.appendChild(pathEl);
     }
 
@@ -87,6 +93,12 @@ export class FeedbackModal {
       body.appendChild(img);
     }
 
+    // Draft saved indicator
+    const draftIndicator = document.createElement('span');
+    draftIndicator.className = 'fb-draft-saved';
+    draftIndicator.textContent = 'Draft saved';
+    draftIndicator.style.display = 'none';
+
     // Wire textarea events
     this.textarea.addEventListener('input', () => {
       submitBtn.disabled = !this.textarea.value.trim();
@@ -94,12 +106,17 @@ export class FeedbackModal {
       this.draftTimer = setTimeout(() => {
         if (this.textarea.value.trim()) {
           opts.onDraftSave(this.textarea.value);
+          draftIndicator.style.display = 'inline';
+          draftIndicator.style.opacity = '1';
+          setTimeout(() => {
+            draftIndicator.style.opacity = '0';
+            setTimeout(() => { draftIndicator.style.display = 'none'; }, 300);
+          }, 1500);
         }
       }, 2000);
     });
     this.textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        // Plain Enter or Ctrl/Cmd+Enter submits (Shift+Enter inserts newline)
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         const comment = this.textarea.value.trim();
         if (comment) {
           e.preventDefault();
@@ -108,6 +125,7 @@ export class FeedbackModal {
       }
     });
     body.appendChild(this.textarea);
+    body.appendChild(draftIndicator);
     modal.appendChild(body);
 
     // Footer
@@ -128,6 +146,12 @@ export class FeedbackModal {
       if (comment) opts.onSubmit(comment);
     });
 
+    const isMac = navigator.platform.toUpperCase().includes('MAC');
+    const hint = document.createElement('span');
+    hint.className = 'fb-submit-hint';
+    hint.textContent = `${isMac ? 'Cmd' : 'Ctrl'}+Enter to submit`;
+
+    footer.appendChild(hint);
     footer.appendChild(cancelBtn);
     footer.appendChild(submitBtn);
     modal.appendChild(footer);

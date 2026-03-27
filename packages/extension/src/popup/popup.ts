@@ -16,12 +16,23 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
   autoCopy: false
 };
 
+function getShortcutText(): string {
+  const isMac = /Mac|iPhone|iPod|iPad/i.test(navigator.platform);
+  return isMac ? 'Opt+Shift+F' : 'Alt+Shift+F';
+}
+
 async function init(): Promise<void> {
   const countEl = document.getElementById('feedback-count');
   const activateBtn = document.getElementById('activate-btn');
+  const shortcutHint = document.getElementById('shortcut-hint');
   const positionSelect = document.getElementById('position-select') as HTMLSelectElement | null;
   const colorInput = document.getElementById('color-input') as HTMLInputElement | null;
   const autoCopyInput = document.getElementById('auto-copy-input') as HTMLInputElement | null;
+
+  // Display OS-aware keyboard shortcut
+  if (shortcutHint) {
+    shortcutHint.textContent = `Keyboard shortcut: ${getShortcutText()}`;
+  }
 
   // Get feedback count
   try {

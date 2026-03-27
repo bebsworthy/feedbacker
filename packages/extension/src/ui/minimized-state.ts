@@ -61,10 +61,12 @@ export class MinimizedState {
     discardBtn.style.cssText = `
       background: none; border: none; cursor: pointer;
       color: var(--fb-text-muted); font-size: 16px; padding: 0 2px;
-      line-height: 1;
+      line-height: 1; min-width: 24px; min-height: 24px;
+      display: inline-flex; align-items: center; justify-content: center;
     `;
     discardBtn.textContent = '×';
     discardBtn.title = 'Discard';
+    discardBtn.setAttribute('aria-label', 'Discard draft');
     discardBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       opts.onDiscard();

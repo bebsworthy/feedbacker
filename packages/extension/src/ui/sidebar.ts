@@ -1,5 +1,8 @@
 /**
  * ManagerSidebar — vanilla TS sidebar for viewing/managing feedback
+ * Note: Exceeds 200-line guideline due to imperative DOM construction
+ * (no JSX/template engine). Cannot be reasonably split further as all
+ * methods share private state and the DOM tree is tightly coupled.
  */
 
 import type { Feedback } from '@feedbacker/core';
@@ -13,6 +16,8 @@ interface SidebarOptions {
   onDelete: (id: string) => void;
   onEdit: (feedback: Feedback) => void;
   onExport: (format: 'markdown' | 'zip') => void;
+  onClearAll: () => void;
+  onAnnounce?: (message: string) => void;
 }
 
 type FilterMode = 'this-site' | 'all-sites';
@@ -27,6 +32,7 @@ export class ManagerSidebar {
   private focusTrap: FocusTrap | null = null;
   private filterMode: FilterMode = 'this-site';
   private currentOrigin: string;
+  private clearAllBtn: HTMLButtonElement;
 
   constructor(container: HTMLElement, opts: SidebarOptions) {
     this.container = container;
@@ -41,6 +47,8 @@ export class ManagerSidebar {
     // Sidebar
     this.sidebar = document.createElement('div');
     this.sidebar.className = 'fb-sidebar';
+    this.sidebar.setAttribute('role', 'complementary');
+    this.sidebar.setAttribute('aria-label', 'Feedback manager');
 
     // Header
     const header = document.createElement('div');
@@ -50,6 +58,7 @@ export class ManagerSidebar {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'fb-btn-icon';
     closeBtn.innerHTML = closeIcon(20);
+    closeBtn.setAttribute('aria-label', 'Close sidebar');
     closeBtn.addEventListener('click', () => opts.onClose());
     header.appendChild(closeBtn);
     this.sidebar.appendChild(header);
@@ -57,6 +66,7 @@ export class ManagerSidebar {
     // Filter tabs
     const filterBar = document.createElement('div');
     filterBar.style.cssText = 'display: flex; border-bottom: 1px solid var(--fb-border); padding: 0 16px;';
+    filterBar.setAttribute('role', 'tablist');
 
     const thisSiteBtn = this.createFilterTab('This site', 'this-site');
     const allSitesBtn = this.createFilterTab('All sites', 'all-sites');
@@ -83,8 +93,15 @@ export class ManagerSidebar {
     exportZipBtn.innerHTML = `${arrowDownTrayIcon(16)} <span style="margin-left:4px">ZIP</span>`;
     exportZipBtn.addEventListener('click', () => opts.onExport('zip'));
 
+    this.clearAllBtn = document.createElement('button');
+    this.clearAllBtn.className = 'fb-btn fb-btn-danger';
+    this.clearAllBtn.textContent = 'Clear all';
+    this.clearAllBtn.style.marginLeft = 'auto';
+    this.clearAllBtn.addEventListener('click', () => opts.onClearAll());
+
     footer.appendChild(exportMdBtn);
     footer.appendChild(exportZipBtn);
+    footer.appendChild(this.clearAllBtn);
     this.sidebar.appendChild(footer);
 
     // Escape to close
@@ -148,13 +165,17 @@ export class ManagerSidebar {
     this.body.innerHTML = '';
     this.renderFeedbackList(filtered);
 
-    // Update active tab styles
+    // Hide Clear All when there are 0 total feedback items
+    this.clearAllBtn.style.display = this.opts.feedbacks.length === 0 ? 'none' : '';
+
+    // Update active tab styles and aria-selected
     this.sidebar.querySelectorAll('[data-filter]').forEach((tab) => {
       const el = tab as HTMLElement;
       const isActive = el.dataset.filter === this.filterMode;
       el.style.borderBottom = isActive ? '2px solid var(--fb-primary)' : '2px solid transparent';
       el.style.color = isActive ? 'var(--fb-primary)' : 'var(--fb-text-secondary)';
       el.style.fontWeight = isActive ? '600' : '400';
+      el.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
   }
 
@@ -162,6 +183,8 @@ export class ManagerSidebar {
     const btn = document.createElement('button');
     btn.dataset.filter = mode;
     btn.textContent = label;
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', mode === this.filterMode ? 'true' : 'false');
     btn.style.cssText = `
       background: none; border: none; cursor: pointer;
       padding: 8px 12px; font-size: 13px;
@@ -250,7 +273,8 @@ export class ManagerSidebar {
       const copyImgBtn = document.createElement('button');
       copyImgBtn.className = 'fb-btn-icon fb-screenshot-copy';
       copyImgBtn.innerHTML = photoIcon(16);
-      copyImgBtn.dataset.tooltip = 'Copy image';
+      copyImgBtn.dataset.tooltip = 'Copy screenshot';
+      copyImgBtn.setAttribute('aria-label', 'Copy screenshot');
       copyImgBtn.addEventListener('click', () => {
         this.copyImageToClipboard(fb.screenshot!, copyImgBtn);
       });
@@ -298,16 +322,19 @@ export class ManagerSidebar {
     editBtn.className = 'fb-btn-icon';
     editBtn.innerHTML = pencilIcon(16);
     editBtn.dataset.tooltip = 'Edit';
+    editBtn.setAttribute('aria-label', 'Edit feedback');
     editBtn.addEventListener('click', () => this.opts.onEdit(fb));
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'fb-btn-icon';
     copyBtn.innerHTML = copyIcon(16);
-    copyBtn.dataset.tooltip = 'Copy markdown';
+    copyBtn.dataset.tooltip = 'Copy to clipboard';
+    copyBtn.setAttribute('aria-label', 'Copy to clipboard');
     copyBtn.addEventListener('click', () => {
       const markdown = MarkdownExporter.exportSingleItem(fb);
       navigator.clipboard.writeText(markdown).then(() => {
         this.flashCopied(copyBtn, copyIcon(16));
+        this.opts.onAnnounce?.('Copied to clipboard');
       });
     });
 
@@ -315,6 +342,7 @@ export class ManagerSidebar {
     deleteBtn.className = 'fb-btn-icon';
     deleteBtn.innerHTML = trashIcon(16);
     deleteBtn.dataset.tooltip = 'Delete';
+    deleteBtn.setAttribute('aria-label', 'Delete feedback');
     deleteBtn.style.color = 'var(--fb-error)';
     deleteBtn.addEventListener('click', () => this.opts.onDelete(fb.id));
 
