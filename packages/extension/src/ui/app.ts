@@ -652,6 +652,20 @@ export class FeedbackApp {
     document.body.appendChild(banner);
     this.selectionBanner = banner;
     logger.debug('Selection banner displayed');
+
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+      if (this.selectionBanner === banner) {
+        banner.style.transition = 'opacity 0.3s ease-out';
+        banner.style.opacity = '0';
+        setTimeout(() => {
+          if (this.selectionBanner === banner) {
+            banner.remove();
+            this.selectionBanner = null;
+          }
+        }, 300);
+      }
+    }, 3000);
   }
 
   private dismissSelectionBanner(): void {
