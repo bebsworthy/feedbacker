@@ -568,7 +568,21 @@ export const EXTENSION_CSS = `
   animation: fb-pulse 1.5s ease-in-out infinite;
 }
 
-/* ---- Undo toast ---- */
+/* ---- Undo toast (inline in sidebar) ---- */
+.fb-toast-inline {
+  background: var(--fb-bg-secondary);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fb-font);
+  font-size: 13px;
+  color: var(--fb-text);
+  margin: 8px 12px;
+  animation: fb-toast-in 200ms ease-out;
+}
 .fb-toast-undo {
   border-left: 4px solid var(--fb-error);
 }

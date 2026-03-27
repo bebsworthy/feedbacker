@@ -64,6 +64,7 @@ export class FeedbackApp {
 
   // Undo delete state (PH-009)
   private pendingDelete: PendingDelete | null = null;
+  private finalizingDeleteIds: Set<string> = new Set();
 
   // Selection banner (PH-011)
   private selectionBanner: HTMLDivElement | null = null;
@@ -165,11 +166,12 @@ export class FeedbackApp {
     this.container.innerHTML = '';
   }
 
-  /** Return feedbacks excluding any item pending deletion (ARCH-005). */
+  /** Return feedbacks excluding pending or finalizing deletions (ARCH-005). */
   private getVisibleFeedbacks(): Feedback[] {
-    if (!this.pendingDelete) return this.state.feedbacks;
-    const pendingId = this.pendingDelete.id;
-    return this.state.feedbacks.filter(f => f.id !== pendingId);
+    const hiddenIds = new Set(this.finalizingDeleteIds);
+    if (this.pendingDelete) hiddenIds.add(this.pendingDelete.id);
+    if (hiddenIds.size === 0) return this.state.feedbacks;
+    return this.state.feedbacks.filter(f => !hiddenIds.has(f.id));
   }
 
   // ---- Announcements and feedback ----
@@ -229,7 +231,14 @@ export class FeedbackApp {
     });
     toast.appendChild(undoBtn);
 
-    this.container.appendChild(toast);
+    // Insert at top of sidebar body if sidebar is open, otherwise into container
+    const sidebarBody = this.container.querySelector('.fb-sidebar-body');
+    if (sidebarBody) {
+      toast.className = 'fb-toast-inline fb-toast-undo';
+      sidebarBody.insertBefore(toast, sidebarBody.firstChild);
+    } else {
+      this.container.appendChild(toast);
+    }
 
     setTimeout(() => toast.remove(), timeoutMs);
   }
@@ -511,11 +520,6 @@ export class FeedbackApp {
       this.finalizePendingDelete();
     }
 
-    // Hide card from sidebar without deleting from storage
-    const visualFeedbacks = this.state.feedbacks.filter(f => f.id !== id);
-    this.sidebar?.updateFeedbacks(visualFeedbacks);
-    this.fab?.updateCount(visualFeedbacks.length);
-
     logger.debug(`Pending delete: ${id}, 8s timeout started`);
 
     const timer = setTimeout(() => {
@@ -523,6 +527,12 @@ export class FeedbackApp {
     }, 8000);
 
     this.pendingDelete = { id, feedback, timer, previousIndex: feedbackIndex };
+
+    // Hide card from sidebar — getVisibleFeedbacks excludes both
+    // the new pending item and any still-finalizing async deletions
+    const visualFeedbacks = this.getVisibleFeedbacks();
+    this.sidebar?.updateFeedbacks(visualFeedbacks);
+    this.fab?.updateCount(visualFeedbacks.length);
 
     this.showUndoToast('Feedback deleted', () => {
       this.undoDelete();
@@ -539,11 +549,18 @@ export class FeedbackApp {
 
     // Remove undo toast
     this.container.querySelector('.fb-toast-undo')?.remove();
+    // Also check inside sidebar body for inline toast
+    this.container.querySelector('.fb-toast-inline')?.remove();
+
+    // Track this ID as finalizing so getVisibleFeedbacks hides it
+    this.finalizingDeleteIds.add(id);
 
     this.state.deleteFeedback(id).then(() => {
+      this.finalizingDeleteIds.delete(id);
       logger.debug(`Delete finalized: ${id}`);
-      this.fab?.updateCount(this.state.feedbacks.length);
+      this.fab?.updateCount(this.getVisibleFeedbacks().length);
     }).catch((error) => {
+      this.finalizingDeleteIds.delete(id);
       logger.error(`Failed to finalize delete: ${id}`, error);
       this.restoreDeletedCard(feedback, previousIndex);
       this.showToast('Failed to delete. Item restored.', 3500, 'error');
