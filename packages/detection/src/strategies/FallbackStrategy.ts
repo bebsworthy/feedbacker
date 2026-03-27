@@ -5,6 +5,7 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../types';
+import { buildElementLabel } from '../utils/element-label';
 import logger from '../utils/logger';
 
 export class FallbackStrategy extends DetectionStrategy {
@@ -34,10 +35,7 @@ export class FallbackStrategy extends DetectionStrategy {
 
       // Even if there's an error, return basic fallback
       const tagName = element.tagName.toLowerCase();
-      const className = element.className;
-      const fallbackPath = className
-        ? ['Unknown', `${tagName}.${className.split(' ').join('.')}`]
-        : ['Unknown', tagName];
+      const fallbackPath = ['Unknown', tagName];
 
       return {
         name: 'Unknown Component',
@@ -101,15 +99,10 @@ export class FallbackStrategy extends DetectionStrategy {
       const id = current.id;
       const classList = Array.from(current.classList);
 
-      // For the first element (selected), include all classes
-      if (depth === 0 && classList.length > 0) {
-        const classes = classList.filter((c) => c.trim()).join('.');
-        domPath.unshift(`${tagName}.${classes}`);
-      } else if (depth === 0 && id) {
+      if (id) {
         domPath.unshift(`${tagName}#${id}`);
       } else {
-        // For parent elements, just show tag name
-        domPath.unshift(tagName);
+        domPath.unshift(buildElementLabel(current));
       }
 
       // Try to detect if we've reached a component boundary

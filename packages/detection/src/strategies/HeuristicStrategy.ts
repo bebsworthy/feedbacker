@@ -5,6 +5,7 @@
 
 import { DetectionStrategy } from '../DetectionStrategy';
 import { ComponentInfo } from '../types';
+import { buildElementLabel } from '../utils/element-label';
 import logger from '../utils/logger';
 
 export class HeuristicStrategy extends DetectionStrategy {
@@ -58,17 +59,8 @@ export class HeuristicStrategy extends DetectionStrategy {
         foundComponent = true;
         componentPath.unshift(possibleComponentName);
       } else if (!foundComponent) {
-        // Still in DOM elements
-        if (domPath.length === 0 && className) {
-          // For the selected element, include className
-          const classes = className
-            .split(' ')
-            .filter((c) => c.trim())
-            .join('.');
-          domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
-        } else {
-          domPath.unshift(tagName);
-        }
+        // Still in DOM elements — use concise label
+        domPath.unshift(buildElementLabel(currentElement));
       } else {
         // We're above the first component, look for parent components
         const parentComponentName = this.guessComponentName(currentElement);

@@ -23,6 +23,7 @@ export {
 } from './utils/performance';
 export { logger, Logger, LogLevel } from './utils/logger';
 export { getHumanReadableName } from './utils/human-readable-name';
+export { buildElementLabel } from './utils/element-label';
 
 import { DetectionChain as _DetectionChain } from './DetectionStrategy';
 import {

@@ -10,6 +10,8 @@
  * 6. Tag name fallback (with first class if present)
  */
 
+import { buildElementLabel } from './element-label';
+
 const MAX_TEXT_LENGTH = 40;
 const MAX_CHILDREN_FOR_TEXT = 2;
 
@@ -99,12 +101,6 @@ export function getHumanReadableName(
     return componentName;
   }
 
-  // Step 6: Tag name fallback with optional first class
-  const tag = element.tagName.toLowerCase();
-  const firstClass = element.classList.length > 0 ? element.classList[0] : null;
-  if (firstClass) {
-    return `${tag}.${firstClass}`;
-  }
-
-  return tag;
+  // Step 6: Tag name fallback with concise label
+  return buildElementLabel(element);
 }
