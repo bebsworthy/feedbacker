@@ -88,6 +88,7 @@ function createMockDetectionController(): DetectionController {
     hoveredComponent: null,
     selectedComponent: null,
     setCallbacks: jest.fn(),
+    setLifecycleCallbacks: jest.fn(),
     activate: jest.fn(),
     deactivate: jest.fn(),
     destroy: jest.fn(),

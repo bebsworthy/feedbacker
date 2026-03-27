@@ -1,6 +1,12 @@
 /**
  * FeedbackApp — main controller that wires together all UI components
  * Renders FAB, modal, sidebar, and overlay in the shadow DOM container
+ *
+ * Note: Exceeds 200-line guideline due to imperative DOM construction and
+ * controller coordination across FAB, modal, sidebar, overlay, toast, banner,
+ * and undo-delete lifecycle. Cannot be reasonably split as all methods share
+ * private state (pendingDelete, selectionBanner, toastMessageIndex) and the
+ * DOM container reference.
  */
 
 import type { Feedback } from '@feedbacker/core';
@@ -16,6 +22,28 @@ import { ConfirmDialog } from './confirm-dialog';
 import { ExportDialog } from './export-dialog';
 import { MinimizedState } from './minimized-state';
 import { checkIcon } from './icons';
+
+/** Rotating toast messages for submit confirmation (PH-012) */
+const SUBMIT_TOAST_MESSAGES = [
+  'Feedback saved!',
+  'Got it!',
+  'Captured!',
+  'Nice catch!',
+] as const;
+
+/** Milestone thresholds and messages (PH-012) */
+const MILESTONES: ReadonlyArray<{ count: number; text: string }> = [
+  { count: 5, text: 'Thorough review!' },
+  { count: 10, text: 'Detailed review!' },
+];
+
+/** Tracks a deferred deletion awaiting undo or finalization (PH-009) */
+interface PendingDelete {
+  id: string;
+  feedback: Feedback;
+  timer: ReturnType<typeof setTimeout>;
+  previousIndex: number;
+}
 
 export class FeedbackApp {
   private container: HTMLDivElement;
@@ -34,6 +62,15 @@ export class FeedbackApp {
   private minimizedState: MinimizedState | null = null;
   private liveRegion: HTMLDivElement | null = null;
 
+  // Undo delete state (PH-009)
+  private pendingDelete: PendingDelete | null = null;
+
+  // Selection banner (PH-011)
+  private selectionBanner: HTMLDivElement | null = null;
+
+  // Toast message rotation (PH-012)
+  private toastMessageIndex = 0;
+
   constructor(container: HTMLDivElement, state: StateManager, detection: DetectionController) {
     this.container = container;
     this.state = state;
@@ -43,6 +80,12 @@ export class FeedbackApp {
     this.detection.setCallbacks(
       (info) => this.onComponentHover(info),
       (info) => this.onComponentSelect(info)
+    );
+
+    // Set up lifecycle callbacks for selection banner (PH-011)
+    this.detection.setLifecycleCallbacks(
+      () => this.showSelectionBanner(),
+      () => this.dismissSelectionBanner()
     );
   }
 
@@ -99,6 +142,11 @@ export class FeedbackApp {
   }
 
   destroy(): void {
+    if (this.pendingDelete) {
+      clearTimeout(this.pendingDelete.timer);
+      this.pendingDelete = null;
+    }
+    this.dismissSelectionBanner();
     this.fab?.destroy();
     this.modal?.destroy();
     this.sidebar?.destroy();
@@ -119,8 +167,8 @@ export class FeedbackApp {
     });
   }
 
-  private showToast(message: string): void {
-    // Remove any existing toast
+  private showToast(message: string, durationMs = 3500): void {
+    // Remove any existing toast (undo or informational)
     this.container.querySelector('.fb-toast')?.remove();
 
     const toast = document.createElement('div');
@@ -136,7 +184,31 @@ export class FeedbackApp {
       setTimeout(() => badge.classList.remove('fb-badge-bump'), 400);
     }
 
-    setTimeout(() => toast.remove(), 3500);
+    setTimeout(() => toast.remove(), durationMs);
+  }
+
+  /** Show undo toast with action button; overrides any active informational toast (PH-009) */
+  private showUndoToast(message: string, onUndo: () => void, timeoutMs = 8000): void {
+    // Remove any existing toast (priority override per ADR-P2-002)
+    this.container.querySelector('.fb-toast')?.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'fb-toast fb-toast-undo';
+    toast.setAttribute('role', 'status');
+    toast.innerHTML = `<span>${message}</span>`;
+
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'fb-toast-undo-btn';
+    undoBtn.textContent = 'Undo';
+    undoBtn.addEventListener('click', () => {
+      toast.remove();
+      onUndo();
+    });
+    toast.appendChild(undoBtn);
+
+    this.container.appendChild(toast);
+
+    setTimeout(() => toast.remove(), timeoutMs);
   }
 
   private showCoachMark(): void {
@@ -233,7 +305,8 @@ export class FeedbackApp {
         this.modal = null;
         this.fab?.updateCount(this.state.feedbacks.length);
         this.fab?.updateDraft(false);
-        this.showToast('Feedback saved!');
+        this.showRotatingSubmitToast();
+        this.showMilestoneIfNeeded();
         this.announce('Feedback saved');
       },
       onCancel: () => {
@@ -277,11 +350,8 @@ export class FeedbackApp {
         this.sidebar?.destroy();
         this.sidebar = null;
       },
-      onDelete: async (id: string) => {
-        await this.state.deleteFeedback(id);
-        this.sidebar?.updateFeedbacks(this.state.feedbacks);
-        this.fab?.updateCount(this.state.feedbacks.length);
-        this.announce('Feedback deleted');
+      onDelete: (id: string) => {
+        this.handleDeleteWithUndo(id);
       },
       onSaveEdit: async (id: string, comment: string) => {
         const existing = this.state.feedbacks.find(f => f.id === id);
@@ -326,13 +396,19 @@ export class FeedbackApp {
   }
 
   private async doExport(format: 'markdown' | 'zip'): Promise<void> {
-    const { MarkdownExporter, ZipExporter } = await import('@feedbacker/core');
-    const feedbacks = this.state.feedbacks;
+    try {
+      const { MarkdownExporter: MdExp, ZipExporter: ZipExp } = await import('@feedbacker/core');
+      const feedbacks = this.state.feedbacks;
 
-    if (format === 'markdown') {
-      MarkdownExporter.downloadMarkdown(feedbacks, MarkdownExporter.generateFilename(feedbacks));
-    } else {
-      await ZipExporter.downloadZip(feedbacks, ZipExporter.generateZipFilename(feedbacks));
+      if (format === 'markdown') {
+        MdExp.downloadMarkdown(feedbacks, MdExp.generateFilename(feedbacks));
+      } else {
+        await ZipExp.downloadZip(feedbacks, ZipExp.generateZipFilename(feedbacks));
+      }
+      this.showToast('Report downloaded');
+    } catch (error) {
+      logger.error('Export failed:', error);
+      this.showToast('Export failed. Please try again.');
     }
   }
 
@@ -394,6 +470,141 @@ export class FeedbackApp {
       },
       onDraftSave: () => {} // No draft for edits
     });
+  }
+
+  // ---- Undo delete (PH-009) ----
+
+  private handleDeleteWithUndo(id: string): void {
+    const feedbackIndex = this.state.feedbacks.findIndex(f => f.id === id);
+    if (feedbackIndex === -1) return;
+    const feedback = this.state.feedbacks[feedbackIndex];
+
+    // If there is already a pending delete, finalize it immediately
+    if (this.pendingDelete) {
+      this.finalizePendingDelete();
+    }
+
+    // Hide card from sidebar without deleting from storage
+    const visualFeedbacks = this.state.feedbacks.filter(f => f.id !== id);
+    this.sidebar?.updateFeedbacks(visualFeedbacks);
+    this.fab?.updateCount(visualFeedbacks.length);
+
+    logger.debug(`Pending delete: ${id}, 8s timeout started`);
+
+    const timer = setTimeout(() => {
+      this.finalizePendingDelete();
+    }, 8000);
+
+    this.pendingDelete = { id, feedback, timer, previousIndex: feedbackIndex };
+
+    this.showUndoToast('Feedback deleted', () => {
+      this.undoDelete();
+    });
+
+    this.announce('Feedback deleted');
+  }
+
+  private finalizePendingDelete(): void {
+    if (!this.pendingDelete) return;
+    const { id, feedback, previousIndex } = this.pendingDelete;
+    clearTimeout(this.pendingDelete.timer);
+    this.pendingDelete = null;
+
+    // Remove undo toast
+    this.container.querySelector('.fb-toast-undo')?.remove();
+
+    this.state.deleteFeedback(id).then(() => {
+      logger.debug(`Delete finalized: ${id}`);
+      this.fab?.updateCount(this.state.feedbacks.length);
+    }).catch((error) => {
+      logger.error(`Failed to finalize delete: ${id}`, error);
+      this.restoreDeletedCard(feedback, previousIndex);
+      this.showToast('Failed to delete. Item restored.');
+    });
+  }
+
+  private undoDelete(): void {
+    if (!this.pendingDelete) return;
+    const { id, previousIndex } = this.pendingDelete;
+    clearTimeout(this.pendingDelete.timer);
+    this.pendingDelete = null;
+
+    logger.debug(`Delete undone: ${id}`);
+
+    // Restore card: sidebar shows current state feedbacks (item was never removed from state)
+    this.sidebar?.updateFeedbacks(this.state.feedbacks);
+    this.fab?.updateCount(this.state.feedbacks.length);
+    this.announce('Feedback restored');
+  }
+
+  private restoreDeletedCard(feedback: Feedback, _previousIndex: number): void {
+    // Item was never removed from state if finalization failed, so just refresh
+    this.sidebar?.updateFeedbacks(this.state.feedbacks);
+    this.fab?.updateCount(this.state.feedbacks.length);
+  }
+
+  // ---- Selection banner (PH-011) ----
+
+  private showSelectionBanner(): void {
+    this.dismissSelectionBanner();
+
+    const banner = document.createElement('div');
+    banner.className = 'fb-selection-banner';
+    banner.setAttribute('role', 'status');
+    banner.textContent = 'Click on any element to capture feedback. Press Esc to cancel.';
+
+    // Inline styles for rendering on document.body outside shadow DOM (ADR-P2-003)
+    banner.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; z-index: 2147483646;
+      background: #3b82f6; color: white; text-align: center;
+      padding: 10px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px; font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    `;
+
+    document.body.appendChild(banner);
+    this.selectionBanner = banner;
+    logger.debug('Selection banner displayed');
+  }
+
+  private dismissSelectionBanner(): void {
+    if (this.selectionBanner) {
+      this.selectionBanner.remove();
+      this.selectionBanner = null;
+      logger.debug('Selection banner dismissed');
+    }
+  }
+
+  // ---- Toast rotation and milestones (PH-012) ----
+
+  private showRotatingSubmitToast(): void {
+    const message = SUBMIT_TOAST_MESSAGES[this.toastMessageIndex % SUBMIT_TOAST_MESSAGES.length];
+    this.toastMessageIndex++;
+    this.showToast(message);
+  }
+
+  private showMilestoneIfNeeded(): void {
+    const count = this.state.feedbacks.length;
+    const milestone = MILESTONES.find(m => m.count === count);
+    if (!milestone) return;
+
+    logger.debug(`Milestone reached: ${count} items`);
+
+    // Show milestone in sidebar header if sidebar is open
+    if (this.sidebar) {
+      const header = this.container.querySelector('.fb-sidebar-header');
+      if (header) {
+        // Remove any existing milestone
+        header.querySelector('.fb-milestone')?.remove();
+
+        const badge = document.createElement('span');
+        badge.className = 'fb-milestone';
+        badge.textContent = milestone.text;
+        header.appendChild(badge);
+      }
+    }
   }
 
   private async cropScreenshot(dataUrl: string, element: HTMLElement): Promise<string> {
