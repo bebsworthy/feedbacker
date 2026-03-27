@@ -76,6 +76,13 @@ async function init(): Promise<void> {
         target: { tabId: tab.id },
         files: ['dist/content/content-script.js']
       });
+      // Auto-start capture mode after injection
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: 'start-capture' });
+      } catch {
+        // Content script may not be ready yet on first injection — that's OK,
+        // user can click the pill to start capture
+      }
       window.close();
     }
   });

@@ -109,8 +109,7 @@ export class FeedbackApp {
       position: settings?.position,
       primaryColor: settings?.primaryColor,
       onNewFeedback: () => this.startCapture(),
-      onShowManager: () => this.showSidebar(),
-      onExport: () => this.showExportDialog()
+      onShowManager: () => this.showSidebar()
     });
 
     // Create overlay (outside shadow DOM — appended to document.body)
@@ -206,11 +205,11 @@ export class FeedbackApp {
     toast.innerHTML = `${icon} <span>${message}</span>`;
     this.container.appendChild(toast);
 
-    // Badge count animation
-    const badge = this.container.querySelector('.fb-fab-badge') as HTMLElement | null;
-    if (badge) {
-      badge.classList.add('fb-badge-bump');
-      setTimeout(() => badge.classList.remove('fb-badge-bump'), 400);
+    // Count badge animation
+    const countBtn = this.container.querySelector('.fb-fab-count') as HTMLElement | null;
+    if (countBtn) {
+      countBtn.classList.add('fb-badge-bump');
+      setTimeout(() => countBtn.classList.remove('fb-badge-bump'), 400);
     }
 
     setTimeout(() => toast.remove(), durationMs);
@@ -253,24 +252,25 @@ export class FeedbackApp {
     mark.textContent = 'Click to start giving feedback';
     this.container.appendChild(mark);
 
-    // Pulse animation on FAB
-    const fabEl = this.container.querySelector('.fb-fab') as HTMLElement | null;
-    if (fabEl) fabEl.classList.add('fb-fab-pulse');
+    // Pulse animation on pill
+    const pillEl = this.container.querySelector('.fb-fab-pill') as HTMLElement | null;
+    if (pillEl) pillEl.classList.add('fb-fab-pulse');
 
     const dismiss = (): void => {
       mark.remove();
-      fabEl?.classList.remove('fb-fab-pulse');
+      pillEl?.classList.remove('fb-fab-pulse');
       chrome.storage.local.set({ 'feedbacker-onboarding-shown': true }).catch(() => {});
     };
 
     mark.addEventListener('click', dismiss);
-    fabEl?.addEventListener('click', dismiss, { once: true });
+    pillEl?.addEventListener('click', dismiss, { once: true });
     setTimeout(dismiss, 8000);
   }
 
   // ---- Actions ----
 
-  private startCapture(): void {
+  /** Start capture mode — can be called externally (e.g., from popup auto-start) */
+  startCapture(): void {
     this.fab?.collapse();
     this.breadcrumb.activate();
     this.detection.activate();
@@ -357,6 +357,7 @@ export class FeedbackApp {
         }
         this.modal?.destroy();
         this.modal = null;
+        this.fab?.expand();
         this.fab?.updateCount(this.state.feedbacks.length);
         this.fab?.updateDraft(false);
         this.showRotatingSubmitToast();
@@ -366,6 +367,7 @@ export class FeedbackApp {
       onCancel: () => {
         this.modal?.destroy();
         this.modal = null;
+        this.fab?.expand();
       },
       onMinimize: (currentComment: string, type: FeedbackType, severity?: BugSeverity) => {
         this.modal?.destroy();
@@ -403,6 +405,7 @@ export class FeedbackApp {
       onClose: () => {
         this.sidebar?.destroy();
         this.sidebar = null;
+        this.fab?.expand();
       },
       onDelete: (id: string) => {
         this.handleDeleteWithUndo(id);

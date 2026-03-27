@@ -52,6 +52,8 @@ async function init(): Promise<void> {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === 'toggle') {
       app.toggle();
+    } else if (message.type === 'start-capture') {
+      app.startCapture();
     }
     return false;
   });

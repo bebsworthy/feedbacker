@@ -37,7 +37,7 @@ describe('Extension CSS', () => {
   /**
    * T-014: Focus-visible styles exist for all interactive classes.
    * CSS string contains :focus-visible rules for .fb-btn, .fb-btn-icon,
-   * .fb-fab, .fb-fab-action, .fb-export-option.
+   * .fb-fab-capture, .fb-fab-count, .fb-export-option.
    */
   describe('T-014: Focus-visible styles', () => {
     it('contains :focus-visible rules for .fb-btn', () => {
@@ -48,12 +48,8 @@ describe('Extension CSS', () => {
       expect(EXTENSION_CSS).toContain('.fb-btn-icon:focus-visible');
     });
 
-    it('contains :focus-visible rules for .fb-fab', () => {
-      expect(EXTENSION_CSS).toContain('.fb-fab:focus-visible');
-    });
-
-    it('contains :focus-visible rules for .fb-fab-action', () => {
-      expect(EXTENSION_CSS).toContain('.fb-fab-action:focus-visible');
+    it('contains :focus-visible rules for .fb-fab-capture', () => {
+      expect(EXTENSION_CSS).toContain('.fb-fab-capture:focus-visible');
     });
 
     it('contains :focus-visible rules for .fb-export-option', () => {
@@ -233,8 +229,8 @@ describe('Extension CSS', () => {
       expect(block).toContain('opacity: 0');
     });
 
-    it('contains @keyframes fb-fab-cascade', () => {
-      expect(EXTENSION_CSS).toContain('@keyframes fb-fab-cascade');
+    it('pill has hover transition instead of cascade animation', () => {
+      expect(EXTENSION_CSS).toContain('.fb-fab-pill:hover');
     });
   });
 
@@ -259,12 +255,12 @@ describe('Extension CSS', () => {
       expect(match![1]).toContain('animation: fb-modal-in 200ms ease-out');
     });
 
-    it('.fb-fab-action uses fb-fab-cascade animation', () => {
+    it('.fb-fab-pill has transition for hover effects', () => {
       const match = EXTENSION_CSS.match(
-        /\.fb-fab-action\s*\{([\s\S]*?)\}/
+        /\.fb-fab-pill\s*\{([\s\S]*?)\}/
       );
       expect(match).not.toBeNull();
-      expect(match![1]).toContain('fb-fab-cascade');
+      expect(match![1]).toContain('transition');
     });
   });
 

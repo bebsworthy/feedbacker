@@ -1,8 +1,12 @@
 /**
- * FAB — Floating Action Button (vanilla TS)
+ * FAB — Pill-style toolbar for quick capture access
+ *
+ * Layout: [ 📢 Capture | 3 ]
+ * - Click "Capture" → starts feedback capture immediately
+ * - Click count badge → opens sidebar/manager
  */
 
-import { megaphoneIcon, closeIcon, messageIcon, listIcon, arrowDownTrayIcon } from './icons';
+import { megaphoneIcon } from './icons';
 
 interface FABOptions {
   feedbackCount: number;
@@ -11,150 +15,110 @@ interface FABOptions {
   primaryColor?: string;
   onNewFeedback: () => void;
   onShowManager: () => void;
-  onExport: () => void;
 }
 
 export class FAB {
   private container: HTMLElement;
   private opts: FABOptions;
-  private button: HTMLButtonElement;
-  private badge: HTMLSpanElement;
-  private actionsEl: HTMLDivElement | null = null;
-  private expanded = false;
+  private pill: HTMLDivElement;
+  private captureBtn: HTMLButtonElement;
+  private countBtn: HTMLButtonElement;
 
   constructor(container: HTMLElement, opts: FABOptions) {
     this.container = container;
     this.opts = opts;
 
-    // Create FAB button
-    this.button = document.createElement('button');
-    this.button.className = 'fb-fab';
-    this.button.innerHTML = megaphoneIcon(24, 'white');
-    this.button.setAttribute('aria-label', 'Feedbacker menu');
-    this.button.setAttribute('aria-expanded', 'false');
+    // Pill container
+    this.pill = document.createElement('div');
+    this.pill.className = 'fb-fab-pill';
+
+    // Capture button (primary action)
+    this.captureBtn = document.createElement('button');
+    this.captureBtn.className = 'fb-fab-capture';
+    this.captureBtn.innerHTML = `${megaphoneIcon(16, 'white')}<span>Capture</span>`;
+    this.captureBtn.setAttribute('aria-label', 'Start feedback capture');
 
     const isMac = navigator.platform.toUpperCase().includes('MAC');
-    this.button.title = `Feedbacker (${isMac ? 'Opt' : 'Alt'}+Shift+F)`;
+    this.captureBtn.title = `Start capture (${isMac ? 'Opt' : 'Alt'}+Shift+F)`;
 
-    this.button.addEventListener('click', () => this.toggleExpanded());
+    this.captureBtn.addEventListener('click', () => opts.onNewFeedback());
+    this.pill.appendChild(this.captureBtn);
 
-    // Badge
-    this.badge = document.createElement('span');
-    this.badge.className = 'fb-fab-badge';
-    this.badge.style.display = opts.feedbackCount > 0 ? 'flex' : 'none';
-    this.badge.textContent = String(opts.feedbackCount);
-    this.badge.setAttribute('aria-label', `${opts.feedbackCount} feedback items`);
-    this.button.appendChild(this.badge);
+    // Count button (opens sidebar)
+    this.countBtn = document.createElement('button');
+    this.countBtn.className = 'fb-fab-count';
+    this.countBtn.textContent = String(opts.feedbackCount);
+    this.countBtn.setAttribute('aria-label', `${opts.feedbackCount} feedback items — click to view`);
+    this.countBtn.title = 'View feedback';
+    this.countBtn.style.display = opts.feedbackCount > 0 ? 'flex' : 'none';
+    this.countBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      opts.onShowManager();
+    });
+    this.pill.appendChild(this.countBtn);
 
     this.applyPosition(opts.position || 'bottom-right');
     if (opts.primaryColor) this.applyColor(opts.primaryColor);
 
-    container.appendChild(this.button);
+    container.appendChild(this.pill);
   }
 
   applyPosition(position: string): void {
-    this.button.style.top = 'auto';
-    this.button.style.bottom = 'auto';
-    this.button.style.left = 'auto';
-    this.button.style.right = 'auto';
+    this.pill.style.top = 'auto';
+    this.pill.style.bottom = 'auto';
+    this.pill.style.left = 'auto';
+    this.pill.style.right = 'auto';
 
     switch (position) {
       case 'top-left':
-        this.button.style.top = '24px';
-        this.button.style.left = '24px';
+        this.pill.style.top = '24px';
+        this.pill.style.left = '24px';
         break;
       case 'top-right':
-        this.button.style.top = '24px';
-        this.button.style.right = '24px';
+        this.pill.style.top = '24px';
+        this.pill.style.right = '24px';
         break;
       case 'bottom-left':
-        this.button.style.bottom = '24px';
-        this.button.style.left = '24px';
+        this.pill.style.bottom = '24px';
+        this.pill.style.left = '24px';
         break;
       default: // bottom-right
-        this.button.style.bottom = '24px';
-        this.button.style.right = '24px';
+        this.pill.style.bottom = '24px';
+        this.pill.style.right = '24px';
         break;
     }
   }
 
   applyColor(color: string): void {
-    this.button.style.background = color;
+    this.captureBtn.style.background = color;
   }
 
-  private toggleExpanded(): void {
-    if (this.expanded) {
-      this.collapse();
-    } else {
-      this.expand();
-    }
-  }
-
-  private expand(): void {
-    this.expanded = true;
-    this.button.setAttribute('aria-expanded', 'true');
-    this.button.innerHTML = closeIcon(24, 'white');
-    this.button.appendChild(this.badge);
-
-    this.actionsEl = document.createElement('div');
-    this.actionsEl.className = 'fb-fab-actions';
-
-    const actions = [
-      { icon: messageIcon(18), label: 'New feedback', onClick: this.opts.onNewFeedback },
-      { icon: listIcon(18), label: `View feedback (${this.opts.feedbackCount})`, onClick: this.opts.onShowManager },
-      { icon: arrowDownTrayIcon(18), label: 'Share / Export', onClick: this.opts.onExport }
-    ];
-
-    for (const action of actions) {
-      const btn = document.createElement('button');
-      btn.className = 'fb-fab-action';
-      btn.innerHTML = `${action.icon}<span>${action.label}</span>`;
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        action.onClick();
-      });
-      this.actionsEl.appendChild(btn);
-    }
-
-    // Escape to collapse menu
-    this.actionsEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.collapse();
-        this.button.focus();
-      }
-    });
-
-    this.container.appendChild(this.actionsEl);
-  }
-
+  /** Hide the pill during capture mode */
   collapse(): void {
-    this.expanded = false;
-    this.button.setAttribute('aria-expanded', 'false');
-    this.button.innerHTML = megaphoneIcon(24, 'white');
-    this.button.appendChild(this.badge);
-    this.actionsEl?.remove();
-    this.actionsEl = null;
+    this.pill.style.display = 'none';
+  }
+
+  /** Show the pill after capture mode ends */
+  expand(): void {
+    this.pill.style.display = 'flex';
   }
 
   updateCount(count: number): void {
     this.opts.feedbackCount = count;
-    this.badge.textContent = count > 99 ? '99+' : String(count);
-    this.badge.style.display = count > 0 ? 'flex' : 'none';
-    this.badge.setAttribute('aria-label', `${count} feedback items`);
+    this.countBtn.textContent = count > 99 ? '99+' : String(count);
+    this.countBtn.style.display = count > 0 ? 'flex' : 'none';
+    this.countBtn.setAttribute('aria-label', `${count} feedback items — click to view`);
   }
 
   updateDraft(_hasDraft: boolean): void {
-    // Draft state is communicated via MinimizedState bar, not the FAB
+    // Draft state is communicated via MinimizedState bar, not the pill
   }
 
   setVisible(visible: boolean): void {
-    this.button.style.display = visible ? 'flex' : 'none';
-    if (!visible) this.collapse();
+    this.pill.style.display = visible ? 'flex' : 'none';
   }
 
   destroy(): void {
-    this.collapse();
-    this.button.remove();
+    this.pill.remove();
   }
 }

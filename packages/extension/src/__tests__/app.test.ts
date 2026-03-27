@@ -180,14 +180,10 @@ describe('FeedbackApp', () => {
     return app;
   }
 
-  /** Helper: open sidebar by clicking the FAB's "View feedback" action */
+  /** Helper: open sidebar by clicking the pill's count button */
   function openSidebar(): void {
-    const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-    fab.click(); // expand
-    const actions = container.querySelectorAll('.fb-fab-action');
-    // "View feedback" is the second action
-    const viewBtn = Array.from(actions).find(a => a.textContent?.includes('View'));
-    (viewBtn as HTMLElement)?.click();
+    const countBtn = container.querySelector('.fb-fab-count') as HTMLButtonElement;
+    countBtn.click();
   }
 
   /**
@@ -588,12 +584,13 @@ describe('FeedbackApp', () => {
       const app = renderAppWithFeedbacks([fb]);
       await jest.advanceTimersByTimeAsync(0);
 
-      // Open export dialog via FAB
-      const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-      fab.click();
-      const actions = container.querySelectorAll('.fb-fab-action');
-      const exportAction = Array.from(actions).find(a => a.textContent?.includes('Export'));
-      (exportAction as HTMLElement)?.click();
+      // Open export dialog via sidebar
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+      const exportBtn = Array.from(container.querySelectorAll('.fb-btn')).find(
+        (b) => b.textContent?.includes('Export')
+      ) as HTMLButtonElement;
+      exportBtn?.click();
       await jest.advanceTimersByTimeAsync(0);
 
       // Click Markdown option (second option in export dialog)
@@ -619,11 +616,12 @@ describe('FeedbackApp', () => {
       const app = renderAppWithFeedbacks([fb]);
       await jest.advanceTimersByTimeAsync(0);
 
-      const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-      fab.click();
-      const actions = container.querySelectorAll('.fb-fab-action');
-      const exportAction = Array.from(actions).find(a => a.textContent?.includes('Export'));
-      (exportAction as HTMLElement)?.click();
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+      const exportBtn = Array.from(container.querySelectorAll('.fb-btn')).find(
+        (b) => b.textContent?.includes('Export')
+      ) as HTMLButtonElement;
+      exportBtn?.click();
       await jest.advanceTimersByTimeAsync(0);
 
       // Click ZIP option (third option)
@@ -655,11 +653,12 @@ describe('FeedbackApp', () => {
       const app = renderAppWithFeedbacks([fb]);
       await jest.advanceTimersByTimeAsync(0);
 
-      const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-      fab.click();
-      const actions = container.querySelectorAll('.fb-fab-action');
-      const exportAction = Array.from(actions).find(a => a.textContent?.includes('Export'));
-      (exportAction as HTMLElement)?.click();
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+      const exportBtn = Array.from(container.querySelectorAll('.fb-btn')).find(
+        (b) => b.textContent?.includes('Export')
+      ) as HTMLButtonElement;
+      exportBtn?.click();
       await jest.advanceTimersByTimeAsync(0);
 
       const options = container.querySelectorAll('.fb-export-option');
@@ -762,12 +761,13 @@ describe('FeedbackApp', () => {
       const app = renderAppWithFeedbacks(feedbacks);
       await jest.advanceTimersByTimeAsync(0);
 
-      // Open export dialog via FAB
-      const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-      fab.click();
-      const actions = container.querySelectorAll('.fb-fab-action');
-      const exportAction = Array.from(actions).find(a => a.textContent?.includes('Export'));
-      (exportAction as HTMLElement)?.click();
+      // Open export dialog via sidebar
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+      const exportBtn = Array.from(container.querySelectorAll('.fb-btn')).find(
+        (b) => b.textContent?.includes('Export')
+      ) as HTMLButtonElement;
+      exportBtn?.click();
       await jest.advanceTimersByTimeAsync(0);
 
       // Click "Copy all to clipboard" (first option)
@@ -798,11 +798,12 @@ describe('FeedbackApp', () => {
       const app = renderAppWithFeedbacks(feedbacks);
       await jest.advanceTimersByTimeAsync(0);
 
-      const fab = container.querySelector('.fb-fab') as HTMLButtonElement;
-      fab.click();
-      const actions = container.querySelectorAll('.fb-fab-action');
-      const exportAction = Array.from(actions).find(a => a.textContent?.includes('Export'));
-      (exportAction as HTMLElement)?.click();
+      openSidebar();
+      await jest.advanceTimersByTimeAsync(0);
+      const exportBtn2 = Array.from(container.querySelectorAll('.fb-btn')).find(
+        (b) => b.textContent?.includes('Export')
+      ) as HTMLButtonElement;
+      exportBtn2?.click();
       await jest.advanceTimersByTimeAsync(0);
 
       const options = container.querySelectorAll('.fb-export-option');
