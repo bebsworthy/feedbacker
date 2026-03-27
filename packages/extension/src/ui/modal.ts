@@ -3,7 +3,7 @@
  */
 
 import type { FeedbackType, BugSeverity } from '@feedbacker/core';
-import { type ComponentInfo, getHumanReadableName } from '@feedbacker/detection';
+import type { ComponentInfo } from '@feedbacker/detection';
 import { closeIcon, minimizeIcon, chevronDownIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 import { createTypeChipBar } from './type-chip-bar';
@@ -45,11 +45,7 @@ export class FeedbackModal {
     modal.className = 'fb-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    const humanName = getHumanReadableName(
-      opts.componentInfo.element,
-      opts.componentInfo.name
-    );
-    modal.setAttribute('aria-label', `Feedback for ${humanName}`);
+    modal.setAttribute('aria-label', `Feedback for ${opts.componentInfo.name}`);
 
     // Textarea (created early so header can reference it)
     this.textarea = document.createElement('textarea');
@@ -61,7 +57,7 @@ export class FeedbackModal {
     // Header
     const header = document.createElement('div');
     header.className = 'fb-modal-header';
-    header.innerHTML = `<h3>${this.escapeHtml(humanName)}</h3>`;
+    header.innerHTML = `<h3>${this.escapeHtml(opts.componentInfo.name)}</h3>`;
     const headerActions = document.createElement('div');
     headerActions.style.cssText = 'display: flex; gap: 4px;';
 
@@ -90,57 +86,37 @@ export class FeedbackModal {
     const body = document.createElement('div');
     body.className = 'fb-modal-body';
 
-    // Technical details toggle (collapsed by default)
-    const hasComponentName = opts.componentInfo.name && opts.componentInfo.name !== 'Unknown';
-    const hasPath = opts.componentInfo.path.length > 0;
-    const hasSnippet = !!opts.htmlSnippet;
+    // Component path (always visible)
+    if (opts.componentInfo.path.length > 0) {
+      const pathEl = document.createElement('div');
+      pathEl.className = 'fb-component-path';
+      pathEl.textContent = 'Element location: ' + opts.componentInfo.path.join(' > ');
+      body.appendChild(pathEl);
+    }
 
-    if (hasComponentName || hasPath || hasSnippet) {
-      const detailsToggle = document.createElement('button');
-      detailsToggle.className = 'fb-details-toggle';
-      detailsToggle.setAttribute('aria-expanded', 'false');
-      detailsToggle.innerHTML = `${chevronDownIcon(14)} <span>Technical details</span>`;
+    // HTML snippet (collapsible — can be long)
+    if (opts.htmlSnippet) {
+      const snippetToggle = document.createElement('button');
+      snippetToggle.className = 'fb-details-toggle';
+      snippetToggle.setAttribute('aria-expanded', 'false');
+      snippetToggle.innerHTML = `${chevronDownIcon(14)} <span>HTML snippet</span>`;
 
-      const detailsContent = document.createElement('div');
-      detailsContent.className = 'fb-details-content';
-      detailsContent.style.display = 'none';
+      const snippetContent = document.createElement('div');
+      snippetContent.className = 'fb-details-content';
+      snippetContent.style.display = 'none';
+      const snippetCode = document.createElement('code');
+      snippetCode.className = 'fb-detail-snippet';
+      snippetCode.textContent = opts.htmlSnippet;
+      snippetContent.appendChild(snippetCode);
 
-      if (hasComponentName) {
-        const nameEl = document.createElement('div');
-        nameEl.className = 'fb-detail-row';
-        nameEl.innerHTML = `<span class="fb-detail-label">Component:</span> <span class="fb-detail-value">${this.escapeHtml(opts.componentInfo.name)}</span>`;
-        detailsContent.appendChild(nameEl);
-      }
-
-      if (hasPath) {
-        const pathEl = document.createElement('div');
-        pathEl.className = 'fb-detail-row';
-        pathEl.innerHTML = `<span class="fb-detail-label">Path:</span> <span class="fb-detail-value">${this.escapeHtml(opts.componentInfo.path.join(' > '))}</span>`;
-        detailsContent.appendChild(pathEl);
-      }
-
-      if (hasSnippet) {
-        const snippetEl = document.createElement('div');
-        snippetEl.className = 'fb-detail-row';
-        const snippetLabel = document.createElement('span');
-        snippetLabel.className = 'fb-detail-label';
-        snippetLabel.textContent = 'HTML:';
-        snippetEl.appendChild(snippetLabel);
-        const snippetCode = document.createElement('code');
-        snippetCode.className = 'fb-detail-snippet';
-        snippetCode.textContent = opts.htmlSnippet!;
-        snippetEl.appendChild(snippetCode);
-        detailsContent.appendChild(snippetEl);
-      }
-
-      detailsToggle.addEventListener('click', () => {
-        const isExpanded = detailsContent.style.display !== 'none';
-        detailsContent.style.display = isExpanded ? 'none' : 'block';
-        detailsToggle.setAttribute('aria-expanded', String(!isExpanded));
+      snippetToggle.addEventListener('click', () => {
+        const isExpanded = snippetContent.style.display !== 'none';
+        snippetContent.style.display = isExpanded ? 'none' : 'block';
+        snippetToggle.setAttribute('aria-expanded', String(!isExpanded));
       });
 
-      body.appendChild(detailsToggle);
-      body.appendChild(detailsContent);
+      body.appendChild(snippetToggle);
+      body.appendChild(snippetContent);
     }
 
     // Screenshot preview

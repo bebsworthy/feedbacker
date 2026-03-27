@@ -11,7 +11,7 @@
 
 import type { Feedback, FeedbackType, BugSeverity } from '@feedbacker/core';
 import { captureHtmlSnippet, logger, MarkdownExporter } from '@feedbacker/core';
-import { type ComponentInfo, getHumanReadableName } from '@feedbacker/detection';
+import type { ComponentInfo } from '@feedbacker/detection';
 import { generateCssSelector } from '../utils/css-selector-generator';
 import { StateManager } from '../core/state-manager';
 import { DetectionController } from '../core/detection-controller';
@@ -334,7 +334,7 @@ export class FeedbackApp {
       onSubmit: async (comment: string, type: FeedbackType, severity?: BugSeverity) => {
         const feedback: Feedback = {
           id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          componentName: getHumanReadableName(info.element, info.name),
+          componentName: info.name,
           componentPath: info.path,
           comment,
           screenshot,
@@ -372,7 +372,7 @@ export class FeedbackApp {
         this.modal = null;
         this.minimizedState?.destroy();
         this.minimizedState = new MinimizedState(this.container, {
-          componentName: getHumanReadableName(info.element, info.name),
+          componentName: info.name,
           hasScreenshot: !!screenshot,
           hasDraft: !!currentComment.trim(),
           onRestore: () => {
