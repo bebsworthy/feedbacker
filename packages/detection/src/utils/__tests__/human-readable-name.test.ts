@@ -155,4 +155,52 @@ describe('getHumanReadableName', () => {
 
     expect(getHumanReadableName(el)).toBe('Navigation');
   });
+
+  // Step 6 integration with buildElementLabel
+
+  it('step 6: returns input[name] for form element with name attr', () => {
+    const el = document.createElement('input');
+    el.setAttribute('name', 'email');
+    document.body.appendChild(el);
+
+    expect(getHumanReadableName(el)).toBe('input[email]');
+  });
+
+  it('step 6: skips Tailwind utility classes', () => {
+    const el = document.createElement('div');
+    el.className = 'flex items-center p-4 bg-blue-500';
+    document.body.appendChild(el);
+
+    // All Tailwind utilities — falls through to just tag
+    expect(getHumanReadableName(el)).toBe('div');
+  });
+
+  it('step 6: picks first meaningful class among Tailwind', () => {
+    const el = document.createElement('div');
+    el.className = 'flex items-center card-wrapper p-4';
+    document.body.appendChild(el);
+
+    expect(getHumanReadableName(el)).toBe('div.card-wrapper');
+  });
+
+  it('step 5 wins over step 6 buildElementLabel', () => {
+    const el = document.createElement('input');
+    el.setAttribute('name', 'email');
+    el.setAttribute('aria-label', 'Email field');
+    document.body.appendChild(el);
+
+    // aria-label triggers step 1, not step 6
+    expect(getHumanReadableName(el)).toBe('Email field');
+    // componentName triggers step 5
+    expect(getHumanReadableName(el, 'EmailInput')).toBe('Email field');
+  });
+
+  it('step 5 componentName wins when no aria/text/role', () => {
+    const el = document.createElement('div');
+    el.className = 'flex p-4';
+    document.body.appendChild(el);
+
+    // componentName at step 5 should return before step 6
+    expect(getHumanReadableName(el, 'DashboardPanel')).toBe('DashboardPanel');
+  });
 });

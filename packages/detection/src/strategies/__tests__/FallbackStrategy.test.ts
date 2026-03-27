@@ -155,6 +155,50 @@ describe('FallbackStrategy', () => {
     expect(result!.name).toContain('Home');
   });
 
+  // -- Path format (buildElementLabel integration) --------------------------
+
+  it('path segments use concise format, not all-classes join', () => {
+    const parent = document.createElement('div');
+    parent.className = 'flex items-center gap-2 p-4 bg-white rounded-lg shadow-md';
+    const child = document.createElement('input');
+    child.className = 'border-input h-9 w-full rounded-md px-3 text-base';
+    child.setAttribute('name', 'email');
+    parent.appendChild(child);
+    document.body.appendChild(parent);
+
+    const result = strategy.handle(child);
+    expect(result).not.toBeNull();
+
+    // Path should NOT contain long Tailwind class strings
+    for (const segment of result!.path) {
+      expect(segment.length).toBeLessThan(50);
+      expect(segment).not.toContain('items-center');
+      expect(segment).not.toContain('border-input');
+    }
+
+    // The input segment should include [email] name
+    const inputSegment = result!.path.find((s) => s.startsWith('input'));
+    expect(inputSegment).toContain('[email]');
+
+    parent.remove();
+  });
+
+  it('path includes aria-label when present on elements', () => {
+    const nav = document.createElement('nav');
+    nav.setAttribute('aria-label', 'Sidebar');
+    const list = document.createElement('ul');
+    nav.appendChild(list);
+    document.body.appendChild(nav);
+
+    const result = strategy.handle(list);
+    expect(result).not.toBeNull();
+
+    const navSegment = result!.path.find((s) => s.startsWith('nav'));
+    expect(navSegment).toContain('"Sidebar"');
+
+    nav.remove();
+  });
+
   // -- Error resilience -----------------------------------------------------
 
   it('handles error during detection gracefully and still returns a result', () => {

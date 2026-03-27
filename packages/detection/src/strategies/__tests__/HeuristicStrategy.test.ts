@@ -129,6 +129,33 @@ describe('HeuristicStrategy', () => {
     expect(result!.element).toBe(deepest);
   });
 
+  // -- Path format (buildElementLabel integration) --------------------------
+
+  it('DOM path segments use concise labels, not all-classes join', () => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex items-center gap-4 px-6 py-2 bg-gray-100';
+    const btn = document.createElement('button');
+    btn.className = 'rounded-md shadow-sm text-sm font-medium';
+    btn.setAttribute('aria-label', 'Save');
+    wrapper.appendChild(btn);
+    document.body.appendChild(wrapper);
+
+    const result = strategy.handle(btn);
+    expect(result).not.toBeNull();
+
+    // No segment should contain long Tailwind class chains
+    for (const segment of result!.path) {
+      expect(segment).not.toContain('items-center');
+      expect(segment).not.toContain('rounded-md');
+    }
+
+    // Button segment should include aria-label
+    const btnSegment = result!.path.find((s) => s.startsWith('button'));
+    expect(btnSegment).toContain('"Save"');
+
+    wrapper.remove();
+  });
+
   // -- Context guessing from parent elements --------------------------------
 
   // Protects against: parent context detection failing to incorporate

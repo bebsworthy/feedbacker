@@ -167,6 +167,45 @@ describe('DetectionStrategy', () => {
     document.body.removeChild(current);
   });
 
+  it('buildHybridPath uses buildElementLabel format for all DOM segments', () => {
+    const strategy = new HelperExercisingStrategy({ type: 'buildHybridPath', fiber: null });
+
+    const grandparent = document.createElement('section');
+    grandparent.setAttribute('aria-label', 'Main content');
+    const parent = document.createElement('form');
+    parent.className = 'flex gap-4 p-6 signup-form';
+    const child = document.createElement('input');
+    child.className = 'border-input h-9 w-full rounded-md';
+    child.setAttribute('name', 'email');
+    grandparent.appendChild(parent);
+    parent.appendChild(child);
+    document.body.appendChild(grandparent);
+
+    const result = strategy.handle(child);
+    expect(result).not.toBeNull();
+
+    // No segment should have Tailwind class explosion
+    for (const segment of result!.path) {
+      expect(segment.length).toBeLessThan(80);
+      expect(segment).not.toContain('border-input');
+      expect(segment).not.toContain('rounded-md');
+    }
+
+    // Input should have form name
+    const inputSeg = result!.path.find((s) => s.startsWith('input'));
+    expect(inputSeg).toContain('[email]');
+
+    // Form should pick meaningful class
+    const formSeg = result!.path.find((s) => s.startsWith('form'));
+    expect(formSeg).toBe('form.signup-form');
+
+    // Section should have aria-label
+    const sectionSeg = result!.path.find((s) => s.startsWith('section'));
+    expect(sectionSeg).toContain('"Main content"');
+
+    grandparent.remove();
+  });
+
   // -- getReactFiber (via handle) -------------------------------------------
 
   // Protects against: getReactFiber crashing on plain DOM elements
