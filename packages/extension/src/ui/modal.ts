@@ -2,19 +2,23 @@
  * FeedbackModal — vanilla TS modal for feedback capture
  */
 
+import type { FeedbackType, BugSeverity } from '@feedbacker/core';
 import { type ComponentInfo, getHumanReadableName } from '@feedbacker/detection';
 import { closeIcon, minimizeIcon, chevronDownIcon } from './icons';
 import { FocusTrap } from './focus-trap';
+import { createTypeChipBar } from './type-chip-bar';
 
-interface ModalOptions {
+export interface ModalOptions {
   componentInfo: ComponentInfo;
   screenshot?: string;
   htmlSnippet?: string;
   draftComment?: string;
-  onSubmit: (comment: string) => void;
+  draftType?: FeedbackType;
+  draftSeverity?: BugSeverity;
+  onSubmit: (comment: string, type: FeedbackType, severity?: BugSeverity) => void;
   onCancel: () => void;
-  onMinimize?: (currentComment: string) => void;
-  onDraftSave: (comment: string) => void;
+  onMinimize?: (currentComment: string, type: FeedbackType, severity?: BugSeverity) => void;
+  onDraftSave: (comment: string, type: FeedbackType, severity?: BugSeverity) => void;
 }
 
 export class FeedbackModal {
@@ -23,9 +27,13 @@ export class FeedbackModal {
   private textarea: HTMLTextAreaElement;
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
   private focusTrap: FocusTrap | null = null;
+  private selectedType: FeedbackType;
+  private selectedSeverity: BugSeverity | undefined;
 
   constructor(container: HTMLElement, opts: ModalOptions) {
     this.container = container;
+    this.selectedType = opts.draftType ?? 'suggestion';
+    this.selectedSeverity = opts.draftSeverity;
 
     this.backdrop = document.createElement('div');
     this.backdrop.className = 'fb-modal-backdrop';
@@ -63,7 +71,9 @@ export class FeedbackModal {
       minBtn.innerHTML = minimizeIcon(20);
       minBtn.title = 'Minimize';
       minBtn.setAttribute('aria-label', 'Minimize');
-      minBtn.addEventListener('click', () => opts.onMinimize!(this.textarea.value));
+      minBtn.addEventListener('click', () =>
+        opts.onMinimize!(this.textarea.value, this.selectedType, this.selectedSeverity)
+      );
       headerActions.appendChild(minBtn);
     }
 
@@ -142,6 +152,17 @@ export class FeedbackModal {
       body.appendChild(img);
     }
 
+    // Type categorization chip bar (PH-012)
+    const chipBar = createTypeChipBar({
+      initialType: this.selectedType,
+      initialSeverity: this.selectedSeverity,
+      onChange: (type, severity) => {
+        this.selectedType = type;
+        this.selectedSeverity = severity;
+      },
+    });
+    body.appendChild(chipBar);
+
     // Draft saved indicator
     const draftIndicator = document.createElement('span');
     draftIndicator.className = 'fb-draft-saved';
@@ -154,7 +175,7 @@ export class FeedbackModal {
       if (this.draftTimer) clearTimeout(this.draftTimer);
       this.draftTimer = setTimeout(() => {
         if (this.textarea.value.trim()) {
-          opts.onDraftSave(this.textarea.value);
+          opts.onDraftSave(this.textarea.value, this.selectedType, this.selectedSeverity);
           draftIndicator.style.display = 'inline';
           draftIndicator.style.opacity = '1';
           setTimeout(() => {
@@ -169,7 +190,7 @@ export class FeedbackModal {
         const comment = this.textarea.value.trim();
         if (comment) {
           e.preventDefault();
-          opts.onSubmit(comment);
+          opts.onSubmit(comment, this.selectedType, this.selectedSeverity);
         }
       }
     });
@@ -192,7 +213,7 @@ export class FeedbackModal {
     submitBtn.disabled = !this.textarea.value.trim();
     submitBtn.addEventListener('click', () => {
       const comment = this.textarea.value.trim();
-      if (comment) opts.onSubmit(comment);
+      if (comment) opts.onSubmit(comment, this.selectedType, this.selectedSeverity);
     });
 
     const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -223,6 +244,14 @@ export class FeedbackModal {
 
   getComment(): string {
     return this.textarea.value;
+  }
+
+  getType(): FeedbackType {
+    return this.selectedType;
+  }
+
+  getSeverity(): BugSeverity | undefined {
+    return this.selectedSeverity;
   }
 
   destroy(): void {

@@ -3,7 +3,7 @@
  * Manages feedback state with event-driven change notifications
  */
 
-import type { Feedback, Draft, StorageManager } from '@feedbacker/core';
+import type { Feedback, Draft, StorageManager, FeedbackType, BugSeverity } from '@feedbacker/core';
 import { FeedbackEventEmitter, logger } from '@feedbacker/core';
 import type { ComponentInfo } from '@feedbacker/detection';
 
@@ -72,12 +72,14 @@ export class StateManager {
     }
   }
 
-  async saveDraft(componentInfo: ComponentInfo, comment: string, screenshot?: string): Promise<void> {
+  async saveDraft(componentInfo: ComponentInfo, comment: string, screenshot?: string, type?: FeedbackType, severity?: BugSeverity): Promise<void> {
     const now = new Date().toISOString();
     const draft: Draft = {
       componentInfo,
       comment,
       screenshot,
+      type,
+      severity,
       createdAt: this._draft?.createdAt || now,
       updatedAt: now
     };

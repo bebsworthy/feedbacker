@@ -136,7 +136,7 @@ describe('FeedbackModal', () => {
       });
       textarea.dispatchEvent(event);
 
-      expect(onSubmit).toHaveBeenCalledWith('Hello World');
+      expect(onSubmit).toHaveBeenCalledWith('Hello World', 'suggestion', undefined);
 
       modal.destroy();
     });
@@ -181,7 +181,7 @@ describe('FeedbackModal', () => {
       });
       textarea.dispatchEvent(event);
 
-      expect(onSubmit).toHaveBeenCalledWith('Feedback text');
+      expect(onSubmit).toHaveBeenCalledWith('Feedback text', 'suggestion', undefined);
 
       modal.destroy();
     });
@@ -240,7 +240,7 @@ describe('FeedbackModal', () => {
       // Advance past the 2000ms draft debounce timer
       jest.advanceTimersByTime(2100);
 
-      expect(onDraftSave).toHaveBeenCalledWith('Draft content');
+      expect(onDraftSave).toHaveBeenCalledWith('Draft content', 'suggestion', undefined);
 
       const indicator = container.querySelector('.fb-draft-saved') as HTMLElement;
       expect(indicator).not.toBeNull();

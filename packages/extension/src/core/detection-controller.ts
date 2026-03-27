@@ -12,12 +12,24 @@ const MESSAGE_PREFIX = 'feedbacker-detection';
 /** Tag names that should be skipped during DOM hierarchy navigation */
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE']);
 
+/** Selector for elements reachable via Tab key */
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
 export class DetectionController {
   private detector = createDetector();
   private _isActive = false;
   private _hoveredComponent: ComponentInfo | null = null;
   private _selectedComponent: ComponentInfo | null = null;
   private _currentElement: HTMLElement | null = null;
+  private _focusableIndex = -1;
+  private _ariaLiveRegion: HTMLElement | null = null;
 
   private onHover: ((info: ComponentInfo | null) => void) | null = null;
   private onSelect: ((info: ComponentInfo) => void) | null = null;
@@ -80,10 +92,10 @@ export class DetectionController {
     };
 
     this.boundKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        this.deactivate();
-      }
+      this.handleKeydown(e);
     };
+
+    this.createAriaLiveRegion();
 
     this.boundMessage = (e: MessageEvent) => {
       if (e.data?.type === `${MESSAGE_PREFIX}:result`) {
@@ -128,6 +140,8 @@ export class DetectionController {
     }
 
     this._currentElement = null;
+    this._focusableIndex = -1;
+    this.removeAriaLiveRegion();
     document.body.style.cursor = '';
     this.onHover?.(null);
     logger.debug('Detection deactivated');
@@ -203,6 +217,120 @@ export class DetectionController {
     if (this.isExtensionElement(el)) return false;
     // Stop at document element (html) — it is navigable but its parent is not
     return true;
+  }
+
+  /** Get all focusable elements on the page, excluding extension elements */
+  getFocusableElements(): HTMLElement[] {
+    const all = document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    const result: HTMLElement[] = [];
+    for (let i = 0; i < all.length; i++) {
+      const el = all[i];
+      if (!this.isExtensionElement(el)) {
+        result.push(el);
+      }
+    }
+    return result;
+  }
+
+  /** Navigate to the next or previous focusable element (Tab / Shift+Tab) */
+  navigateToFocusable(direction: 'next' | 'previous'): HTMLElement | null {
+    const focusable = this.getFocusableElements();
+    if (focusable.length === 0) {
+      this.announceToLiveRegion(
+        'No focusable elements found. Use arrow keys to navigate.'
+      );
+      return null;
+    }
+
+    if (direction === 'next') {
+      this._focusableIndex = (this._focusableIndex + 1) % focusable.length;
+    } else {
+      this._focusableIndex =
+        this._focusableIndex <= 0
+          ? focusable.length - 1
+          : this._focusableIndex - 1;
+    }
+
+    const target = focusable[this._focusableIndex];
+    this.setCurrentElement(target);
+    logger.debug(
+      `Keyboard selection: Tab to <${target.tagName.toLowerCase()}>`
+    );
+    return target;
+  }
+
+  /** Confirm the currently highlighted element as the selection */
+  confirmSelection(): void {
+    if (!this._currentElement) return;
+    const info = this.detector.detectComponent(this._currentElement);
+    if (info) {
+      this._selectedComponent = info;
+      this.onSelect?.(info);
+      this.deactivate();
+    }
+  }
+
+  private handleKeydown(e: KeyboardEvent): void {
+    if (!this._isActive) return;
+
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
+        this.deactivate();
+        break;
+      case 'Tab':
+        e.preventDefault();
+        e.stopPropagation();
+        this.navigateToFocusable(e.shiftKey ? 'previous' : 'next');
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        e.stopPropagation();
+        if (this._currentElement) {
+          this.navigateToParent();
+        }
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        e.stopPropagation();
+        if (this._currentElement) {
+          this.navigateToChild();
+        }
+        break;
+      case 'Enter':
+        e.preventDefault();
+        e.stopPropagation();
+        this.confirmSelection();
+        break;
+    }
+  }
+
+  private createAriaLiveRegion(): void {
+    this._ariaLiveRegion = document.createElement('div');
+    this._ariaLiveRegion.setAttribute('aria-live', 'assertive');
+    this._ariaLiveRegion.setAttribute('role', 'status');
+    this._ariaLiveRegion.style.position = 'absolute';
+    this._ariaLiveRegion.style.width = '1px';
+    this._ariaLiveRegion.style.height = '1px';
+    this._ariaLiveRegion.style.overflow = 'hidden';
+    this._ariaLiveRegion.style.clip = 'rect(0 0 0 0)';
+    this._ariaLiveRegion.style.whiteSpace = 'nowrap';
+    this._ariaLiveRegion.id = 'feedbacker-aria-live';
+    document.body.appendChild(this._ariaLiveRegion);
+  }
+
+  private removeAriaLiveRegion(): void {
+    if (this._ariaLiveRegion) {
+      this._ariaLiveRegion.remove();
+      this._ariaLiveRegion = null;
+    }
+  }
+
+  private announceToLiveRegion(message: string): void {
+    if (this._ariaLiveRegion) {
+      this._ariaLiveRegion.textContent = message;
+    }
   }
 
   private handleWheel(e: WheelEvent): void {

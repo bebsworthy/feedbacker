@@ -96,6 +96,13 @@ export function sortIcon(size = 16, color = 'currentColor'): string {
   ].join(''));
 }
 
+export function locateIcon(size = 16, color = 'currentColor'): string {
+  return svg(size, [
+    stroke('M2 12H6M18 12H22M12 2V6M12 18V22', color),
+    `<circle cx="12" cy="12" r="4" stroke="${color}" stroke-width="2" fill="none"/>`,
+  ].join(''));
+}
+
 export function clipboardCopyIcon(size = 20, color = 'currentColor'): string {
   return svg(size, [
     stroke('M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-12a2 2 0 00-2-2h-2', color),

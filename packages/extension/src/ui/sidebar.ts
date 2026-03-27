@@ -8,7 +8,7 @@
 
 import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
-import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration, searchIcon, sortIcon } from './icons';
+import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration, searchIcon, sortIcon, locateIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 import { InlineEditController } from './inline-edit';
 
@@ -20,6 +20,8 @@ interface SidebarOptions {
   onShowExportDialog: () => void;
   onStartCapture: () => void;
   onAnnounce?: (message: string) => void;
+  onLocateElement?: (feedback: Feedback) => void;
+  currentOrigin?: string;
 }
 
 type FilterMode = 'this-site' | 'all-sites';
@@ -173,6 +175,15 @@ export class ManagerSidebar {
         return false;
       }
     });
+  }
+
+  private isSameOrigin(url: string): boolean {
+    const origin = this.opts.currentOrigin ?? this.currentOrigin;
+    try {
+      return new URL(url).origin === origin;
+    } catch {
+      return false;
+    }
   }
 
   private renderFiltered(): void {
@@ -406,6 +417,14 @@ export class ManagerSidebar {
     header.appendChild(time);
     card.appendChild(header);
 
+    // Type badge
+    if (fb.type) {
+      const badge = document.createElement('span');
+      badge.className = `fb-type-badge fb-type-${fb.type}`;
+      badge.textContent = fb.type.charAt(0).toUpperCase() + fb.type.slice(1);
+      card.appendChild(badge);
+    }
+
     // Site origin (show when viewing all sites)
     if (this.filterMode === 'all-sites') {
       try {
@@ -459,6 +478,18 @@ export class ManagerSidebar {
 
     actions.appendChild(editBtn);
     actions.appendChild(copyBtn);
+
+    // Locate button: only for same-origin cards with elementSelector (PH-015)
+    if (fb.elementSelector && this.isSameOrigin(fb.url)) {
+      const locateBtn = document.createElement('button');
+      locateBtn.className = 'fb-btn-icon';
+      locateBtn.innerHTML = locateIcon(16);
+      locateBtn.dataset.tooltip = 'Locate element';
+      locateBtn.setAttribute('aria-label', 'Locate element');
+      locateBtn.addEventListener('click', () => this.opts.onLocateElement?.(fb));
+      actions.appendChild(locateBtn);
+    }
+
     actions.appendChild(deleteBtn);
     card.appendChild(actions);
 

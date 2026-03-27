@@ -9,9 +9,10 @@
  * DOM container reference.
  */
 
-import type { Feedback } from '@feedbacker/core';
+import type { Feedback, FeedbackType, BugSeverity } from '@feedbacker/core';
 import { captureHtmlSnippet, logger, MarkdownExporter } from '@feedbacker/core';
 import { type ComponentInfo, getHumanReadableName } from '@feedbacker/detection';
+import { generateCssSelector } from '../utils/css-selector-generator';
 import { StateManager } from '../core/state-manager';
 import { DetectionController } from '../core/detection-controller';
 import { FAB } from './fab';
@@ -22,6 +23,7 @@ import { ConfirmDialog } from './confirm-dialog';
 import { ExportDialog } from './export-dialog';
 import { MinimizedState } from './minimized-state';
 import { checkIcon } from './icons';
+import { relocateElement, highlightElement } from '../utils/element-relocator';
 
 /** Rotating toast messages for submit confirmation (PH-012) */
 const SUBMIT_TOAST_MESSAGES = [
@@ -301,18 +303,31 @@ export class FeedbackApp {
       // Ignore
     }
 
+    // Generate CSS selector for navigate-to-element (PH-014)
+    let elementSelector: string | undefined;
+    try {
+      const selector = generateCssSelector(info.element);
+      if (selector) {
+        elementSelector = selector;
+      }
+    } catch {
+      // Selector generation is best-effort; never propagate errors
+    }
+
     // Show modal
-    this.showModal(info, screenshot, htmlSnippet);
+    this.showModal(info, screenshot, htmlSnippet, elementSelector);
   }
 
-  private showModal(info: ComponentInfo, screenshot?: string, htmlSnippet?: string): void {
+  private showModal(info: ComponentInfo, screenshot?: string, htmlSnippet?: string, elementSelector?: string): void {
     this.modal?.destroy();
     this.modal = new FeedbackModal(this.container, {
       componentInfo: info,
       screenshot,
       htmlSnippet,
       draftComment: this.state.draft?.comment,
-      onSubmit: async (comment: string) => {
+      draftType: this.state.draft?.type,
+      draftSeverity: this.state.draft?.severity,
+      onSubmit: async (comment: string, type: FeedbackType, severity?: BugSeverity) => {
         const feedback: Feedback = {
           id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           componentName: getHumanReadableName(info.element, info.name),
@@ -320,6 +335,9 @@ export class FeedbackApp {
           comment,
           screenshot,
           htmlSnippet,
+          elementSelector,
+          type,
+          severity,
           url: window.location.href,
           timestamp: new Date().toISOString(),
           browserInfo: {
@@ -345,7 +363,7 @@ export class FeedbackApp {
         this.modal?.destroy();
         this.modal = null;
       },
-      onMinimize: (currentComment: string) => {
+      onMinimize: (currentComment: string, type: FeedbackType, severity?: BugSeverity) => {
         this.modal?.destroy();
         this.modal = null;
         this.minimizedState?.destroy();
@@ -356,7 +374,7 @@ export class FeedbackApp {
           onRestore: () => {
             this.minimizedState?.destroy();
             this.minimizedState = null;
-            this.showModal(info, screenshot, htmlSnippet);
+            this.showModal(info, screenshot, htmlSnippet, elementSelector);
           },
           onDiscard: () => {
             this.minimizedState?.destroy();
@@ -366,8 +384,8 @@ export class FeedbackApp {
           }
         });
       },
-      onDraftSave: (comment: string) => {
-        this.state.saveDraft(info, comment, screenshot);
+      onDraftSave: (comment: string, type: FeedbackType, severity?: BugSeverity) => {
+        this.state.saveDraft(info, comment, screenshot, type, severity);
         this.fab?.updateDraft(true);
       }
     });
@@ -395,11 +413,25 @@ export class FeedbackApp {
       },
       onShowExportDialog: () => this.showExportDialog(),
       onStartCapture: () => this.startCapture(),
-      onAnnounce: (message: string) => this.announce(message)
+      onAnnounce: (message: string) => this.announce(message),
+      onLocateElement: (feedback: Feedback) => this.handleLocateElement(feedback),
+      currentOrigin: window.location.origin,
     });
 
     // Show any pending milestone badge
     this.displayMilestoneBadge();
+  }
+
+  private handleLocateElement(feedback: Feedback): void {
+    if (!feedback.elementSelector) return;
+    const el = relocateElement(feedback.elementSelector);
+    if (el) {
+      highlightElement(el);
+      this.announce('Element located');
+    } else {
+      this.showToast('Element not found on this page', 3500, 'error');
+      this.announce('Element not found on this page');
+    }
   }
 
   private showExportDialog(): void {
@@ -492,8 +524,10 @@ export class FeedbackApp {
       screenshot: feedback.screenshot,
       htmlSnippet: feedback.htmlSnippet,
       draftComment: feedback.comment,
-      onSubmit: async (comment: string) => {
-        const updated: Feedback = { ...feedback, comment, timestamp: new Date().toISOString() };
+      draftType: feedback.type,
+      draftSeverity: feedback.severity,
+      onSubmit: async (comment: string, type: FeedbackType, severity?: BugSeverity) => {
+        const updated: Feedback = { ...feedback, comment, type, severity, timestamp: new Date().toISOString() };
         await this.state.addFeedback(updated); // save with same ID = update
         this.modal?.destroy();
         this.modal = null;
