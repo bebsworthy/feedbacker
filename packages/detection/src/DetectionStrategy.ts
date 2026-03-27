@@ -4,6 +4,7 @@
  */
 
 import { ComponentInfo } from './types';
+import { buildElementLabel } from './utils/element-label';
 import logger from './utils/logger';
 
 /**
@@ -116,20 +117,7 @@ export abstract class DetectionStrategy {
       domIterations++;
 
       // Add current element to DOM path
-      const tagName = currentElement.tagName.toLowerCase();
-      const className = currentElement.className;
-
-      // Format the element (include className for the first/selected element)
-      if (domPath.length === 0 && className) {
-        // For the selected element, include className
-        const classes = className
-          .split(' ')
-          .filter((c) => c.trim())
-          .join('.');
-        domPath.unshift(classes ? `${tagName}.${classes}` : tagName);
-      } else {
-        domPath.unshift(tagName);
-      }
+      domPath.unshift(buildElementLabel(currentElement));
 
       // Check if this element has a React fiber with a component
       const elementFiber = this.getReactFiber(currentElement);
