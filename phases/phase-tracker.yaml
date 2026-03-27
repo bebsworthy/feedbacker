@@ -50,8 +50,8 @@ phases:
   end_commit: null
   steps:
     ideas: skipped
-    brd: in_progress
-    research: not_started
+    brd: complete
+    research: in_progress
     spec: not_started
     plan: not_started
     build: not_started
