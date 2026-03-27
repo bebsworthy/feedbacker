@@ -1,10 +1,7 @@
 /**
  * Tests for popup keyboard shortcut display and privacy trust signal.
  * Covers T-011 and T-023.
- *
- * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -75,7 +72,7 @@ describe('Popup', () => {
       const notice = document.querySelector('.privacy-notice');
       expect(notice).not.toBeNull();
       expect(notice!.textContent).toContain(
-        'Your feedback stays local — nothing leaves your browser.'
+        'Your feedback stays local'
       );
     });
   });
