@@ -10,7 +10,7 @@ phases:
   refs:
   - .audit/ux/05-proposals.md
   - .audit/ux/04-audit.md
-  status: started
+  status: complete
   summary: ''
   depends_on: []
   tags:
@@ -18,7 +18,7 @@ phases:
   - frontend
   size: small
   start_commit: 41fc7f8b16f58064818e582eb12432499d16bffe
-  end_commit: null
+  end_commit: 9c3bd17103a7837e9ad6bb47eb549bca03f78c4b
   steps:
     ideas: skipped
     brd: complete
@@ -26,7 +26,7 @@ phases:
     spec: complete
     plan: complete
     build: complete
-    check: in_progress
+    check: complete
 - number: 2
   title: Polish Core User Flows
   brief: '10 improvements: undo toast for delete (F-03), export success toast (F-13),
@@ -38,7 +38,7 @@ phases:
   - .audit/ux/05-proposals.md
   - .audit/ux/04-audit.md
   - .audit/ux/01-user-goals.md
-  status: not_started
+  status: started
   summary: ''
   depends_on:
   - 1
@@ -46,11 +46,11 @@ phases:
   - ux
   - frontend
   size: medium
-  start_commit: null
+  start_commit: 9c3bd17103a7837e9ad6bb47eb549bca03f78c4b
   end_commit: null
   steps:
     ideas: skipped
-    brd: not_started
+    brd: in_progress
     research: not_started
     spec: not_started
     plan: not_started
