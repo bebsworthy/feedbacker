@@ -9,6 +9,7 @@ import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
 import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration } from './icons';
 import { FocusTrap } from './focus-trap';
+import { InlineEditController } from './inline-edit';
 
 interface SidebarOptions {
   feedbacks: Feedback[];
@@ -32,11 +33,13 @@ export class ManagerSidebar {
   private focusTrap: FocusTrap | null = null;
   private filterMode: FilterMode = 'this-site';
   private currentOrigin: string;
+  private inlineEdit: InlineEditController;
 
   constructor(container: HTMLElement, opts: SidebarOptions) {
     this.container = container;
     this.opts = opts;
     this.currentOrigin = window.location.origin;
+    this.inlineEdit = new InlineEditController({ onSaveEdit: opts.onSaveEdit });
 
     // Backdrop
     this.backdrop = document.createElement('div');
@@ -123,6 +126,7 @@ export class ManagerSidebar {
   }
 
   destroy(): void {
+    this.inlineEdit.destroy();
     this.focusTrap?.destroy();
     this.backdrop.remove();
     this.sidebar.remove();
@@ -328,8 +332,7 @@ export class ManagerSidebar {
     editBtn.innerHTML = pencilIcon(16);
     editBtn.dataset.tooltip = 'Edit';
     editBtn.setAttribute('aria-label', 'Edit feedback');
-    // PH-008 will replace this with inline textarea editing
-    editBtn.addEventListener('click', () => {});
+    editBtn.addEventListener('click', () => this.inlineEdit.activateEdit(fb.id, fb.comment, card, this.body));
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'fb-btn-icon';
