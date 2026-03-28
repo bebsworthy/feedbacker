@@ -137,27 +137,10 @@ describe('Extension CSS', () => {
 
   /**
    * T-026: Screenshot copy button is always visible.
-   * CSS for .fb-screenshot-copy does NOT have opacity: 0 as default.
-   * Opacity is >= 0.85 by default.
+   * CSS for .fb-screenshot-copy is hidden by default and revealed on hover.
    */
-  describe('T-026: Screenshot copy button always visible', () => {
-    it('does NOT have opacity: 0 as default for .fb-screenshot-copy', () => {
-      // Extract the .fb-screenshot-copy block (not the hover variant)
-      const match = EXTENSION_CSS.match(
-        /\.fb-screenshot-copy\s*\{([\s\S]*?)\}/
-      );
-      expect(match).not.toBeNull();
-      const block = match![1];
-
-      // Should not contain "opacity: 0" (but may contain "opacity: 0.85")
-      const opacityValues = block.match(/opacity:\s*([0-9.]+)/g) || [];
-      for (const val of opacityValues) {
-        const num = parseFloat(val.replace('opacity:', '').trim());
-        expect(num).not.toBe(0);
-      }
-    });
-
-    it('has default opacity >= 0.85', () => {
+  describe('T-026: Screenshot copy button revealed on hover', () => {
+    it('has opacity: 0 by default for .fb-screenshot-copy', () => {
       const match = EXTENSION_CSS.match(
         /\.fb-screenshot-copy\s*\{([\s\S]*?)\}/
       );
@@ -166,8 +149,19 @@ describe('Extension CSS', () => {
 
       const opacityMatch = block.match(/opacity:\s*([0-9.]+)/);
       expect(opacityMatch).not.toBeNull();
-      const opacity = parseFloat(opacityMatch![1]);
-      expect(opacity).toBeGreaterThanOrEqual(0.85);
+      expect(parseFloat(opacityMatch![1])).toBe(0);
+    });
+
+    it('shows on hover with opacity >= 0.85', () => {
+      const match = EXTENSION_CSS.match(
+        /\.fb-screenshot-wrap:hover\s+\.fb-screenshot-copy\s*\{([\s\S]*?)\}/
+      );
+      expect(match).not.toBeNull();
+      const block = match![1];
+
+      const opacityMatch = block.match(/opacity:\s*([0-9.]+)/);
+      expect(opacityMatch).not.toBeNull();
+      expect(parseFloat(opacityMatch![1])).toBeGreaterThanOrEqual(0.85);
     });
   });
 

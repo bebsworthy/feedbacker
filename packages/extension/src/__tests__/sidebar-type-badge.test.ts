@@ -92,13 +92,14 @@ describe('Sidebar type badges', () => {
   });
 
   /**
-   * T-036: Pre-existing feedback with no type field renders without badge and without errors.
+   * T-036: Pre-existing feedback with no type field defaults to Suggestion badge.
    */
-  it('T-036: feedback without type renders without badge and without errors', () => {
+  it('T-036: feedback without type defaults to Suggestion badge', () => {
     const sidebar = createSidebar([createFeedback()]);
 
     const badge = container.querySelector('.fb-type-badge');
-    expect(badge).toBeNull();
+    expect(badge).not.toBeNull();
+    expect(badge!.textContent).toBe('Suggestion');
 
     // Card should still render properly
     const card = container.querySelector('.fb-card');

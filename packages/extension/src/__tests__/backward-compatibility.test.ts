@@ -94,11 +94,12 @@ describe('T-062: Sidebar rendering of pre-phase-3 feedback', () => {
     container.remove();
   });
 
-  it('renders card without type badge when type is absent', () => {
+  it('renders default Suggestion badge when type is absent', () => {
     const sidebar = createSidebar(container, [createLegacyFeedback()]);
 
     const badge = container.querySelector('.fb-type-badge');
-    expect(badge).toBeNull();
+    expect(badge).not.toBeNull();
+    expect(badge!.textContent).toBe('Suggestion');
 
     const card = container.querySelector('.fb-card');
     expect(card).not.toBeNull();
@@ -147,8 +148,10 @@ describe('T-062: Sidebar rendering of pre-phase-3 feedback', () => {
     const cards = container.querySelectorAll('.fb-card');
     expect(cards.length).toBe(3);
 
+    // Each legacy card gets a default 'Suggestion' badge
     const badges = container.querySelectorAll('.fb-type-badge');
-    expect(badges.length).toBe(0);
+    expect(badges.length).toBe(3);
+    badges.forEach(b => expect(b.textContent).toBe('Suggestion'));
 
     const locateBtns = container.querySelectorAll('[aria-label="Locate element"]');
     expect(locateBtns.length).toBe(0);
@@ -172,10 +175,12 @@ describe('T-062: Sidebar rendering of pre-phase-3 feedback', () => {
     const cards = container.querySelectorAll('.fb-card');
     expect(cards.length).toBe(2);
 
-    // Only the typed feedback should have a badge
+    // Legacy card gets default 'Suggestion'; typed card gets 'Bug' + 'Major' severity
     const badges = container.querySelectorAll('.fb-type-badge');
-    expect(badges.length).toBe(1);
-    expect(badges[0].textContent).toBe('Bug');
+    expect(badges.length).toBe(3);
+    expect(badges[0].textContent).toBe('Suggestion');
+    expect(badges[1].textContent).toBe('Bug');
+    expect(badges[2].textContent).toBe('Major');
 
     // Only the typed feedback with elementSelector on same origin should have locate icon
     const locateBtns = container.querySelectorAll('[aria-label="Locate element"]');

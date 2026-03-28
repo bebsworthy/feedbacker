@@ -8,7 +8,7 @@
 
 import type { Feedback } from '@feedbacker/core';
 import { formatDistanceToNow, MarkdownExporter } from '@feedbacker/core';
-import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, photoIcon, emptyStateIllustration, searchIcon, sortIcon, locateIcon } from './icons';
+import { closeIcon, trashIcon, copyIcon, arrowDownTrayIcon, pencilIcon, checkIcon, emptyStateIllustration, searchIcon, sortIcon, locateIcon } from './icons';
 import { FocusTrap } from './focus-trap';
 import { InlineEditController } from './inline-edit';
 
@@ -341,11 +341,11 @@ export class ManagerSidebar {
       const blob = await res.blob();
       const pngBlob = blob.type === 'image/png' ? blob : await this.convertToPng(dataUrl);
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
-      this.flashCopied(btn, photoIcon(16));
+      this.flashCopied(btn, copyIcon(16));
     } catch {
       // Fallback: copy the data URL as text
       await navigator.clipboard.writeText(dataUrl);
-      this.flashCopied(btn, photoIcon(16));
+      this.flashCopied(btn, copyIcon(16));
     }
   }
 
@@ -385,7 +385,7 @@ export class ManagerSidebar {
     // Screenshot
     if (fb.screenshot) {
       const screenshotWrap = document.createElement('div');
-      screenshotWrap.style.cssText = 'position: relative;';
+      screenshotWrap.className = 'fb-screenshot-wrap';
       const img = document.createElement('img');
       img.className = 'fb-card-screenshot';
       img.src = fb.screenshot;
@@ -394,7 +394,7 @@ export class ManagerSidebar {
 
       const copyImgBtn = document.createElement('button');
       copyImgBtn.className = 'fb-btn-icon fb-screenshot-copy';
-      copyImgBtn.innerHTML = photoIcon(16);
+      copyImgBtn.innerHTML = copyIcon(16);
       copyImgBtn.dataset.tooltip = 'Copy screenshot';
       copyImgBtn.setAttribute('aria-label', 'Copy screenshot');
       copyImgBtn.addEventListener('click', () => {
@@ -409,7 +409,11 @@ export class ManagerSidebar {
     header.className = 'fb-card-header';
     const title = document.createElement('span');
     title.className = 'fb-card-title';
-    title.textContent = fb.componentName;
+    const genericNames = ['component', 'div', 'span', 'section', 'article', 'main', 'header', 'footer', 'aside', 'nav'];
+    const isGeneric = genericNames.includes(fb.componentName.toLowerCase());
+    title.textContent = isGeneric && fb.componentPath.length > 0
+      ? fb.componentPath[fb.componentPath.length - 1]
+      : fb.componentName;
     const time = document.createElement('span');
     time.className = 'fb-card-time';
     time.textContent = formatDistanceToNow(new Date(fb.timestamp));
@@ -417,13 +421,24 @@ export class ManagerSidebar {
     header.appendChild(time);
     card.appendChild(header);
 
-    // Type badge
-    if (fb.type) {
-      const badge = document.createElement('span');
-      badge.className = `fb-type-badge fb-type-${fb.type}`;
-      badge.textContent = fb.type.charAt(0).toUpperCase() + fb.type.slice(1);
-      card.appendChild(badge);
+    // Type & severity badges (default to 'suggestion' for legacy items)
+    const type = fb.type || 'suggestion';
+    const badgeRow = document.createElement('div');
+    badgeRow.className = 'fb-badge-row';
+
+    const badge = document.createElement('span');
+    badge.className = `fb-type-badge fb-type-${type}`;
+    badge.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    badgeRow.appendChild(badge);
+
+    if (fb.severity && type === 'bug') {
+      const sevBadge = document.createElement('span');
+      sevBadge.className = `fb-type-badge fb-severity-${fb.severity}`;
+      sevBadge.textContent = fb.severity.charAt(0).toUpperCase() + fb.severity.slice(1);
+      badgeRow.appendChild(sevBadge);
     }
+
+    card.appendChild(badgeRow);
 
     // Site origin (show when viewing all sites)
     if (this.filterMode === 'all-sites') {
